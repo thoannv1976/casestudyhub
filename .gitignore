@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+.npm
+
+# build output
+.next/
+out/
+dist/
+*.tsbuildinfo
+
+# test / coverage
+coverage/
+test-results/
+playwright-report/
+
+# env & secrets
+.env
+.env.*
+!.env.example
+*-service-account*.json
+service-account*.json
+gcp-key*.json
+
+# firebase emulator
+firebase/.firebaserc
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+.firebase/
+emulator-data/
+
+# editor / os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

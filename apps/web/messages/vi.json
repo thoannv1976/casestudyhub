@@ -1,0 +1,152 @@
+{
+  "app": {
+    "name": "CaseStudy Hub",
+    "fullName": "Nền tảng quản lý và đánh giá thuyết trình Case Study ứng dụng AI",
+    "tagline": "Tổ chức trọn vẹn một chu trình case study: giao case, phân tích, thuyết trình, phản biện, đánh giá."
+  },
+  "common": {
+    "language": "Ngôn ngữ",
+    "theme": "Giao diện",
+    "themeLight": "Sáng",
+    "themeDark": "Tối",
+    "themeSystem": "Theo hệ thống",
+    "signIn": "Đăng nhập",
+    "register": "Đăng ký",
+    "learnMore": "Tìm hiểu thêm",
+    "comingSoon": "Sắp có",
+    "inProgress": "Đang xây dựng",
+    "done": "Hoàn thành",
+    "minutes": "phút",
+    "points": "điểm",
+    "students": "sinh viên",
+    "slides": "slide"
+  },
+  "nav": {
+    "home": "Trang chủ",
+    "myClasses": "Lớp của tôi",
+    "myGroup": "Nhóm của tôi",
+    "caseLibrary": "Thư viện Case Study",
+    "myResults": "Kết quả học tập",
+    "admin": "Quản trị"
+  },
+  "landing": {
+    "heroTitle": "Dạy học bằng Case Study, từ lúc giao bài đến khi công bố điểm",
+    "heroSubtitle": "Nền tảng song ngữ cho trường đại học: quản lý lớp và nhóm, thư viện case study, buổi thuyết trình trực tiếp có câu hỏi của cả lớp, đánh giá chéo, phản hồi AI và điểm do giảng viên phê duyệt.",
+    "heroNote": "Phase 1 đang được xây dựng. Trang này là phần đầu tiên đã triển khai được.",
+    "pillarsTitle": "Ba giá trị cốt lõi",
+    "pillar1Title": "Quản lý Case Study",
+    "pillar1Body": "Tình huống, hướng dẫn, nhóm, lịch thuyết trình, bài nộp và kết quả của nhiều học phần, nhiều lớp, nhiều học kỳ trên cùng một hệ thống.",
+    "pillar2Title": "Lớp học tương tác",
+    "pillar2Body": "Cả lớp đặt câu hỏi, phản biện, bình chọn và đánh giá ngay trên điện thoại trong lúc một nhóm thuyết trình.",
+    "pillar3Title": "Đánh giá dựa trên minh chứng",
+    "pillar3Body": "Phân tích của AI, đánh giá của sinh viên và quyết định của giảng viên, tất cả được lưu làm minh chứng cho sự tiến bộ của từng sinh viên.",
+    "frameworkTitle": "Khung thuyết trình mặc định của hệ thống",
+    "frameworkSubtitle": "E-Commerce 2026 — Standard Case Study Presentation Framework. Mọi giá trị dưới đây là cấu hình, không viết cố định trong mã nguồn, nên học phần khác có thể thay đổi.",
+    "rolesTitle": "Sáu vai trò thuyết trình",
+    "rolesSubtitle": "Bối cảnh → Cơ chế → Số liệu → Phản biện → Ứng dụng → Quyết định. Mỗi thành viên giữ một mắt xích và phải trả lời câu hỏi thuộc phần của mình.",
+    "rubricTitle": "Rubric 100 điểm",
+    "rubricSubtitle": "AI được đề xuất điểm nháp cho năm tiêu chí đầu dựa trên case gốc, hướng dẫn và bài nộp. Tiêu chí trình bày và phối hợp thuộc về giảng viên.",
+    "rubricAiColumn": "AI đề xuất nháp",
+    "rubricLecturerOnly": "Giảng viên chấm",
+    "roadmapTitle": "Lộ trình phát triển",
+    "phase1": "Phase 1 — Nền tảng lõi",
+    "phase1Body": "Tài khoản, phân quyền, lớp học, nhóm, phân vai, thư viện case, giao bài và nộp bài.",
+    "phase2": "Phase 2 — Thuyết trình tương tác",
+    "phase2Body": "Live Presentation Room, bộ đếm thời gian, Question Wall, Q&A theo vai trò và đánh giá chéo.",
+    "phase3": "Phase 3 — Đánh giá bằng AI",
+    "phase3Body": "Xử lý tài liệu, chấm theo rubric có trích dẫn nguồn, sinh câu hỏi phản biện và bộ tính điểm.",
+    "phase4": "Phase 4 — Phân tích & tích hợp",
+    "phase4Body": "CLO Analytics, hồ sơ năng lực, ghi nhận đóng góp và kết nối LMS.",
+    "statusHealthy": "Dịch vụ hoạt động bình thường"
+  },
+  "policy": {
+    "ecom2026Standard": "E-Commerce 2026 — Khung thuyết trình Case Study chuẩn",
+    "groupSize": "Số sinh viên mỗi nhóm",
+    "presentationTime": "Thời gian thuyết trình",
+    "qaTime": "Hỏi đáp",
+    "slideCount": "Slide nội dung",
+    "deadline": "Thời hạn nộp bài",
+    "deadlineValue": "{hours} giờ trước buổi thuyết trình",
+    "marking": "Cách tính điểm",
+    "markingValue": "{team}% điểm nhóm + {individual}% điểm cá nhân",
+    "range": "{min}–{max}"
+  },
+  "roles": {
+    "contextSetter": {
+      "title": "Người đặt bối cảnh",
+      "presents": "Bối cảnh doanh nghiệp, vấn đề trung tâm, lý do case thuộc về chương đang học.",
+      "mustAnswer": "Nếu bỏ case này khỏi chương, lớp sẽ mất điều gì?"
+    },
+    "modelAnalyst": {
+      "title": "Người phân tích mô hình",
+      "presents": "Mô hình kinh doanh: cách tạo ra, cung cấp và thu nhận giá trị.",
+      "mustAnswer": "Doanh nghiệp này thực sự kiếm tiền ở đâu?"
+    },
+    "dataAnalyst": {
+      "title": "Người phân tích số liệu",
+      "presents": "Số liệu, KPI, unit economics, trình bày tối thiểu một phép tính trên slide.",
+      "mustAnswer": "Con số nào chứng minh điều bạn vừa nói?"
+    },
+    "critic": {
+      "title": "Người phản biện",
+      "presents": "Rủi ro, giả định dễ sai và điều kiện khiến mô hình thất bại.",
+      "mustAnswer": "Điều gì phải đúng thì kết luận của nhóm mới đứng vững?"
+    },
+    "transferLead": {
+      "title": "Người đánh giá khả năng ứng dụng",
+      "presents": "Điều kiện áp dụng vào bối cảnh Việt Nam: cái gì dùng được, cái gì không.",
+      "mustAnswer": "Phần nào một doanh nghiệp Việt Nam thực sự có thể làm theo?"
+    },
+    "decisionLead": {
+      "title": "Người ra quyết định & điều phối",
+      "presents": "Ba bài học, quyết định quản trị của nhóm và điều phối phần hỏi đáp.",
+      "mustAnswer": "Ở vị trí CEO, nhóm quyết định thế nào và vì sao?"
+    }
+  },
+  "rubric": {
+    "standard100": "Rubric chuẩn cho bài thuyết trình case study (100 điểm)",
+    "criteria": {
+      "understanding": "Hiểu tình huống",
+      "analysis": "Chất lượng phân tích",
+      "evidence": "Minh chứng và số liệu",
+      "critique": "Phản biện",
+      "transferDecision": "Ứng dụng và quyết định",
+      "delivery": "Trình bày và phối hợp"
+    }
+  },
+  "deliverables": {
+    "slidesPdf": "Slide thuyết trình (PDF)",
+    "slidesSource": "File slide gốc (PPTX hoặc link)",
+    "roleAllocationSheet": "Phiếu phân vai",
+    "referenceList": "Danh mục tài liệu tham khảo",
+    "aiUsageDisclosure": "Phiếu khai báo sử dụng AI",
+    "caseAnalysisReport": "Báo cáo phân tích tình huống"
+  },
+  "slides": {
+    "cover": "Trang bìa: tên case, tên nhóm, thành viên và vai trò",
+    "centralProblem": "Vấn đề trung tâm của tình huống",
+    "companyContext": "Bối cảnh doanh nghiệp và thị trường",
+    "chapterLink": "Vì sao case này thuộc về chương đang học",
+    "businessModel": "Mô hình kinh doanh: tạo ra – cung cấp – thu nhận giá trị",
+    "operatingMechanism": "Cơ chế vận hành cốt lõi",
+    "competitiveAdvantage": "Nguồn gốc lợi thế cạnh tranh",
+    "keyIndicators": "Các chỉ số chính và cách diễn giải",
+    "calculation": "Một phép tính trình bày từng bước",
+    "numbersLimits": "Điều mà các con số không nói lên",
+    "risks": "Rủi ro và mặt trái của mô hình",
+    "weakestAssumption": "Giả định dễ sai nhất",
+    "transferConditions": "Điều kiện áp dụng tại Việt Nam",
+    "appliesOrNot": "Cái gì dùng được, cái gì không",
+    "threeLessons": "Ba bài học rút ra",
+    "managementDecision": "Quyết định quản trị của nhóm"
+  },
+  "errors": {
+    "unauthenticated": "Vui lòng đăng nhập để tiếp tục.",
+    "forbidden": "Bạn không có quyền thực hiện thao tác này.",
+    "notFound": "Không tìm thấy nội dung bạn cần.",
+    "groupFull": "Nhóm này đã đủ thành viên.",
+    "groupTooSmall": "Nhóm có ít thành viên hơn quy định của học phần.",
+    "alreadyInGroup": "Bạn đã tham gia một nhóm cho case này.",
+    "unexpected": "Đã có lỗi xảy ra. Vui lòng thử lại."
+  }
+}

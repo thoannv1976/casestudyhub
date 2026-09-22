@@ -1,0 +1,12 @@
+**/node_modules
+**/.next
+**/dist
+**/coverage
+.git
+.github
+docs
+firebase/.firebaserc
+**/*.test.ts
+.env
+.env.*
+!.env.example

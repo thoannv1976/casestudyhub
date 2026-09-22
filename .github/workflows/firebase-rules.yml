@@ -1,0 +1,43 @@
+name: Deploy Firebase rules and indexes
+
+# Security rules are deployed on their own so a rules change never waits on an
+# application build, and so the diff is easy to review in isolation.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'firebase/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy-rules:
+    name: firestore + storage rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Deploy rules and indexes
+        working-directory: firebase
+        run: |
+          npx --yes firebase-tools@latest deploy \
+            --only firestore:rules,firestore:indexes,storage \
+            --project "${{ secrets.GCP_PROJECT_ID }}" \
+            --non-interactive

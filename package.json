@@ -1,0 +1,31 @@
+{
+  "name": "casestudyhub",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CaseStudy Hub - AI-Powered Case Study Presentation & Assessment Platform",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @casestudyhub/web",
+    "build": "npm run build --workspace @casestudyhub/web",
+    "start": "npm run start --workspace @casestudyhub/web",
+    "lint": "npm run lint --workspace @casestudyhub/web",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
+    "emulators": "cd firebase && firebase emulators:start --project demo-casestudyhub"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "prettier": "^3.4.2",
+    "typescript": "5.9.3",
+    "vitest": "^5.0.1"
+  }
+}

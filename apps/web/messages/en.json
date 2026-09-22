@@ -1,0 +1,152 @@
+{
+  "app": {
+    "name": "CaseStudy Hub",
+    "fullName": "AI-Powered Case Study Presentation & Assessment Platform",
+    "tagline": "Run the whole case study cycle in one place: assign, analyse, present, question, assess."
+  },
+  "common": {
+    "language": "Language",
+    "theme": "Theme",
+    "themeLight": "Light",
+    "themeDark": "Dark",
+    "themeSystem": "System",
+    "signIn": "Sign in",
+    "register": "Register",
+    "learnMore": "Learn more",
+    "comingSoon": "Coming soon",
+    "inProgress": "In progress",
+    "done": "Done",
+    "minutes": "minutes",
+    "points": "points",
+    "students": "students",
+    "slides": "slides"
+  },
+  "nav": {
+    "home": "Home",
+    "myClasses": "My classes",
+    "myGroup": "My group",
+    "caseLibrary": "Case study library",
+    "myResults": "My results",
+    "admin": "Administration"
+  },
+  "landing": {
+    "heroTitle": "Case study teaching, from assignment to assessment",
+    "heroSubtitle": "A bilingual platform for universities: class and group management, a case study library, live presentations with class questions, peer review, AI-assisted evaluation and lecturer-approved grading.",
+    "heroNote": "Phase 1 is under construction. This page is the first deployable slice.",
+    "pillarsTitle": "Three core values",
+    "pillar1Title": "Case study management",
+    "pillar1Body": "Cases, guides, groups, schedules, submissions and results of many courses, classes and semesters in one system.",
+    "pillar2Title": "Interactive classroom",
+    "pillar2Body": "The class asks, challenges, votes and reviews from their phones while a group presents.",
+    "pillar3Title": "Evidence-based assessment",
+    "pillar3Body": "AI analysis, peer review and the lecturer's decision, each kept as evidence of how a student developed.",
+    "frameworkTitle": "The presentation framework the platform ships with",
+    "frameworkSubtitle": "E-Commerce 2026 — Standard Case Study Presentation Framework. Every value below is configuration, not code, so another course can change it.",
+    "rolesTitle": "Six presentation roles",
+    "rolesSubtitle": "Context → Mechanism → Numbers → Critique → Transfer → Decision. Every member owns one link of the chain and answers questions on it.",
+    "rubricTitle": "100-point rubric",
+    "rubricSubtitle": "AI may draft the first five criteria against the case, the guide and the submission. Delivery and coordination stays with the lecturer.",
+    "rubricAiColumn": "AI may draft",
+    "rubricLecturerOnly": "Lecturer only",
+    "roadmapTitle": "Build roadmap",
+    "phase1": "Phase 1 — Core platform",
+    "phase1Body": "Accounts, roles, classes, groups, role allocation, case library, assignments and submissions.",
+    "phase2": "Phase 2 — Interactive presentation",
+    "phase2Body": "Live presentation room, timer, question wall, Q&A by role and peer assessment.",
+    "phase3": "Phase 3 — AI assessment",
+    "phase3Body": "Document processing, rubric evaluation with citations, question generator and the grading engine.",
+    "phase4": "Phase 4 — Analytics & integration",
+    "phase4Body": "CLO analytics, learning portfolio, contribution tracker and LMS integration.",
+    "statusHealthy": "Service healthy"
+  },
+  "policy": {
+    "ecom2026Standard": "E-Commerce 2026 — Standard Case Study Presentation Framework",
+    "groupSize": "Team size",
+    "presentationTime": "Presentation time",
+    "qaTime": "Q&A",
+    "slideCount": "Content slides",
+    "deadline": "Submission deadline",
+    "deadlineValue": "{hours} hours before the session",
+    "marking": "Marking",
+    "markingValue": "{team}% team + {individual}% individual",
+    "range": "{min}–{max}"
+  },
+  "roles": {
+    "contextSetter": {
+      "title": "Context setter",
+      "presents": "Company context, the central problem, why this case belongs to the chapter.",
+      "mustAnswer": "If this case were removed from the chapter, what would the class lose?"
+    },
+    "modelAnalyst": {
+      "title": "Model analyst",
+      "presents": "The business model: creating, delivering and capturing value.",
+      "mustAnswer": "Where does this business actually make its money?"
+    },
+    "dataAnalyst": {
+      "title": "Data analyst",
+      "presents": "Figures, KPIs, unit economics, with at least one calculation shown.",
+      "mustAnswer": "Which number proves what you just said?"
+    },
+    "critic": {
+      "title": "Critic",
+      "presents": "Risks, weak assumptions and the conditions under which the model fails.",
+      "mustAnswer": "What has to be true for your conclusion to hold?"
+    },
+    "transferLead": {
+      "title": "Transfer lead",
+      "presents": "Conditions for transfer to the Vietnamese context: what applies and what does not.",
+      "mustAnswer": "Which part could a Vietnamese firm actually copy?"
+    },
+    "decisionLead": {
+      "title": "Decision lead & moderator",
+      "presents": "Three lessons, the team's management decision, moderating the Q&A.",
+      "mustAnswer": "As CEO, what does the team decide, and why?"
+    }
+  },
+  "rubric": {
+    "standard100": "Standard case presentation rubric (100 points)",
+    "criteria": {
+      "understanding": "Understanding the case",
+      "analysis": "Quality of analysis",
+      "evidence": "Evidence and figures",
+      "critique": "Critique",
+      "transferDecision": "Transfer and decision",
+      "delivery": "Delivery and coordination"
+    }
+  },
+  "deliverables": {
+    "slidesPdf": "Presentation slides (PDF)",
+    "slidesSource": "Source slides (PPTX or link)",
+    "roleAllocationSheet": "Role allocation sheet",
+    "referenceList": "Reference list",
+    "aiUsageDisclosure": "AI usage disclosure",
+    "caseAnalysisReport": "Case analysis report"
+  },
+  "slides": {
+    "cover": "Cover: case, team, members and roles",
+    "centralProblem": "The central problem of the case",
+    "companyContext": "Company and market context",
+    "chapterLink": "Why this case belongs to the chapter",
+    "businessModel": "Business model: create – deliver – capture value",
+    "operatingMechanism": "The core operating mechanism",
+    "competitiveAdvantage": "Sources of competitive advantage",
+    "keyIndicators": "Key indicators and their interpretation",
+    "calculation": "One calculation presented step by step",
+    "numbersLimits": "What the numbers do not say",
+    "risks": "Risks and downsides of the model",
+    "weakestAssumption": "The assumption most likely to be wrong",
+    "transferConditions": "Conditions for transfer to Vietnam",
+    "appliesOrNot": "What applies and what does not",
+    "threeLessons": "Three lessons drawn",
+    "managementDecision": "The team's management decision"
+  },
+  "errors": {
+    "unauthenticated": "Please sign in to continue.",
+    "forbidden": "You do not have permission to do this.",
+    "notFound": "We could not find what you were looking for.",
+    "groupFull": "This group is already full.",
+    "groupTooSmall": "This group has fewer members than the course policy allows.",
+    "alreadyInGroup": "You already belong to a group for this case.",
+    "unexpected": "Something went wrong. Please try again."
+  }
+}
