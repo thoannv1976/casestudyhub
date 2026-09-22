@@ -4,3 +4,4 @@ dist
 coverage
 docs/source
 package-lock.json
+next-env.d.ts
