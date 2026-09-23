@@ -30,6 +30,7 @@ export const AUDIT_ACTIONS = [
   'class.lecturer_added',
   'ai.assessment_requested',
   'ai.answers_generated',
+  'ai.questions_suggested',
   'session.started',
   'session.status_changed',
   'question.selected',

@@ -24,6 +24,7 @@ export * from './ai/provider';
 export * from './ai/vertex';
 export * from './ai/evaluation';
 export * from './ai/answers';
+export * from './ai/tutor';
 export * from './analytics/reports';
 
 // Next.js-specific entry points are NOT re-exported here: `auth/session` and

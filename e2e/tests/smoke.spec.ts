@@ -1244,6 +1244,68 @@ test('a portfolio is one student\u2019s own, and nobody else\u2019s', async ({ p
   await expect(page.getByText('69', { exact: true })).toHaveCount(0);
 });
 
+test('the tutor is offered to students and the suggester to staff', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  // A student gets a tutor; the lecturer's question suggester is not theirs.
+  // (What the tutor refuses to do is asserted in the unit tests, on the
+  // instruction itself: the form that carries that note only renders once a
+  // model is configured, and nothing is configured in this run.)
+  await expect(page.getByText('Ask about this case')).toBeVisible();
+  await expect(page.getByText('Questions you could ask the group')).toHaveCount(0);
+  const caseId = (new URL(page.url()).pathname.split('/cases/')[1] ?? '').replace(/\/$/, '');
+
+  await signOut(page);
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en/cases/${caseId}`);
+
+  // A lecturer gets question suggestions, and no tutor.
+  await expect(page.getByText('Questions you could ask the group')).toBeVisible();
+  await expect(page.getByText('Ask about this case')).toHaveCount(0);
+});
+
+test('with no model configured the tutor says so rather than failing', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+  const caseId = (new URL(page.url()).pathname.split('/cases/')[1] ?? '').replace(/\/$/, '');
+
+  await expect(page.getByText('the tutor is not available')).toBeVisible();
+  await expect(page.locator('#message')).toHaveCount(0);
+
+  const response = await page.request.post(`/api/cases/${caseId}/tutor`, {
+    data: { mode: 'explain', message: 'Why is the marketplace more profitable?' },
+  });
+  expect(response.status()).toBe(422);
+  expect((await response.json()).error.messageKey).toBe('errors.aiNotConfigured');
+});
+
+test('a student cannot ask for the lecturer\u2019s question suggestions', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/cases');
+  const href = await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .getAttribute('href');
+  const caseId = (href ?? '').split('/cases/')[1] ?? '';
+
+  const response = await page.request.post(`/api/cases/${caseId}/suggested-questions`);
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

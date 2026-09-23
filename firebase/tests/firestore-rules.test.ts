@@ -775,3 +775,37 @@ describe('AI suggestions', () => {
     await assertFails(updateDoc(doc(lecturer(), 'aiAssessments', 'A1'), { suggestedTotal: 90 }));
   });
 });
+
+describe('tutor conversations', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'aiTutorSessions', `CS1__${OTHER_STUDENT_UID}`), {
+        id: `CS1__${OTHER_STUDENT_UID}`,
+        caseStudyId: 'CS1',
+        studentUid: OTHER_STUDENT_UID,
+        turns: [{ role: 'student', text: 'I do not understand the revenue split.', at: 'x' }],
+        updatedAt: '2026-10-01T02:00:00.000Z',
+      });
+    });
+  });
+
+  it('keeps one student from reading what another asked the tutor', async () => {
+    // What a student admits they do not understand is theirs alone.
+    await assertFails(getDoc(doc(student(), 'aiTutorSessions', `CS1__${OTHER_STUDENT_UID}`)));
+    await assertFails(getDocs(collection(student(), 'aiTutorSessions')));
+    await assertFails(getDoc(doc(lecturer(), 'aiTutorSessions', `CS1__${OTHER_STUDENT_UID}`)));
+  });
+
+  it('is written only by the server, which knows whose it is', async () => {
+    await assertFails(
+      setDoc(doc(student(), 'aiTutorSessions', `CS1__${STUDENT_UID}`), {
+        caseStudyId: 'CS1',
+        studentUid: STUDENT_UID,
+        turns: [],
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(student(), 'aiTutorSessions', `CS1__${OTHER_STUDENT_UID}`), { turns: [] }),
+    );
+  });
+});

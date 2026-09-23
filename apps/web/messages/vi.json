@@ -275,7 +275,10 @@
     "notALecturerAccount": "Tài khoản đó không phải tài khoản giảng viên.",
     "aiNotConfigured": "Bản triển khai này chưa cấu hình mô hình AI.",
     "aiResponseUnusable": "Mô hình không trả về kết quả dùng được. Vui lòng thử lại.",
-    "nothingToEvaluate": "Không có tài liệu nào mô hình đọc được để làm việc."
+    "nothingToEvaluate": "Không có tài liệu nào mô hình đọc được để làm việc.",
+    "tutorModeInvalid": "Vui lòng chọn cách bạn muốn được hỗ trợ.",
+    "tutorMessageTooShort": "Hãy nói rõ hơn một chút để trợ giảng giúp được bạn.",
+    "tutorMessageTooLong": "Nội dung quá dài. Vui lòng rút gọn."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -749,5 +752,44 @@
       "answered": "{count, plural, other {# câu đã trả lời trực tiếp}}",
       "scored": "{count, plural, other {# nhóm đã chấm}}"
     }
+  },
+  "tutor": {
+    "title": "Hỏi về case này",
+    "purpose": "Một trợ giảng cho case study này. Có thể giải thích, hỏi ngược lại bạn, phản biện lập luận của bạn hoặc ra bài luyện tập — tùy bạn chọn.",
+    "notConfigured": "Bản triển khai này chưa cấu hình mô hình AI nên chưa dùng được trợ giảng.",
+    "mode": "Bạn muốn được hỗ trợ thế nào?",
+    "message": "Bạn muốn hỏi gì?",
+    "send": "Hỏi",
+    "thinking": "Đang suy nghĩ…",
+    "startOver": "Bắt đầu lại",
+    "you": "Bạn",
+    "tutorLabel": "Trợ giảng",
+    "willNotWrite": "Trợ giảng sẽ không viết slide hay báo cáo thay bạn. Đó chính là phần được đánh giá, và bạn phải bảo vệ được nó trên lớp.",
+    "modes": {
+      "explain": {
+        "name": "Giải thích giúp tôi",
+        "hint": "Giải thích một khái niệm bằng ngôn ngữ dễ hiểu, lấy chính công ty này làm ví dụ."
+      },
+      "socratic": {
+        "name": "Hỏi ngược lại tôi",
+        "hint": "Không trả lời thẳng mà đặt câu hỏi cho bạn, rồi chỉ ra phần nên đọc lại."
+      },
+      "challenge": {
+        "name": "Phản biện lập luận của tôi",
+        "hint": "Đưa lập luận của bạn vào, trợ giảng chỉ ra phản bác mạnh nhất và giả định bạn chưa nói ra."
+      },
+      "practice": {
+        "name": "Ra bài luyện tập",
+        "hint": "Vài câu hỏi ngắn kiểu giảng viên hay hỏi, kèm ý chính cần trả lời."
+      }
+    }
+  },
+  "suggestions": {
+    "title": "Câu hỏi bạn có thể hỏi nhóm",
+    "hint": "Chỉ là gợi ý. Không có câu nào được ghi vào tường câu hỏi — tường đó là của lớp.",
+    "suggest": "Gợi ý câu hỏi",
+    "again": "Gợi ý thêm",
+    "thinking": "Đang suy nghĩ…",
+    "notConfigured": "Bản triển khai này chưa cấu hình mô hình AI."
   }
 }

@@ -9,6 +9,7 @@ export * from './domain/peer-review';
 export * from './domain/assessment';
 export * from './domain/ai';
 export * from './analytics/analytics';
+export * from './domain/tutor';
 export * from './policy/presentation-policy';
 export * from './policy/role-allocation';
 export * from './policy/grading';

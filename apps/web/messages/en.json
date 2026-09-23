@@ -275,7 +275,10 @@
     "notALecturerAccount": "That account is not a lecturer account.",
     "aiNotConfigured": "No AI model is configured for this deployment.",
     "aiResponseUnusable": "The model did not return an answer we could use. Please try again.",
-    "nothingToEvaluate": "There is no readable material for the model to work from."
+    "nothingToEvaluate": "There is no readable material for the model to work from.",
+    "tutorModeInvalid": "Please choose how you would like the tutor to help.",
+    "tutorMessageTooShort": "Say a little more so the tutor can help.",
+    "tutorMessageTooLong": "That message is too long. Please shorten it."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -749,5 +752,44 @@
       "answered": "{count, plural, one {# answered aloud} other {# answered aloud}}",
       "scored": "{count, plural, one {# group scored} other {# groups scored}}"
     }
+  },
+  "tutor": {
+    "title": "Ask about this case",
+    "purpose": "A tutor for this case study. It will explain, question you back, challenge an argument or set practice — in whichever way you ask.",
+    "notConfigured": "No AI model is configured for this deployment, so the tutor is not available.",
+    "mode": "How should it help?",
+    "message": "What would you like to ask?",
+    "send": "Ask",
+    "thinking": "Thinking…",
+    "startOver": "Start over",
+    "you": "You",
+    "tutorLabel": "Tutor",
+    "willNotWrite": "The tutor will not write your slides or your report. That is the work being assessed, and you have to be able to defend it in the room.",
+    "modes": {
+      "explain": {
+        "name": "Explain it",
+        "hint": "A plain explanation of an idea, with this company as the example."
+      },
+      "socratic": {
+        "name": "Question me",
+        "hint": "It asks you questions instead of answering, and points you at the part to re-read."
+      },
+      "challenge": {
+        "name": "Challenge my argument",
+        "hint": "Put your argument to it and it names the strongest objection and the assumption you left unsaid."
+      },
+      "practice": {
+        "name": "Set me practice",
+        "hint": "Short Q&A questions of the kind a lecturer would ask, with the marking points."
+      }
+    }
+  },
+  "suggestions": {
+    "title": "Questions you could ask the group",
+    "hint": "Suggestions only. Nothing here is written to the question wall — that belongs to the class.",
+    "suggest": "Suggest questions",
+    "again": "Suggest some more",
+    "thinking": "Thinking…",
+    "notConfigured": "No AI model is configured for this deployment."
   }
 }

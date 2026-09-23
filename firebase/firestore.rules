@@ -204,6 +204,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // A tutor conversation is one student's, and it is served to them by the
+    // route handler that can check whose it is. A rule cannot express "your
+    // own conversation about a case on your course", so it expresses nothing.
+    match /aiTutorSessions/{tutorSessionId} {
+      allow read, write: if false;
+    }
+
     // Rate limit counters are server bookkeeping. A client that could read
     // them would know how many attempts it has left; one that could write
     // them would simply reset the limit.

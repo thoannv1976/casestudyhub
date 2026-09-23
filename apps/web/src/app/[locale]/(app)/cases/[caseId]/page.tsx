@@ -1,11 +1,19 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { aiIsAvailable, assertCanReadCase, getCase, listCaseQuestions } from '@casestudyhub/core';
+import {
+  aiIsAvailable,
+  assertCanReadCase,
+  getCase,
+  getTutorSession,
+  listCaseQuestions,
+} from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
 import { AnswerBank } from './answer-bank';
+import { SuggestedQuestions } from './suggested-questions';
+import { Tutor } from './tutor';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +47,8 @@ export default async function CaseKnowledgePage({
   const user = await requireSessionUser();
   const t = await getTranslations('caseBank');
   const tQuestions = await getTranslations('questions');
+  const tTutor = await getTranslations('tutor');
+  const tSuggestions = await getTranslations('suggestions');
   const tError = await getTranslations('errors');
 
   const caseStudy = await getCase(caseId);
@@ -54,6 +64,10 @@ export default async function CaseKnowledgePage({
   // A later cohort reads the bank anonymised; the lecturer of the class that
   // asked still sees who asked, because it counts toward the individual mark.
   const questions = await listCaseQuestions(caseId, { forOtherCohort: !isStaff });
+
+  const aiAvailable = aiIsAvailable();
+  // A tutor conversation belongs to one student, and is loaded for them only.
+  const tutorSession = isStaff ? null : await getTutorSession(caseId, user.uid);
 
   const answered = questions.filter((question) => question.answerText);
   const byRoom = answered.filter((question) => !question.answeredByAi);
@@ -79,10 +93,27 @@ export default async function CaseKnowledgePage({
 
         {isStaff ? (
           <div className="mt-4">
-            <AnswerBank caseId={caseId} available={aiIsAvailable()} pending={unanswered} />
+            <AnswerBank caseId={caseId} available={aiAvailable} pending={unanswered} />
           </div>
         ) : null}
       </Card>
+
+      {isStaff ? (
+        <Card>
+          <CardTitle>{tSuggestions('title')}</CardTitle>
+          <div className="mt-4">
+            <SuggestedQuestions caseId={caseId} available={aiAvailable} />
+          </div>
+        </Card>
+      ) : (
+        <Card>
+          <CardTitle>{tTutor('title')}</CardTitle>
+          <p className="text-muted mt-2 text-sm">{tTutor('purpose')}</p>
+          <div className="mt-4">
+            <Tutor caseId={caseId} available={aiAvailable} initial={tutorSession} />
+          </div>
+        </Card>
+      )}
 
       <ul className="space-y-3">
         {questions.length === 0 ? (
