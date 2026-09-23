@@ -37,6 +37,7 @@ export default async function AppLayout({
   const items: NavItem[] = [{ href: '/dashboard', labelKey: 'dashboard' }];
   if (user.role === 'student') {
     items.push({ href: '/classes', labelKey: 'myClasses' });
+    items.push({ href: '/portfolio', labelKey: 'portfolio' });
   }
   if (user.role === 'lecturer' || user.role === 'admin') {
     items.push({ href: '/teaching', labelKey: 'teaching' });

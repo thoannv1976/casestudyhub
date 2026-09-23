@@ -32,7 +32,8 @@
     "dashboard": "Trang làm việc",
     "profile": "Hồ sơ",
     "signOut": "Đăng xuất",
-    "teaching": "Lớp giảng dạy"
+    "teaching": "Lớp giảng dạy",
+    "portfolio": "Hồ sơ của tôi"
   },
   "landing": {
     "heroTitle": "Dạy học bằng Case Study, từ lúc giao bài đến khi công bố điểm",
@@ -560,7 +561,8 @@
     },
     "openPeerReview": "Mở chấm điểm",
     "closePeerReview": "Đóng chấm điểm",
-    "mark": "Chấm điểm"
+    "mark": "Chấm điểm",
+    "classReport": "Báo cáo lớp"
   },
   "questions": {
     "title": "Tường câu hỏi",
@@ -698,5 +700,54 @@
     "answering": "Đang trả lời…",
     "answeredNotice": "Đã trả lời {answered} câu. Trong đó {ungrounded} câu cho biết tài liệu case không chứa câu trả lời.",
     "aiNotConfigured": "Chưa cấu hình mô hình AI nên các câu còn bỏ ngỏ vẫn giữ nguyên."
+  },
+  "report": {
+    "title": "Báo cáo lớp",
+    "download": "Tải về dạng bảng tính",
+    "gradesTitle": "Phân phối điểm",
+    "publishedOnly": "Chỉ tính điểm đã công bố. Bản nháp là ghi chép của giảng viên, chưa phải kết quả.",
+    "unpublishedWarning": "Một số bài đã chấm nhưng chưa công bố nên không được tính bên dưới.",
+    "noGrades": "Lớp này chưa công bố điểm nào.",
+    "gradesSummary": "{count, plural, other {# sinh viên}} · trung bình {mean} · trung vị {median} · từ {lowest} đến {highest}",
+    "bands": {
+      "excellent": "từ 85 trở lên",
+      "good": "70 đến 84",
+      "fair": "55 đến 69",
+      "weak": "dưới 55"
+    },
+    "criteriaTitle": "Lớp mạnh ở đâu",
+    "criteriaHint": "Hiển thị theo tỷ lệ trên thang điểm riêng của từng tiêu chí, để tiêu chí 25 điểm và tiêu chí 10 điểm so sánh được với nhau.",
+    "cloTitle": "Mức đạt chuẩn đầu ra",
+    "cloCaveat": "Bảng ánh xạ từ tiêu chí rubric sang chuẩn đầu ra là bảng minh họa đi kèm khung đánh giá. Hãy đối chiếu với đề cương học phần trước khi dùng các số liệu này để báo cáo chính thức.",
+    "cloThreshold": "Tính là đạt khi đạt {threshold} số điểm dành cho chuẩn đầu ra đó.",
+    "cloMet": "{share} số bài đã chấm đạt",
+    "noData": "chưa chấm",
+    "participationTitle": "Ai đã tham gia",
+    "asked": "{count}/{total} sinh viên đã đặt câu hỏi",
+    "answered": "{count}/{total} sinh viên đã trả lời trực tiếp",
+    "scored": "{count}/{total} sinh viên đã chấm nhóm thuyết trình",
+    "silent": "{count, plural, other {# sinh viên chưa tham gia gì}}",
+    "silentHint": "Đây là những bạn nên trao đổi thêm."
+  },
+  "portfolio": {
+    "title": "Hồ sơ của tôi",
+    "subtitle": "Những gì bạn đã làm ở tất cả các lớp: vai trò đã đảm nhận, câu hỏi đã đặt và đã trả lời, cùng những điểm đã được công bố.",
+    "contributionTitle": "Đóng góp của bạn",
+    "counts": {
+      "classes": "lớp",
+      "asked": "câu hỏi đã đặt",
+      "answered": "câu đã trả lời trực tiếp",
+      "scored": "nhóm bạn đã chấm"
+    },
+    "rolesHeld": "Vai trò bạn đã đảm nhận:",
+    "nothingYet": "Chưa ghi nhận hoạt động nào. Cách bắt đầu nhanh nhất là đặt một câu hỏi trong buổi thuyết trình.",
+    "noClasses": "Bạn chưa tham gia lớp nào.",
+    "notPublished": "Chưa công bố",
+    "breakdown": "điểm nhóm {group} · điểm cá nhân {individual}",
+    "inClass": {
+      "asked": "{count, plural, other {# câu hỏi đã đặt}}",
+      "answered": "{count, plural, other {# câu đã trả lời trực tiếp}}",
+      "scored": "{count, plural, other {# nhóm đã chấm}}"
+    }
   }
 }

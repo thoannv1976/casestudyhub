@@ -32,7 +32,8 @@
     "dashboard": "Dashboard",
     "profile": "Profile",
     "signOut": "Sign out",
-    "teaching": "Teaching"
+    "teaching": "Teaching",
+    "portfolio": "My portfolio"
   },
   "landing": {
     "heroTitle": "Case study teaching, from assignment to assessment",
@@ -560,7 +561,8 @@
     },
     "openPeerReview": "Open scoring",
     "closePeerReview": "Close scoring",
-    "mark": "Mark"
+    "mark": "Mark",
+    "classReport": "Class report"
   },
   "questions": {
     "title": "Question wall",
@@ -698,5 +700,54 @@
     "answering": "Answering…",
     "answeredNotice": "{answered} answered. {ungrounded} of them said the case material does not contain the answer.",
     "aiNotConfigured": "No AI model is configured, so the open questions stay as they are."
+  },
+  "report": {
+    "title": "Class report",
+    "download": "Download as a spreadsheet",
+    "gradesTitle": "Grade distribution",
+    "publishedOnly": "Published grades only. A draft is the lecturer’s working note, not a result.",
+    "unpublishedWarning": "Some work has been marked but not published, so it is not counted below.",
+    "noGrades": "No grades have been published in this class yet.",
+    "gradesSummary": "{count, plural, one {# student} other {# students}} · mean {mean} · median {median} · from {lowest} to {highest}",
+    "bands": {
+      "excellent": "85 and above",
+      "good": "70 to 84",
+      "fair": "55 to 69",
+      "weak": "below 55"
+    },
+    "criteriaTitle": "Where the cohort is strong",
+    "criteriaHint": "Shown as a share of each criterion’s own maximum, so a criterion worth 25 and one worth 10 can be compared.",
+    "cloTitle": "Learning outcome attainment",
+    "cloCaveat": "The mapping from rubric criteria to learning outcomes is the illustrative one that ships with the framework. Confirm it against the syllabus before using these figures for formal reporting.",
+    "cloThreshold": "Counted as met at {threshold} of the points available for that outcome.",
+    "cloMet": "{share} of marked work met it",
+    "noData": "nothing marked",
+    "participationTitle": "Who took part",
+    "asked": "{count} of {total} asked a question",
+    "answered": "{count} of {total} answered one aloud",
+    "scored": "{count} of {total} scored a presenting group",
+    "silent": "{count, plural, one {# student took no part} other {# students took no part}}",
+    "silentHint": "These are the students to talk to."
+  },
+  "portfolio": {
+    "title": "My portfolio",
+    "subtitle": "What you have done across every class: the roles you carried, the questions you asked and answered, and the marks that have been published.",
+    "contributionTitle": "Your contribution",
+    "counts": {
+      "classes": "classes",
+      "asked": "questions asked",
+      "answered": "answered aloud",
+      "scored": "groups you scored"
+    },
+    "rolesHeld": "Roles you have carried:",
+    "nothingYet": "Nothing recorded yet. Asking a question during a presentation is the quickest way to start.",
+    "noClasses": "You are not in any class yet.",
+    "notPublished": "Not published yet",
+    "breakdown": "group {group} · individual {individual}",
+    "inClass": {
+      "asked": "{count, plural, one {# question asked} other {# questions asked}}",
+      "answered": "{count, plural, one {# answered aloud} other {# answered aloud}}",
+      "scored": "{count, plural, one {# group scored} other {# groups scored}}"
+    }
   }
 }

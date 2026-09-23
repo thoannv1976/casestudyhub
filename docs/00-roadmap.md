@@ -66,5 +66,22 @@ lên trình bày đến lúc sinh viên nhìn thấy điểm đã công bố.
 
 ## Phase 4 — Analytics & Integration
 
-CLO Analytics, Class Analytics, Student Learning Portfolio, Contribution Tracker,
-AI Feedback Comparison, báo cáo quản lý, tích hợp Moodle/LTI.
+| PR  | Milestone                   | Nội dung                                                                                                                                                                                                           | Trạng thái |
+| --- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
+| 16  | Báo cáo lớp và chuẩn đầu ra | Phân phối điểm (chỉ tính điểm đã công bố), lớp mạnh/yếu ở tiêu chí nào theo tỷ lệ, mức đạt chuẩn đầu ra có ngưỡng do khoa đặt, ai đã tham gia và **ai chưa tham gia gì**; tải về CSV mở được bằng Excel tiếng Việt | ✅         |
+| 17  | Hồ sơ học tập sinh viên     | Một trang cho sinh viên xem toàn bộ quá trình: vai trò đã đảm nhận, câu hỏi đã đặt, câu đã trả lời trực tiếp, nhóm đã chấm, và điểm — chỉ hiện khi đã công bố                                                      | ✅         |
+| 18  | Tích hợp Moodle/LTI         | Cần thông tin kết nối LTI của trường (client id, khóa, endpoint). Chưa làm — xuất CSV ở PR 16 đã phục vụ được việc nộp điểm lên hệ thống của trường trong lúc chờ                                                  | ⏸️         |
+
+**Ghi chú thiết kế Phase 4**
+
+- Mọi con số ở đây là **đọc lại** các quyết định đã có. Không có chỗ nào tính
+  hay sửa điểm, và báo cáo chỉ đếm điểm **đã công bố**: bản nháp là ghi chép
+  của giảng viên, đếm vào báo cáo thì con số sẽ đổi dưới chân người đọc.
+- So sánh tiêu chí theo **tỷ lệ** chứ không theo điểm thô: tiêu chí 25 điểm và
+  tiêu chí 10 điểm không so được với nhau bằng điểm thô.
+- Chuẩn đầu ra tính có trọng số theo điểm của từng tiêu chí, và mỗi báo cáo đều
+  nói rõ bảng ánh xạ là bảng minh họa cho tới khi khoa xác nhận với đề cương.
+- Phần "ai chưa tham gia gì" liệt kê **tên**: một tỷ lệ nói với giảng viên rằng
+  lớp im lặng, một danh sách nói cho họ biết nên hỏi ai.
+- CSV vô hiệu hóa ô bắt đầu bằng `=`, `+`, `-`, `@` — tên sinh viên và ghi chú
+  tự do đều nằm trong file này, và bảng tính sẽ chạy chúng như công thức.

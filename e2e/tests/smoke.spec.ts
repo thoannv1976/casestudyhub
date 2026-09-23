@@ -1139,6 +1139,111 @@ test('only staff can ask the model to answer a bank', async ({ page }) => {
   expect(response.status()).toBe(403);
 });
 
+/**
+ * Reporting and the student's own record (SRS Module 14). Everything here is a
+ * reading of decisions already made; nothing on these pages changes a mark.
+ */
+
+test('the class report reads back what was marked and published', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.getByRole('link', { name: 'Class report' }).click();
+  await page.waitForURL(/\/report$/);
+
+  // The group of four was published earlier in this run at 83, 83, 83 and 69.
+  await expect(page.getByText('4 students · mean 79.5')).toBeVisible();
+  await expect(page.getByText('Published grades only')).toBeVisible();
+
+  // The cohort was marked 12 of 15 on evidence, its weakest criterion.
+  await expect(page.getByText('Where the cohort is strong')).toBeVisible();
+  await expect(page.getByText('Learning outcome attainment')).toBeVisible();
+  // The caveat is part of the report, not a footnote to it.
+  await expect(page.getByText('Confirm it against the syllabus')).toBeVisible();
+});
+
+test('the report names who took no part', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  await page.getByRole('link', { name: 'Class report' }).click();
+  await page.waitForURL(/\/report$/);
+
+  await expect(page.getByText('Who took part')).toBeVisible();
+  // Five students in the class; only the one in the audience asked anything.
+  await expect(page.getByText('1 of 5 asked a question')).toBeVisible();
+  await expect(page.getByText('took no part')).toBeVisible();
+});
+
+test('the report downloads as a spreadsheet, with formulas defused', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  const classId = page.url().split('/teaching/')[1]?.split(/[?#]/)[0] ?? '';
+
+  const response = await page.request.get(`/api/classes/${classId}/report`);
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('text/csv');
+  expect(response.headers()['content-disposition']).toContain('attachment');
+
+  const csv = await response.text();
+  // The byte order mark is what makes Excel read Vietnamese correctly.
+  expect(csv.charCodeAt(0)).toBe(0xfeff);
+  expect(csv).toContain('CaseStudy Hub');
+  expect(csv).toContain('CLO1');
+});
+
+test('a student cannot read their class\u2019s report', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  const classId = page.url().split('/teaching/')[1]?.split(/[?#]/)[0] ?? '';
+  await signOut(page);
+
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en/teaching/${classId}/report`);
+  await expect(page.getByTestId('alert-error')).toContainText('do not have permission');
+
+  const response = await page.request.get(`/api/classes/${classId}/report`);
+  expect(response.status()).toBe(403);
+});
+
+test('a student\u2019s portfolio shows their published mark and their contribution', async ({
+  page,
+}) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/portfolio');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'My portfolio' })).toBeVisible();
+  await expect(page.getByText(`E-Commerce ${RUN}`)).toBeVisible();
+  // This student presented, so they carried a role, and their mark is 69.
+  await expect(page.getByText('Context setter').first()).toBeVisible();
+  await expect(page.getByText('69', { exact: true })).toBeVisible();
+});
+
+test('a student who was quiet sees that, rather than an empty page', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/portfolio');
+
+  // They asked one question and scored one group, but were never marked.
+  await expect(page.getByText('questions asked')).toBeVisible();
+  await expect(page.getByText('Not published yet')).toBeVisible();
+});
+
+test('a portfolio is one student\u2019s own, and nobody else\u2019s', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/portfolio');
+
+  // The presenting group's mark belongs to them, not to the audience.
+  await expect(page.getByText(STUDENT.fullName)).toHaveCount(0);
+  await expect(page.getByText('69', { exact: true })).toHaveCount(0);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

@@ -15,6 +15,7 @@ import {
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
+import { Link } from '@/i18n/navigation';
 import { Alert } from '@/components/ui/form';
 import { AssignmentManager } from './assignment-manager';
 import { GroupManager } from './group-manager';
@@ -92,7 +93,15 @@ export default async function ClassDetailPage({
           <h1 className="text-2xl font-semibold tracking-tight">{details.className}</h1>
           <p className="text-muted mt-2 font-mono text-sm">{details.classCode}</p>
         </div>
-        <Badge tone="brand">{t('joinedCount', { joined, expected })}</Badge>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge tone="brand">{t('joinedCount', { joined, expected })}</Badge>
+          <Link
+            href={`/teaching/${classId}/report`}
+            className="text-brand-600 dark:text-brand-300 text-sm font-medium underline"
+          >
+            {tSession('classReport')}
+          </Link>
+        </div>
       </div>
 
       <Card>
