@@ -75,10 +75,11 @@ else
 fi
 
 echo "▶ [5/6] Build image (khoảng 4–6 phút)..."
+# Chạy build ở phạm vi global: nộp build kèm --region trên project này bị
+# PERMISSION_DENIED. Image vẫn được đẩy vào Artifact Registry ở $REGION.
 gcloud builds submit \
   --config cloudbuild.yaml \
   --substitutions="_IMAGE=${IMAGE}${FB_SUBS:+,$FB_SUBS}" \
-  --region="$REGION" \
   --quiet
 
 echo "▶ [6/6] Deploy lên Cloud Run..."
