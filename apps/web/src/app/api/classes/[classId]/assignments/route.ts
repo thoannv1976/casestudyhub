@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import {
   AppError,
   assertCanManageClass,
+  assertCanViewClass,
   createAssignment,
   extendDeadline,
   listAssignments,
@@ -17,8 +18,10 @@ export async function GET(
   context: { params: Promise<{ classId: string }> },
 ) {
   try {
-    await requireSessionUser();
+    const caller = await requireSessionUser();
     const { classId } = await context.params;
+    await assertCanViewClass(caller, classId);
+
     return NextResponse.json({ assignments: await listAssignments(classId) });
   } catch (error) {
     return respondWithError(error);

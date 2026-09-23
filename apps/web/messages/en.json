@@ -19,7 +19,8 @@
     "minutes": "minutes",
     "points": "points",
     "students": "students",
-    "slides": "slides"
+    "slides": "slides",
+    "skipToContent": "Skip to content"
   },
   "nav": {
     "home": "Home",
@@ -241,7 +242,8 @@
     "deliverableNotFound": "That deliverable is not part of this course framework.",
     "submissionNotFound": "That submission no longer exists.",
     "onlyGroupMembersSubmit": "Only members of the group can hand in work.",
-    "presentationInPast": "Choose a presentation date in the future."
+    "presentationInPast": "Choose a presentation date in the future.",
+    "caseNotYourCourse": "This case study belongs to a course you are not taking."
   },
   "auth": {
     "signInTitle": "Sign in",

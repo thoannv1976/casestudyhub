@@ -72,7 +72,9 @@ export default async function AppLayout({
         <aside className="hidden w-52 shrink-0 md:block">
           <AppNav items={items} variant="sidebar" />
         </aside>
-        <main className="min-w-0 flex-1 pb-20 md:pb-0">{children}</main>
+        <main id="main-content" className="min-w-0 flex-1 pb-20 md:pb-0">
+          {children}
+        </main>
       </div>
 
       <div className="sticky bottom-0 md:hidden">

@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createGroupsSchema } from '@casestudyhub/shared';
 import {
   assertCanManageClass,
+  assertCanViewClass,
   createGroups,
   distributeRandomly,
   listGroups,
@@ -20,8 +21,12 @@ export async function GET(
   context: { params: Promise<{ classId: string }> },
 ) {
   try {
-    await requireSessionUser();
+    const caller = await requireSessionUser();
     const { classId } = await context.params;
+    // Belonging to the class, not merely being signed in: another cohort's
+    // group lists carry their members' names.
+    await assertCanViewClass(caller, classId);
+
     const [groups, members] = await Promise.all([listGroups(classId), listMembers(classId)]);
     return NextResponse.json({ groups, members });
   } catch (error) {

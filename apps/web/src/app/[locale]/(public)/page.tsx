@@ -113,7 +113,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </div>
       </header>
 
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <div className="bg-[var(--surface-muted)]">
           <div className="mx-auto w-full max-w-6xl px-4 py-16 sm:px-6">
             <Badge tone="brand">{tApp('fullName')}</Badge>

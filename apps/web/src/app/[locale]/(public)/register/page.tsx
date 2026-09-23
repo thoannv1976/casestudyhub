@@ -26,7 +26,7 @@ export default async function RegisterPage({ params }: { params: Promise<{ local
   const t = await getTranslations('auth');
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
+    <main id="main-content" className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
       <h1 className="text-2xl font-semibold tracking-tight">{t('registerTitle')}</h1>
       <p className="text-muted mt-2 text-sm">{t('registerSubtitle')}</p>
 
@@ -40,6 +40,6 @@ export default async function RegisterPage({ params }: { params: Promise<{ local
           {t('goSignIn')}
         </Link>
       </p>
-    </div>
+    </main>
   );
 }

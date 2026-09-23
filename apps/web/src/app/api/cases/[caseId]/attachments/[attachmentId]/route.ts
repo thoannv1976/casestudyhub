@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { AppError, getCase, readAttachment, removeAttachment } from '@casestudyhub/core';
+import {
+  AppError,
+  assertCanReadCase,
+  getCase,
+  readAttachment,
+  removeAttachment,
+} from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { respondWithError } from '@/lib/api/respond';
@@ -23,9 +29,7 @@ export async function GET(
 
     const study = await getCase(caseId);
     if (!study) throw new AppError('NOT_FOUND', 'errors.caseNotFound');
-    if (caller.role === 'student' && study.status !== 'published') {
-      throw new AppError('FORBIDDEN', 'errors.caseNotPublished');
-    }
+    await assertCanReadCase(caller, study);
 
     const { attachment, body } = await readAttachment(caseId, attachmentId);
 

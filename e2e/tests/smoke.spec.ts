@@ -501,6 +501,68 @@ test('a student is refused the administration pages', async ({ page }) => {
   await expect(page.getByRole('cell', { name: ADMIN.email })).toHaveCount(0);
 });
 
+test('a student cannot read another class the platform happens to hold', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+
+  // A second class this student never joined.
+  await signOut(page);
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.locator('#classCode').fill(`OTHER-${RUN}`);
+  await page.locator('#className').fill('Another cohort');
+  await page.getByRole('button', { name: 'Create a class' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('Class created');
+
+  await page.getByText(`OTHER-${RUN}`).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  const otherClassId = page.url().split('/teaching/')[1]?.split(/[?#]/)[0] ?? '';
+  expect(otherClassId).not.toHaveLength(0);
+
+  await signOut(page);
+  await signIn(page, STUDENT.email, STUDENT.password);
+
+  // Signed in is not the same as belonging: the group list of a class this
+  // student is not in carries other students' names.
+  // page.request carries this student's session; the bare request fixture
+  // would only prove that an anonymous caller is refused.
+  const groups = await page.request.get(`/api/classes/${otherClassId}/groups`);
+  expect(groups.status()).toBe(403);
+
+  const assignments = await page.request.get(`/api/classes/${otherClassId}/assignments`);
+  expect(assignments.status()).toBe(403);
+
+  await page.goto(`/en/classes/${otherClassId}`);
+  await expect(page.getByTestId('alert-error')).toContainText('not enrolled');
+});
+
+test('a keyboard user can skip the header and reach the content', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  // A fresh navigation, so focus starts at the top of the document rather than
+  // wherever the sign-in form left it.
+  await page.goto('/en/dashboard');
+
+  const skip = page.getByRole('link', { name: 'Skip to content' });
+  await expect(skip).toBeAttached();
+
+  await page.keyboard.press('Tab');
+  await expect(skip).toBeFocused();
+
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#main-content')).toBeVisible();
+});
+
+test('every page declares its language, so a screen reader reads it correctly', async ({
+  page,
+}) => {
+  await page.goto('/en/login');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+  await page.goto('/vi/login');
+  await expect(page.locator('html')).toHaveAttribute('lang', 'vi');
+  // The interface language is what changes; the documents keep their own.
+  await expect(page.getByRole('button', { name: 'Đăng nhập' })).toBeVisible();
+});
+
 test('an anonymous visitor is sent to the sign-in page', async ({ page }) => {
   await page.goto('/en/dashboard');
   await page.waitForURL('**/login');

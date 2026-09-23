@@ -38,6 +38,7 @@ export default async function LocaleLayout({
     notFound();
   }
   setRequestLocale(locale);
+  const t = await getTranslations('common');
 
   return (
     <html lang={locale} suppressHydrationWarning>
@@ -45,7 +46,15 @@ export default async function LocaleLayout({
         <ThemeScript />
       </head>
       <body className="min-h-dvh">
-        <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <NextIntlClientProvider>
+          <a
+            href="#main-content"
+            className="bg-brand-600 sr-only rounded-br-lg px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:absolute focus:top-0 focus:left-0 focus:z-50"
+          >
+            {t('skipToContent')}
+          </a>
+          {children}
+        </NextIntlClientProvider>
       </body>
     </html>
   );

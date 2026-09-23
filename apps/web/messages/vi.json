@@ -19,7 +19,8 @@
     "minutes": "phút",
     "points": "điểm",
     "students": "sinh viên",
-    "slides": "slide"
+    "slides": "slide",
+    "skipToContent": "Bỏ qua, tới nội dung chính"
   },
   "nav": {
     "home": "Trang chủ",
@@ -241,7 +242,8 @@
     "deliverableNotFound": "Mục nộp này không thuộc khung học phần.",
     "submissionNotFound": "Bài nộp này không còn tồn tại.",
     "onlyGroupMembersSubmit": "Chỉ thành viên trong nhóm mới nộp bài được.",
-    "presentationInPast": "Hãy chọn ngày thuyết trình trong tương lai."
+    "presentationInPast": "Hãy chọn ngày thuyết trình trong tương lai.",
+    "caseNotYourCourse": "Case study này thuộc học phần bạn không theo học."
   },
   "auth": {
     "signInTitle": "Đăng nhập",

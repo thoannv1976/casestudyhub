@@ -11,6 +11,7 @@ export * from './users/staff';
 export * from './academic/structure';
 export * from './academic/enrollment';
 export * from './academic/rate-limit';
+export * from './academic/access';
 export * from './groups/groups';
 export * from './cases/cases';
 export * from './assignments/assignments';

@@ -33,7 +33,7 @@ npm test -- grading   # lọc theo tên file
 | 11  | Hai sinh viên cùng join nhóm gần đầy              | Integration (transaction) | 4            | ⏳         |
 | 12  | Đổi rubric không làm sai lệch điểm đã công bố     | Unit                      | 1            | ✅         |
 
-## Unit test — 87 test
+## Unit test — 113 test
 
 **Policy engine & tính điểm** (`packages/shared/src/__tests__/grading.test.ts`)
 
@@ -119,7 +119,7 @@ khi tạo tài khoản giảng viên chỉ xuất hiện khi Next.js chia mã se
 nhiều chunk — điều `next dev` không làm. Toàn bộ 87 unit test và 30 rules test
 đều xanh trong khi production hỏng. E2E là lớp duy nhất bắt được loại lỗi đó.
 
-### 12 kịch bản
+### 33 kịch bản
 
 1. Dịch vụ trả lời `/api/health` trước khi thử bất cứ điều gì khác.
 2. Sinh viên đăng ký và vào được trang làm việc của mình.
@@ -137,6 +137,23 @@ nhiều chunk — điều `next dev` không làm. Toàn bộ 87 unit test và 30
 11. Sinh viên gõ thẳng địa chỉ trang quản trị thì **bị từ chối** và không thấy
     dữ liệu người dùng nào.
 12. Khách chưa đăng nhập bị đẩy về trang đăng nhập.
+
+**Nhóm và phân vai (PR 5):** giảng viên tạo nhóm; sinh viên vào nhóm; không giữ
+hai nhóm trong một lớp; ba sinh viên nữa vào cho đủ bốn; nhóm 4/4 không nhận
+thêm; **phân vai tự động cho nhóm 4 người ra đúng R1+R5, R2, R3, R4+R6**; nhóm
+chưa đủ người thì không phân vai được; sinh viên thấy vai của mình.
+
+**Thư viện case (PR 6):** thêm case và tải PDF thật lên; file giả mạo định dạng
+bị từ chối; bản nháp sinh viên không thấy; công bố xong sinh viên đọc được và
+tải được đúng content-type.
+
+**Giao bài và nộp bài (PR 7):** giao case cho nhóm; nhóm thấy phải nộp gì và nộp
+slide; **nộp lại tạo phiên bản 2 mà phiên bản 1 vẫn còn**; sai định dạng bị từ
+chối; không có phiên đăng nhập thì không tải được file; giảng viên thấy tiến độ.
+
+**Bảo mật và tiếp cận (PR 8):** sinh viên **không đọc được lớp mình không thuộc**
+(403 với phiên hợp lệ, không phải chỉ 401 với khách); bàn phím nhảy được tới nội
+dung chính; mỗi trang khai báo đúng ngôn ngữ.
 
 ## Kiểm thử đồng thời (PR 5)
 
@@ -165,7 +182,7 @@ chưa có); CI đã cài sẵn.
 Nguyên tắc: mỗi collection được mở trong rules phải có test chứng minh cả hai
 chiều — người đúng quyền ghi được, người sai quyền bị chặn.
 
-### Đã có — 30 test rules
+### Đã có — 54 test rules và test đồng thời
 
 **`users`** — sinh viên đọc được hồ sơ của chính mình nhưng **không** đọc được
 hồ sơ người khác và không liệt kê được toàn bộ tài khoản; giảng viên đọc và liệt

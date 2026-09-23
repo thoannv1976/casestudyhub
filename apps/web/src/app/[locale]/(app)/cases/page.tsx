@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { listCases, listCourses } from '@casestudyhub/core';
+import { filterCasesForStudent, listCases, listCourses } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { CaseLibrary } from './case-library';
 
@@ -23,10 +23,11 @@ export default async function CaseLibraryPage({ params }: { params: Promise<{ lo
   const user = await requireSessionUser();
   const canEdit = user.role === 'lecturer' || user.role === 'admin';
 
-  const [cases, courses] = await Promise.all([
+  const [allCases, courses] = await Promise.all([
     listCases({ publishedOnly: !canEdit }),
     canEdit ? listCourses() : Promise.resolve([]),
   ]);
+  const cases = canEdit ? allCases : await filterCasesForStudent(user.uid, allCases);
 
   const t = await getTranslations('cases');
 
