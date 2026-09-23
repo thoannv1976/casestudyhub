@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { readSubmissionFile } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
-import { assertCanAccessAssignment } from '@/lib/api/assignment-access';
+import { assertCanReadSubmission } from '@/lib/api/assignment-access';
 import { respondWithError } from '@/lib/api/respond';
 
 export const dynamic = 'force-dynamic';
@@ -19,7 +19,7 @@ export async function GET(
     const { submissionId } = await context.params;
 
     const { submission, body } = await readSubmissionFile(submissionId);
-    await assertCanAccessAssignment(caller, submission.assignmentId);
+    await assertCanReadSubmission(caller, submission);
 
     return new NextResponse(new Uint8Array(body), {
       headers: {

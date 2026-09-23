@@ -46,11 +46,13 @@ await db.collection('users').doc(record.uid).set({
 console.log(`Seeded administrator ${ADMIN.email} (${record.uid})`);
 
 /**
- * Three more students, so a group can reach the four members the course
- * framework requires before roles may be allocated. The first student still
- * registers through the interface - that path needs covering too.
+ * Four more students. Three of them fill the presenting group to the four
+ * members the course framework requires before roles may be allocated; the
+ * fourth sits in the audience, because the question wall only means anything
+ * when somebody in the room is not in the group being asked. The first student
+ * still registers through the interface - that path needs covering too.
  */
-for (const index of [2, 3, 4]) {
+for (const index of [2, 3, 4, 5]) {
   const student = {
     studentId: `SVSEED${index}`,
     email: `student${index}@e2e.test`,

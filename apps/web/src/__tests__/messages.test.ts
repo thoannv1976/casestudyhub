@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOCALES,
+  answerQuestionSchema,
+  askQuestionSchema,
   changePasswordSchema,
   createClassSchema,
   createCourseSchema,
@@ -112,6 +114,11 @@ describe('validation messages are translated', () => {
       preferredLanguage: 'fr',
     }),
     ...messagesOf(removeEnrollmentSchema, { enrollmentId: 'e1', reason: 'x' }),
+    // The question wall is the one form the whole class types into at once.
+    ...messagesOf(askQuestionSchema, {}),
+    ...messagesOf(askQuestionSchema, { category: 'nope', text: 'hi' }),
+    ...messagesOf(askQuestionSchema, { category: 'critical', text: 'x'.repeat(1001) }),
+    ...messagesOf(answerQuestionSchema, { questionId: 'q1', answerText: 'no' }),
     // Import problems are shown to the lecturer the same way form errors are.
     ...parseStudentRoster('studentId,email\nSV001,a@x.edu.vn').problems.map((p) => p.messageKey),
     ...parseStudentRoster('').problems.map((p) => p.messageKey),

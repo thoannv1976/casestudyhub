@@ -146,6 +146,34 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ----- presentation sessions -------------------------------------------
+    match /presentationSessions/{sessionId} {
+      // The room is public to the class: the clock, whose turn it is and which
+      // group is on. Nothing here identifies anyone.
+      allow read: if isSignedIn();
+      // The clock is settled in server updates that fold the running stretch
+      // into the totals. A client write would let a group award itself time.
+      allow write: if false;
+    }
+
+    // ----- the question wall -----------------------------------------------
+    // Questions carry the asker's name and student id, and a student may ask
+    // anonymously. Direct client reads would defeat that: anonymity is applied
+    // on the server, per viewer, before the question is sent. Writes are
+    // server-side too, because the one-question-per-student rule and the cap of
+    // three chosen questions are enforced in transactions.
+    match /questions/{questionId} {
+      allow read, write: if false;
+    }
+
+    match /questionVotes/{voteId} {
+      allow read, write: if false;
+    }
+
+    match /questionResponses/{responseId} {
+      allow read, write: if false;
+    }
+
     // Rate limit counters are server bookkeeping. A client that could read
     // them would know how many attempts it has left; one that could write
     // them would simply reset the limit.
@@ -163,9 +191,9 @@ service cloud.firestore {
     }
 
     // ----- everything else -------------------------------------------------
-    // Collections arriving in later phases (groups, submissions, questions,
-    // peer reviews, AI assessments, grades) stay closed until their module
-    // lands together with its rules and emulator tests.
+    // Collections arriving in later phases (peer reviews, AI assessments,
+    // grades) stay closed until their module lands together with its rules and
+    // emulator tests.
     match /{document=**} {
       allow read, write: if false;
     }

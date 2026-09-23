@@ -106,3 +106,51 @@ export const gradeSchema = z.object({
   publishedByUid: z.string().optional(),
 });
 export type Grade = z.infer<typeof gradeSchema>;
+
+/**
+ * A presentation session (SRS Module 08, 10).
+ *
+ * The timer stores server timestamps and accumulated milliseconds rather than a
+ * ticking value: a number that has to be written every second would cost a
+ * write per second per class, and would still drift between devices.
+ */
+export const SESSION_STATUSES = ['scheduled', 'live', 'qa', 'review', 'completed'] as const;
+export const sessionStatusSchema = z.enum(SESSION_STATUSES);
+export type SessionStatus = z.infer<typeof sessionStatusSchema>;
+
+export const presentationSessionSchema = z.object({
+  id: z.string().min(1),
+  classId: z.string().min(1),
+  assignmentId: z.string().min(1),
+  groupId: z.string().min(1),
+  caseStudyId: z.string().min(1),
+  status: sessionStatusSchema,
+  /** Which of the six roles is speaking now, if any. */
+  currentRoleId: z.string().nullable().default(null),
+  /** Set while the clock runs; null while paused. */
+  runningSinceMs: z.number().nullable().default(null),
+  /** Time already counted, excluding any currently running stretch. */
+  accumulatedMs: z.number().nonnegative().default(0),
+  /** Time per role, so a member carrying two roles is still measured fairly. */
+  roleMs: z.record(z.string(), z.number()).default({}),
+  /** The class may ask questions while this is open. */
+  questionsOpen: z.boolean().default(false),
+  /** The class may score the group while this is open. */
+  peerReviewOpen: z.boolean().default(false),
+  startedAt: z.string().optional(),
+  endedAt: z.string().optional(),
+});
+export type PresentationSession = z.infer<typeof presentationSessionSchema>;
+
+/** Elapsed time of a session, including the stretch running right now. */
+export function elapsedMs(session: PresentationSession, nowMs: number): number {
+  const running = session.runningSinceMs === null ? 0 : Math.max(0, nowMs - session.runningSinceMs);
+  return session.accumulatedMs + running;
+}
+
+/** Elapsed time attributed to one role, including the running stretch. */
+export function roleElapsedMs(session: PresentationSession, roleId: string, nowMs: number): number {
+  const stored = session.roleMs[roleId] ?? 0;
+  if (session.currentRoleId !== roleId || session.runningSinceMs === null) return stored;
+  return stored + Math.max(0, nowMs - session.runningSinceMs);
+}

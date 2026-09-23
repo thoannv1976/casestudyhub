@@ -33,6 +33,21 @@ const SEEDED_STUDENTS = [2, 3, 4].map((index) => ({
 }));
 
 /**
+ * The student sitting in the audience: in the class, in another group. The
+ * question wall is written by people in exactly this position.
+ */
+const AUDIENCE = {
+  email: 'student5@e2e.test',
+  password: 'student2026',
+  fullName: 'Seeded Student 5',
+};
+
+/** Carried between tests, because they are stages of one presentation. */
+let slidesHref = '';
+let reportHref = '';
+let sessionUrl = '';
+
+/**
  * Signing in ends with a navigation. Without waiting for it, the next step
  * opens a page before the session cookie is set and lands back on sign-in -
  * a failure that looks like a broken feature but is a broken test.
@@ -477,6 +492,9 @@ test('a student from another group cannot read the submitted file', async ({ pag
 
   const href = await page.getByRole('link', { name: /group1-slides-v2\.pdf/ }).getAttribute('href');
   expect(href).toBeTruthy();
+  // Kept for the session tests: the same address is what the class will be
+  // allowed to open once this group takes the floor, and no other.
+  slidesHref = href ?? '';
 
   // The same address, fetched without this student's session, gives nothing.
   const anonymous = await request.get(href ?? '');
@@ -490,6 +508,259 @@ test('the lecturer sees the group has handed something in', async ({ page }) => 
   await page.waitForURL(/\/teaching\/.+/);
 
   await expect(page.getByRole('row').filter({ hasText: 'Group 1' })).toContainText('1 item');
+});
+
+/**
+ * The classroom itself (SRS Module 10). A group presents, the rest of the
+ * class watches on their own screens and asks; the group answers two or three
+ * aloud and the rest of the questions stay with the case study.
+ */
+
+test('the group also hands in the analysis report, which stays private', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const report = page.getByRole('listitem').filter({ hasText: 'Case analysis report' });
+  await report.locator('input[type="file"]').setInputFiles({
+    name: 'group1-report.pdf',
+    mimeType: 'application/pdf',
+    buffer: TINY_PDF,
+  });
+  await expect(page.getByTestId('alert-success')).toContainText('version 1');
+
+  reportHref =
+    (await page.getByRole('link', { name: /group1-report\.pdf/ }).getAttribute('href')) ?? '';
+  expect(reportHref).not.toHaveLength(0);
+});
+
+test('the student in the audience joins the class and a different group', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  await page.goto('/en/classes');
+  await page.locator('#classCode').fill(CLASS_CODE);
+  await page.getByRole('button', { name: 'Join class' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('You joined');
+
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Group 2' })
+    .getByRole('button', { name: 'Join this group' })
+    .click();
+  await expect(page.getByText('Your group')).toBeVisible();
+});
+
+test('before the session starts the slides belong to the group alone', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  const response = await page.request.get(slidesHref);
+  expect(response.status()).toBe(403);
+});
+
+test('the lecturer starts the session and the clock appears', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Group 1' })
+    .getByRole('button', { name: 'Start session' })
+    .click();
+
+  await page.waitForURL(/\/sessions\/.+/);
+  // Without the locale prefix: the tests build both page and API addresses
+  // from it, and only the page carries a locale.
+  sessionUrl = new URL(page.url()).pathname.replace(/^\/[a-z]{2}(?=\/)/, '');
+  expect(sessionUrl).toMatch(/^\/sessions\/.+/);
+
+  await expect(page.getByText('Presenting', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+  // The role that speaks first, named rather than numbered.
+  // It appears twice: on the clock, and beside the member who owns it.
+  await expect(page.getByText('R1 · Context setter').first()).toBeVisible();
+});
+
+test('once the session starts the class can open the slides, and nothing else', async ({
+  page,
+}) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  const slides = await page.request.get(slidesHref);
+  expect(slides.status()).toBe(200);
+  expect(slides.headers()['content-type']).toContain('application/pdf');
+
+  // The gap is the slide deck. The analysis report of the same group, of the
+  // same assignment, in the same live session, is still refused.
+  const report = await page.request.get(reportHref);
+  expect(report.status()).toBe(403);
+});
+
+test('a student in the audience asks their one question', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await page.locator('#text').fill('Which figure shows the marketplace is more profitable?');
+  await page.locator('#category').selectOption('evidence');
+  await page.locator('#roleId').selectOption('R3');
+  await page.getByRole('button', { name: 'Send question' }).click();
+
+  await expect(page.getByText('1 question', { exact: true })).toBeVisible();
+  // Scoped to the wall: the same words are sitting in the edit form above it.
+  await expect(
+    page.getByRole('listitem').filter({ hasText: 'Which figure shows the marketplace' }),
+  ).toBeVisible();
+});
+
+test('sending again edits the same question rather than adding a second', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  // Their own question comes back in the form, which is how they know they
+  // already asked one.
+  await expect(page.locator('#text')).toHaveValue(/Which figure/);
+
+  await page.locator('#text').fill('Which figure shows the marketplace outearns retail?');
+  await page.getByRole('button', { name: 'Update question' }).click();
+
+  await expect(page.getByText('1 question', { exact: true })).toBeVisible();
+  await expect(page.getByRole('listitem').filter({ hasText: 'outearns retail' })).toBeVisible();
+});
+
+test('the presenting group is not offered a question to ask itself', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.getByText('Question wall')).toBeVisible();
+  await expect(page.locator('#text')).toHaveCount(0);
+
+  // And typing the request directly is refused too: the form is not the rule.
+  const response = await page.request.post(`/api${sessionUrl}/questions`, {
+    data: {
+      action: 'ask',
+      category: 'evidence',
+      text: 'A question the presenting group asked itself.',
+    },
+  });
+  expect(response.status()).toBe(422);
+});
+
+test('an anonymous question does not carry its asker to the browser', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  // Not merely hidden in the markup: the name never leaves the server.
+  await expect(page.getByText(AUDIENCE.fullName)).toHaveCount(0);
+
+  const response = await page.request.get(`/api${sessionUrl}/questions`);
+  const body = await response.text();
+  expect(body).toContain('outearns retail');
+  expect(body).not.toContain(AUDIENCE.fullName);
+  expect(body).toContain('Anonymous');
+});
+
+test('the lecturer does see who asked, because it counts toward the mark', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+
+  const response = await page.request.get(`/api${sessionUrl}/questions`);
+  expect(await response.text()).toContain(AUDIENCE.fullName);
+});
+
+test('the group chooses the question it will answer, and records the answer', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  const question = page.getByRole('listitem').filter({ hasText: 'outearns retail' });
+  await question.getByRole('button', { name: 'Choose to answer' }).click();
+  await expect(page.getByText('1 of 3 chosen')).toBeVisible();
+
+  await question.getByRole('button', { name: 'Record the answer' }).click();
+  await question
+    .getByRole('textbox', { name: 'Record the answer' })
+    .fill('Third-party seller services revenue, shown on slide 9.');
+  await question.getByRole('button', { name: 'Save answer' }).click();
+
+  await expect(question.getByText('Answered')).toBeVisible();
+  await expect(question).toContainText('Third-party seller services revenue');
+});
+
+test('the lecturer sees the Q&A checklist the Guide asks for', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.getByText('Q&A checklist')).toBeVisible();
+  // One question so far, and the framework wants at least two.
+  await expect(page.getByText('1 question from the class (at least 2)')).toBeVisible();
+  await expect(page.getByText('of 4 members have answered')).toBeVisible();
+});
+
+test('a student cannot run the clock or close the questions', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.getByRole('button', { name: 'Pause' })).toHaveCount(0);
+
+  const response = await page.request.post(`/api${sessionUrl}`, {
+    data: { action: 'pause' },
+  });
+  expect(response.status()).toBe(403);
+});
+
+test('closing the window stops new questions without hiding the ones asked', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${sessionUrl}`);
+  await page.getByRole('button', { name: 'Close questions' }).click();
+  await expect(page.getByRole('button', { name: 'Open questions' })).toBeVisible();
+
+  await signOut(page);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.getByText('The question window is closed.')).toBeVisible();
+  // Closing the window stops new questions; it does not take away the bank.
+  await expect(page.getByRole('listitem').filter({ hasText: 'outearns retail' })).toBeVisible();
+});
+
+test('the slides stay open after the presentation ends', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${sessionUrl}`);
+  await page.getByRole('button', { name: 'End session' }).click();
+  await expect(page.getByText('Finished')).toBeVisible();
+
+  await signOut(page);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  // The class keeps the slides to revise from; the report is still not theirs.
+  expect((await page.request.get(slidesHref)).status()).toBe(200);
+  expect((await page.request.get(reportHref)).status()).toBe(403);
+});
+
+test('a student from another class cannot reach the room at all', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${sessionUrl}`);
+  await signOut(page);
+
+  // Every other account in this run belongs to the class by now, so the
+  // outsider has to be a fresh one.
+  await page.goto('/en/register');
+  await page.locator('#studentId').fill(`SVOUT${RUN}`);
+  await page.locator('#fullName').fill('Outsider Student');
+  await page.locator('#email').fill(`outsider.${RUN}@e2e.test`);
+  await page.locator('#password').fill('outsider2026');
+  await page.locator('#confirmPassword').fill('outsider2026');
+  await page.getByRole('button', { name: 'Create account' }).click();
+  await page.waitForURL('**/dashboard');
+
+  await page.goto(`/en${sessionUrl}`);
+  await expect(page.getByTestId('alert-error')).toContainText('not enrolled');
+
+  const questions = await page.request.get(`/api${sessionUrl}/questions`);
+  expect(questions.status()).toBe(403);
+  expect((await page.request.get(slidesHref)).status()).toBe(403);
 });
 
 test('a student is refused the administration pages', async ({ page }) => {

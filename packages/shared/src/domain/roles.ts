@@ -46,3 +46,15 @@ export const ROLE_ALLOCATION_BY_TEAM_SIZE: Readonly<
   5: { R1: 1, R2: 2, R3: 3, R4: 4, R5: 1, R6: 5 },
   4: { R1: 1, R2: 2, R3: 3, R4: 4, R5: 1, R6: 4 },
 } as const;
+
+const ROLE_KEY_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
+  DEFAULT_PRESENTATION_ROLES.map((role) => [role.id, role.key]),
+);
+
+/**
+ * The i18n key of a role id. Role ids are what the database stores; the titles
+ * live in the message catalogues, in both languages.
+ */
+export function roleKeyOf(roleId: string): string {
+  return ROLE_KEY_BY_ID[roleId] ?? 'contextSetter';
+}

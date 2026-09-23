@@ -17,18 +17,36 @@ Mỗi milestone là một PR riêng, có test xanh trước khi đẩy lên.
 **Kết quả Phase 1:** giảng viên và sinh viên dùng được để tổ chức một học phần
 Case Study thực tế, từ đăng ký đến nộp bài.
 
-## Phase 2 — Interactive Presentation
+## Phase 2 — Buổi thuyết trình trên lớp
 
-Live Presentation Room (realtime), Presentation Timer, chuyển người thuyết trình
-R1→R6, Question Wall (5 loại câu hỏi, upvote, ẩn danh trước lớp), Q&A theo vai
-trò, Q&A Completion Checklist, Peer Assessment, Live Polling, thông báo realtime.
-Tối ưu mobile-first.
+Nhóm trình bày trên lớp; sinh viên ngồi dưới theo dõi slide trên điện thoại hoặc
+laptop, đặt câu hỏi và chấm điểm ngay trên app; giảng viên chốt điểm cuối cùng.
+
+| PR  | Milestone               | Nội dung                                                                                                                                                                                                                                          | Trạng thái |
+| --- | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 9   | Phòng thuyết trình      | Mở phiên cho từng nhóm, đồng hồ đếm theo mốc 18–20 phút và giới hạn cứng 22 phút, chuyển vai R1→R6 có ghi thời lượng từng vai; cả lớp mở được slide PDF của nhóm đang trình bày (chỉ slide, chỉ đúng lớp, chỉ từ khi phiên bắt đầu)               | ✅         |
+| 10  | Tường câu hỏi           | Mỗi sinh viên một câu hỏi (sửa được khi cửa sổ còn mở), 5 loại câu hỏi, hỏi theo vai, upvote, ẩn danh trước lớp nhưng giảng viên vẫn thấy; nhóm chọn 2–3 câu trả lời trực tiếp, phần còn lại thành kho câu hỏi của case; bảng kiểm Q&A theo Guide | ✅         |
+| 11  | Chấm chéo giữa các nhóm | Sinh viên chấm nhóm thuyết trình theo rubric; điểm chấm chéo là bằng chứng tham khảo, không tự động cộng vào điểm cuối                                                                                                                            | ⏳         |
+| 12  | Giảng viên chốt điểm    | Màn hình chấm hợp nhất, điểm nhóm 80% và điểm cá nhân 20%, duyệt và công bố điểm                                                                                                                                                                  | ⏳         |
+
+### Ghi chú thiết kế cho PR 9 và 10
+
+- Slide được nộp trước buổi học. Thời gian không cần đồng bộ từng giây: đồng hồ
+  lưu mốc bắt đầu do server cấp cộng số mili giây đã tích lũy, máy nào cũng tính
+  ra cùng một con số mà không phải ghi mỗi giây.
+- Tường câu hỏi làm mới mỗi 10 giây thay vì lắng nghe Firestore trực tiếp, để mọi
+  lượt đọc vẫn đi qua kiểm tra quyền ở server.
+- Ẩn danh được thực hiện ở server: tên người hỏi không bao giờ rời máy chủ với
+  câu hỏi ẩn danh, kể cả trong dữ liệu gửi xuống trình duyệt.
+- Câu hỏi gắn với **case study**, không chỉ với phiên: đó là điều cho phép Phase 3
+  dùng AI trả lời toàn bộ kho câu hỏi và để lại tài liệu cho các khóa sau.
 
 ## Phase 3 — AI Assessment
 
 Cloud Run worker + Cloud Tasks, trích xuất PDF/DOCX/PPTX, pipeline chấm theo
-rubric có trích dẫn nguồn, AI Question Generator, AI Tutor 4 chế độ, màn hình
-chấm hợp nhất, Grade Engine, quy trình phê duyệt và công bố điểm.
+rubric có trích dẫn nguồn, **AI trả lời toàn bộ kho câu hỏi của lớp để làm tài
+liệu tham khảo cho các khóa sau**, AI Question Generator, AI Tutor 4 chế độ, AI
+trong màn hình chấm của giảng viên.
 
 ## Phase 4 — Analytics & Integration
 

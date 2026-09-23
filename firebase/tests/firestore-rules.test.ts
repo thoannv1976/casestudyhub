@@ -494,3 +494,121 @@ describe('assignments and submissions', () => {
     );
   });
 });
+
+describe('presentation sessions and the question wall', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'presentationSessions', 'PS1'), {
+        id: 'PS1',
+        classId: 'C1',
+        assignmentId: 'A1',
+        groupId: 'G1',
+        caseStudyId: 'CS1',
+        status: 'live',
+        currentRoleId: 'R1',
+        runningSinceMs: 1_000,
+        accumulatedMs: 0,
+        roleMs: {},
+        questionsOpen: true,
+        peerReviewOpen: false,
+      });
+      await setDoc(doc(db, 'questions', 'PS1__student_b'), {
+        id: 'PS1__student_b',
+        caseStudyId: 'CS1',
+        sessionId: 'PS1',
+        classId: 'C1',
+        groupId: 'G1',
+        askedByUid: OTHER_STUDENT_UID,
+        askedByName: 'Tran Thi B',
+        askedByStudentId: 'SV002',
+        anonymousToClass: true,
+        roleId: 'R3',
+        category: 'evidence',
+        text: 'Which number proves the unit economics claim?',
+        upvotes: 0,
+        status: 'submitted',
+        answeredByAi: false,
+      });
+      await setDoc(doc(db, 'questionVotes', 'PS1__student_b__student_a'), {
+        questionId: 'PS1__student_b',
+        voterUid: STUDENT_UID,
+      });
+      await setDoc(doc(db, 'questionResponses', 'QR1'), {
+        questionId: 'PS1__student_b',
+        sessionId: 'PS1',
+        responderUid: STUDENT_UID,
+      });
+    });
+  });
+
+  it('lets the class see the room: which group is on and where the clock is', async () => {
+    await assertSucceeds(getDoc(doc(student(), 'presentationSessions', 'PS1')));
+    await assertSucceeds(getDoc(doc(lecturer(), 'presentationSessions', 'PS1')));
+  });
+
+  it('refuses the room to someone who is not signed in', async () => {
+    await assertFails(getDoc(doc(anonymous(), 'presentationSessions', 'PS1')));
+  });
+
+  it('stops a group awarding itself time on the clock', async () => {
+    await assertFails(
+      updateDoc(doc(student(), 'presentationSessions', 'PS1'), { accumulatedMs: 0 }),
+    );
+    await assertFails(
+      updateDoc(doc(student(), 'presentationSessions', 'PS1'), { runningSinceMs: null }),
+    );
+    // Even the lecturer goes through the server, which settles the running
+    // stretch into the totals before writing.
+    await assertFails(
+      updateDoc(doc(lecturer(), 'presentationSessions', 'PS1'), { currentRoleId: 'R4' }),
+    );
+  });
+
+  it('keeps an anonymous question anonymous by keeping the document off the client', async () => {
+    // The wall is read through a route handler that strips the asker's name
+    // per viewer. If the document itself were readable, that would be theatre.
+    await assertFails(getDoc(doc(student(), 'questions', 'PS1__student_b')));
+    await assertFails(getDocs(collection(student(), 'questions')));
+    await assertFails(getDoc(doc(lecturer(), 'questions', 'PS1__student_b')));
+  });
+
+  it('stops a student writing a question straight into the collection', async () => {
+    // The document id carries the one-question-per-student rule and the group
+    // being asked cannot ask itself; both are checked server-side.
+    await assertFails(
+      setDoc(doc(student(), 'questions', 'PS1__student_a'), {
+        sessionId: 'PS1',
+        askedByUid: STUDENT_UID,
+        text: 'A question written round the back.',
+        status: 'submitted',
+      }),
+    );
+    await assertFails(
+      updateDoc(doc(student(), 'questions', 'PS1__student_b'), { status: 'selected' }),
+    );
+    await assertFails(deleteDoc(doc(student(), 'questions', 'PS1__student_b')));
+  });
+
+  it('stops a student stuffing the upvotes', async () => {
+    await assertFails(updateDoc(doc(student(), 'questions', 'PS1__student_b'), { upvotes: 99 }));
+    await assertFails(
+      setDoc(doc(student(), 'questionVotes', 'PS1__student_b__forged'), {
+        questionId: 'PS1__student_b',
+        voterUid: STUDENT_UID,
+      }),
+    );
+    await assertFails(getDoc(doc(student(), 'questionVotes', 'PS1__student_b__student_a')));
+  });
+
+  it('keeps who answered what out of the client, since it feeds the individual mark', async () => {
+    await assertFails(getDoc(doc(student(), 'questionResponses', 'QR1')));
+    await assertFails(
+      setDoc(doc(student(), 'questionResponses', 'forged'), {
+        questionId: 'PS1__student_b',
+        sessionId: 'PS1',
+        responderUid: STUDENT_UID,
+      }),
+    );
+  });
+});

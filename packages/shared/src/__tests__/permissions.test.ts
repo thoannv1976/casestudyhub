@@ -20,6 +20,14 @@ describe('role permission matrix (SRS Module 02)', () => {
     }
   });
 
+  it('lets staff run a presentation, but never a student', () => {
+    // The button that starts a session is on the same page for both, so a role
+    // that cannot use it would be shown a dead control.
+    expect(hasPermission('lecturer', 'presentation.control')).toBe(true);
+    expect(hasPermission('admin', 'presentation.control')).toBe(true);
+    expect(hasPermission('student', 'presentation.control')).toBe(false);
+  });
+
   it('reserves platform-wide grade access for admins', () => {
     expect(hasPermission('admin', 'grade.viewPlatform')).toBe(true);
     expect(hasPermission('lecturer', 'grade.viewPlatform')).toBe(false);

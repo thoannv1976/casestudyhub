@@ -9,6 +9,7 @@ import {
   listGroups,
   listMembers,
   listRoster,
+  listSessions,
   listSubmissions,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -17,6 +18,7 @@ import { Alert } from '@/components/ui/form';
 import { AssignmentManager } from './assignment-manager';
 import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
+import { SessionBoard } from './session-board';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,6 +45,7 @@ export default async function ClassDetailPage({
   const tAssignments = await getTranslations('assignments');
   const tGroups = await getTranslations('groups');
   const tTeaching = await getTranslations('teaching');
+  const tSession = await getTranslations('session');
   const tError = await getTranslations('errors');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
@@ -59,12 +62,13 @@ export default async function ClassDetailPage({
     return <Alert tone="error">{tError('notYourClass')}</Alert>;
   }
 
-  const [roster, groups, members, assignments, cases] = await Promise.all([
+  const [roster, groups, members, assignments, cases, sessions] = await Promise.all([
     listRoster(classId),
     listGroups(classId),
     listMembers(classId),
     listAssignments(classId),
     listCases(),
+    listSessions(classId),
   ]);
 
   const submissionsByAssignment = Object.fromEntries(
@@ -109,6 +113,19 @@ export default async function ClassDetailPage({
         <CardTitle>{tGroups('title')}</CardTitle>
         <div className="mt-4">
           <GroupManager classId={classId} groups={groups} members={members} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{tSession('boardTitle')}</CardTitle>
+        <p className="text-muted mt-2 text-sm">{tSession('boardHint')}</p>
+        <div className="mt-4">
+          <SessionBoard
+            assignments={assignments}
+            groups={groups}
+            cases={cases}
+            sessions={sessions}
+          />
         </div>
       </Card>
 
