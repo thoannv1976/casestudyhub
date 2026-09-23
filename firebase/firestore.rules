@@ -82,7 +82,35 @@ service cloud.firestore {
 
     match /classes/{classId} {
       allow read: if isSignedIn();
+      // Created and changed only through the server, which checks that the
+      // caller owns the class and freezes the policy version.
       allow write: if false;
+    }
+
+    // ----- enrolment -------------------------------------------------------
+    function enrollment() {
+      return resource.data;
+    }
+
+    match /classEnrollments/{enrollmentId} {
+      // A student sees their own row. Staff see any row, because a lecturer
+      // needs the roster and an admin supports every class.
+      allow get: if isAdmin()
+        || isLecturer()
+        || (isSignedIn() && enrollment().studentUid == request.auth.uid);
+      allow list: if isAdmin() || isLecturer();
+
+      // Joining, importing and removing all run in transactions on the server
+      // that check the class policy and keep the student count right; a direct
+      // client write would bypass every one of those checks.
+      allow write: if false;
+    }
+
+    // Rate limit counters are server bookkeeping. A client that could read
+    // them would know how many attempts it has left; one that could write
+    // them would simply reset the limit.
+    match /rateLimits/{limitId} {
+      allow read, write: if false;
     }
 
     // ----- never readable by a client --------------------------------------

@@ -33,7 +33,7 @@ npm test -- grading   # lọc theo tên file
 | 11  | Hai sinh viên cùng join nhóm gần đầy              | Integration (transaction) | 4            | ⏳         |
 | 12  | Đổi rubric không làm sai lệch điểm đã công bố     | Unit                      | 1            | ✅         |
 
-## Unit test — 63 test
+## Unit test — 87 test
 
 **Policy engine & tính điểm** (`packages/shared/src/__tests__/grading.test.ts`)
 
@@ -69,6 +69,21 @@ npm test -- grading   # lọc theo tên file
 - Chỉ admin xem được điểm toàn trường.
 - Mã sinh viên và class code được validate đúng định dạng.
 
+**Đọc file danh sách sinh viên** (`roster-import.test.ts`, PR 3)
+
+Đây là chỗ dữ liệu thật của khoa đi vào hệ thống, nên bộ test bám sát những gì
+Excel thực sự xuất ra:
+
+- Dấu phẩy nằm trong tên được đặt trong ngoặc kép; ngoặc kép lồng nhau.
+- **BOM của Excel, dòng kết thúc CRLF, và dấu chấm phẩy** của Excel bản tiếng Việt.
+- Tiêu đề cột tiếng Việt (`Mã sinh viên`, `Họ và tên`, `MSSV`) hay tiếng Anh, thứ tự bất kỳ.
+- Dòng trống bị bỏ qua, không bị báo lỗi.
+- Dòng sai **được báo kèm số dòng**, các dòng đúng vẫn nhập được.
+- Trùng mã sinh viên hoặc trùng email **ngay trong file**, có chỉ ra dòng đầu tiên.
+- Thiếu cột bắt buộc thì từ chối và nói rõ thiếu cột nào.
+- Mọi thông báo lỗi là khóa i18n.
+- Mã sinh viên dạng `../admin` bị từ chối — không để chuỗi lạ chui vào document id.
+
 **Hợp đồng đăng ký** (`auth-contracts.test.ts`, PR 2)
 
 - Hai mật khẩu không khớp báo lỗi đúng ở ô xác nhận.
@@ -102,7 +117,7 @@ chưa có); CI đã cài sẵn.
 Nguyên tắc: mỗi collection được mở trong rules phải có test chứng minh cả hai
 chiều — người đúng quyền ghi được, người sai quyền bị chặn.
 
-### Đã có (PR 2) — 20 test rules
+### Đã có — 30 test rules
 
 **`users`** — sinh viên đọc được hồ sơ của chính mình nhưng **không** đọc được
 hồ sơ người khác và không liệt kê được toàn bộ tài khoản; giảng viên đọc và liệt
@@ -124,3 +139,13 @@ từ chối cho tới khi module của chúng ra đời cùng rules và test ri�
 
 **`classes`** — sinh viên đã đăng nhập đọc được, khách không đọc được, và không
 ai ghi được từ client.
+
+**`classEnrollments`** (PR 3) — sinh viên đọc được dòng ghi danh của chính mình
+nhưng **không** đọc được của bạn cùng lớp và không liệt kê được cả danh sách;
+giảng viên đọc được toàn bộ roster. Sinh viên **không tự ghi danh bằng cách tạo
+document**, **không tự chuyển trạng thái chờ duyệt thành đã vào lớp**, và
+**không tự gỡ lệnh loại khỏi lớp**. Ngay cả giảng viên cũng không ghi trực tiếp
+được — mọi thay đổi đi qua transaction trên server để giữ đúng sĩ số lớp.
+
+**`rateLimits`** (PR 3) — không client nào đọc hay ghi được. Đọc được thì biết
+còn bao nhiêu lượt thử; ghi được thì tự xoá giới hạn.

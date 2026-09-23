@@ -1,8 +1,15 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOCALES,
+  changePasswordSchema,
+  createClassSchema,
+  createCourseSchema,
+  createStaffAccountSchema,
+  joinClassSchema,
+  parseStudentRoster,
   profileUpdateSchema,
   registerRequestSchema,
+  removeEnrollmentSchema,
   sessionRequestSchema,
 } from '@casestudyhub/shared';
 import en from '../../messages/en.json';
@@ -86,6 +93,29 @@ describe('validation messages are translated', () => {
     ...messagesOf(profileUpdateSchema, {}),
     ...messagesOf(profileUpdateSchema, { fullName: 'A' }),
     ...messagesOf(sessionRequestSchema, { idToken: '' }),
+    ...messagesOf(changePasswordSchema, { newPassword: 'short', confirmPassword: 'other' }),
+    ...messagesOf(joinClassSchema, { classCode: 'x' }),
+    ...messagesOf(createClassSchema, {
+      classCode: 'x',
+      className: 'A',
+      courseId: '',
+      semesterId: '',
+      language: 'fr',
+      joinMode: 'whatever',
+    }),
+    ...messagesOf(createCourseSchema, { code: 'x', name: 'A', defaultLanguage: 'fr' }),
+    ...messagesOf(createStaffAccountSchema, {
+      email: 'nope',
+      fullName: 'A',
+      role: 'superuser',
+      temporaryPassword: 'short',
+      preferredLanguage: 'fr',
+    }),
+    ...messagesOf(removeEnrollmentSchema, { enrollmentId: 'e1', reason: 'x' }),
+    // Import problems are shown to the lecturer the same way form errors are.
+    ...parseStudentRoster('studentId,email\nSV001,a@x.edu.vn').problems.map((p) => p.messageKey),
+    ...parseStudentRoster('').problems.map((p) => p.messageKey),
+    ...parseStudentRoster('studentId,fullName,email\nx,A,bad').problems.map((p) => p.messageKey),
   ];
 
   it('produces something to check', () => {

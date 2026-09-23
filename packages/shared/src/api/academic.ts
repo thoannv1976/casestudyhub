@@ -1,0 +1,116 @@
+import { z } from 'zod';
+import { classCodeSchema, localeSchema, studentIdSchema, userRoleSchema } from '../domain/identity';
+
+/** Request contracts for the academic structure and user administration. */
+
+export const createAcademicYearSchema = z.object({
+  name: z.string().trim().min(4, 'errors.nameInvalid').max(32, 'errors.nameInvalid'),
+  startDate: z.iso.date('errors.dateInvalid'),
+  endDate: z.iso.date('errors.dateInvalid'),
+});
+
+export const createSemesterSchema = z.object({
+  academicYearId: z.string().min(1, 'errors.academicYearRequired'),
+  name: z.string().trim().min(2, 'errors.nameInvalid').max(32, 'errors.nameInvalid'),
+});
+
+export const createCourseSchema = z.object({
+  code: z.string().trim().min(2, 'errors.courseCodeInvalid').max(32, 'errors.courseCodeInvalid'),
+  name: z.string().trim().min(2, 'errors.nameInvalid').max(160, 'errors.nameInvalid'),
+  description: z.string().trim().max(2000).optional(),
+  cloIds: z.array(z.string().trim().min(1).max(16)).max(20).default([]),
+  defaultLanguage: localeSchema,
+});
+
+export const createClassSchema = z.object({
+  classCode: classCodeSchema,
+  className: z.string().trim().min(2, 'errors.nameInvalid').max(160, 'errors.nameInvalid'),
+  courseId: z.string().min(1, 'errors.courseRequired'),
+  semesterId: z.string().min(1, 'errors.semesterRequired'),
+  language: localeSchema,
+  expectedStudents: z.number().int().positive().max(1000).optional(),
+  joinMode: z.enum(['code', 'approval', 'closed'], { error: 'errors.joinModeInvalid' }),
+  /** Lecturers beside the creator. The creator is always added. */
+  lecturerIds: z.array(z.string().min(1)).max(10).default([]),
+});
+
+export const updateClassSchema = createClassSchema.partial().extend({
+  status: z.enum(['draft', 'active', 'archived']).optional(),
+});
+
+export const joinClassSchema = z.object({
+  classCode: classCodeSchema,
+});
+
+export const removeEnrollmentSchema = z.object({
+  enrollmentId: z.string().min(1),
+  reason: z.string().trim().min(3, 'errors.reasonRequired').max(500),
+});
+
+/**
+ * Admin creates a staff account. The temporary password is handed over out of
+ * band and must be changed at first sign-in, so it never becomes a shared
+ * long-term credential.
+ */
+export const createStaffAccountSchema = z.object({
+  email: z.email('errors.emailInvalid'),
+  fullName: z.string().trim().min(2, 'errors.fullNameInvalid').max(120, 'errors.fullNameInvalid'),
+  role: z.enum(['lecturer', 'admin'], { error: 'errors.roleInvalid' }),
+  temporaryPassword: z
+    .string({ error: 'errors.passwordTooShort' })
+    .min(8, 'errors.passwordTooShort')
+    .max(128, 'errors.passwordTooLong')
+    .refine((value) => /[A-Za-z]/.test(value) && /[0-9]/.test(value), 'errors.passwordTooSimple'),
+  preferredLanguage: localeSchema,
+});
+
+export const changePasswordSchema = z
+  .object({
+    newPassword: z
+      .string({ error: 'errors.passwordTooShort' })
+      .min(8, 'errors.passwordTooShort')
+      .max(128, 'errors.passwordTooLong')
+      .refine((value) => /[A-Za-z]/.test(value) && /[0-9]/.test(value), 'errors.passwordTooSimple'),
+    confirmPassword: z.string({ error: 'errors.passwordMismatch' }),
+  })
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: 'errors.passwordMismatch',
+    path: ['confirmPassword'],
+  });
+
+export const setRoleSchema = z.object({
+  targetUid: z.string().min(1),
+  role: userRoleSchema,
+  reason: z.string().trim().min(3, 'errors.reasonRequired').max(500),
+});
+
+export const setStatusSchema = z.object({
+  targetUid: z.string().min(1),
+  status: z.enum(['active', 'suspended'], { error: 'errors.statusInvalid' }),
+  reason: z.string().trim().min(3, 'errors.reasonRequired').max(500),
+});
+
+/** One row of a student import file, after parsing. */
+export const importedStudentSchema = z.object({
+  studentId: studentIdSchema,
+  fullName: z.string().trim().min(2, 'errors.fullNameInvalid').max(120, 'errors.fullNameInvalid'),
+  email: z.email('errors.emailInvalid'),
+});
+export type ImportedStudent = z.infer<typeof importedStudentSchema>;
+
+/**
+ * Schemas with `.default()` have a different input and output type: a form
+ * binds to the input (the field may be absent), a service receives the output
+ * (the default has been applied). Both are exported so neither side has to
+ * guess.
+ */
+export type CreateClassInput = z.input<typeof createClassSchema>;
+export type CreateCourseInput = z.input<typeof createCourseSchema>;
+
+export type CreateAcademicYearRequest = z.infer<typeof createAcademicYearSchema>;
+export type CreateSemesterRequest = z.infer<typeof createSemesterSchema>;
+export type CreateCourseRequest = z.infer<typeof createCourseSchema>;
+export type CreateClassRequest = z.infer<typeof createClassSchema>;
+export type JoinClassRequest = z.infer<typeof joinClassSchema>;
+export type CreateStaffAccountRequest = z.infer<typeof createStaffAccountSchema>;
+export type ChangePasswordRequest = z.infer<typeof changePasswordSchema>;

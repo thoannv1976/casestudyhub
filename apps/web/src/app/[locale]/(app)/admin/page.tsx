@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
-import { Alert } from '@/components/ui/form';
 import { Card, CardBody, CardTitle } from '@/components/ui/card';
+import { Alert } from '@/components/ui/form';
+import { Link } from '@/i18n/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,9 +47,20 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
         <CardBody>{user.email}</CardBody>
       </Card>
 
-      <Card>
-        <CardBody>{t('usersSoon')}</CardBody>
-      </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Link href="/admin/users" className="block">
+          <Card className="hover:border-brand-400 h-full transition-colors">
+            <CardTitle>{t('usersTitle')}</CardTitle>
+            <CardBody>{t('usersBody')}</CardBody>
+          </Card>
+        </Link>
+        <Link href="/admin/academic" className="block">
+          <Card className="hover:border-brand-400 h-full transition-colors">
+            <CardTitle>{t('academicTitle')}</CardTitle>
+            <CardBody>{t('academicBody')}</CardBody>
+          </Card>
+        </Link>
+      </div>
     </div>
   );
 }

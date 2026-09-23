@@ -51,6 +51,7 @@ export async function verifySessionCookie(cookie: string): Promise<SessionUser |
       email: decoded.email ?? '',
       role,
       preferredLanguage: decoded.preferredLanguage,
+      mustChangePassword: decoded.mustChangePassword === true,
     };
   } catch {
     return null;

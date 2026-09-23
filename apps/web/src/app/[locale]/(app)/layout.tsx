@@ -28,12 +28,20 @@ export default async function AppLayout({
   const user = await getSessionUser();
   if (!user) redirect(`/${locale}/login`);
 
+  // An account still on the temporary password an admin handed over reaches
+  // nothing else until it is replaced.
+  if (user.mustChangePassword) redirect(`/${locale}/change-password`);
+
   const tApp = await getTranslations('app');
 
-  const items: NavItem[] = [
-    { href: '/dashboard', labelKey: 'dashboard' },
-    { href: '/profile', labelKey: 'profile' },
-  ];
+  const items: NavItem[] = [{ href: '/dashboard', labelKey: 'dashboard' }];
+  if (user.role === 'student') {
+    items.push({ href: '/classes', labelKey: 'myClasses' });
+  }
+  if (user.role === 'lecturer' || user.role === 'admin') {
+    items.push({ href: '/teaching', labelKey: 'teaching' });
+  }
+  items.push({ href: '/profile', labelKey: 'profile' });
   if (user.role === 'admin') {
     items.push({ href: '/admin', labelKey: 'admin' });
   }

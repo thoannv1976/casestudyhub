@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { registerRequestSchema } from '@casestudyhub/shared';
-import { registerStudent } from '@casestudyhub/core';
+import { clientAddress, enforceRateLimit, registerStudent } from '@casestudyhub/core';
 import { respondWithError } from '@/lib/api/respond';
 
 export const dynamic = 'force-dynamic';
@@ -11,6 +11,14 @@ export const dynamic = 'force-dynamic';
  */
 export async function POST(request: NextRequest) {
   try {
+    // The endpoint is reachable without signing in, so it is the one an abuser
+    // would hammer to create accounts or to probe which emails exist.
+    await enforceRateLimit({
+      key: `register:${clientAddress(request.headers)}`,
+      max: 5,
+      windowMs: 15 * 60 * 1000,
+    });
+
     const input = registerRequestSchema.parse(await request.json());
 
     const { uid } = await registerStudent({

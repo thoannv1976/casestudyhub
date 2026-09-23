@@ -203,3 +203,103 @@ describe('academic structure', () => {
     await assertFails(updateDoc(doc(lecturer(), 'classes', 'ECOM-A01'), { status: 'archived' }));
   });
 });
+
+describe('classEnrollments collection', () => {
+  const ENROLLMENT_ID = 'ECOM-A01__SV001';
+
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'classEnrollments', ENROLLMENT_ID), {
+        id: ENROLLMENT_ID,
+        classId: 'ECOM-A01',
+        studentId: 'SV001',
+        studentUid: STUDENT_UID,
+        fullName: 'Nguyen Van A',
+        email: 'student_a@university.edu.vn',
+        status: 'active',
+        joinedVia: 'class_code',
+      });
+      await setDoc(doc(db, 'classEnrollments', 'ECOM-A01__SV002'), {
+        id: 'ECOM-A01__SV002',
+        classId: 'ECOM-A01',
+        studentId: 'SV002',
+        studentUid: OTHER_STUDENT_UID,
+        fullName: 'Tran Thi B',
+        email: 'student_b@university.edu.vn',
+        status: 'active',
+        joinedVia: 'class_code',
+      });
+    });
+  });
+
+  it('lets a student read their own enrolment', async () => {
+    await assertSucceeds(getDoc(doc(student(), 'classEnrollments', ENROLLMENT_ID)));
+  });
+
+  it('stops a student reading a classmate enrolment', async () => {
+    await assertFails(getDoc(doc(student(), 'classEnrollments', 'ECOM-A01__SV002')));
+  });
+
+  it('stops a student listing the whole roster', async () => {
+    await assertFails(getDocs(collection(student(), 'classEnrollments')));
+  });
+
+  it('lets a lecturer read the roster', async () => {
+    await assertSucceeds(getDocs(collection(lecturer(), 'classEnrollments')));
+  });
+
+  it('stops a student enrolling themselves by writing a document', async () => {
+    // Joining must go through the server, which checks the class join mode and
+    // keeps the student count correct.
+    await assertFails(
+      setDoc(doc(student(), 'classEnrollments', 'ECOM-A01__SV999'), {
+        classId: 'ECOM-A01',
+        studentId: 'SV999',
+        studentUid: STUDENT_UID,
+        status: 'active',
+      }),
+    );
+  });
+
+  it('stops a student promoting their own pending enrolment to active', async () => {
+    await assertFails(
+      updateDoc(doc(student(), 'classEnrollments', ENROLLMENT_ID), { status: 'active' }),
+    );
+  });
+
+  it('stops a student undoing their removal', async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), 'classEnrollments', ENROLLMENT_ID), {
+        status: 'removed',
+      });
+    });
+    await assertFails(
+      updateDoc(doc(student(), 'classEnrollments', ENROLLMENT_ID), { status: 'active' }),
+    );
+  });
+
+  it('stops even a lecturer writing an enrolment directly', async () => {
+    await assertFails(
+      updateDoc(doc(lecturer(), 'classEnrollments', ENROLLMENT_ID), { status: 'removed' }),
+    );
+  });
+
+  it('stops an anonymous visitor reading enrolments', async () => {
+    await assertFails(getDoc(doc(anonymous(), 'classEnrollments', ENROLLMENT_ID)));
+  });
+});
+
+describe('rate limit counters', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'rateLimits', 'abc'), { count: 3 });
+    });
+  });
+
+  it('cannot be read or reset by any client', async () => {
+    await assertFails(getDoc(doc(student(), 'rateLimits', 'abc')));
+    await assertFails(setDoc(doc(student(), 'rateLimits', 'abc'), { count: 0 }));
+    await assertFails(setDoc(doc(admin(), 'rateLimits', 'abc'), { count: 0 }));
+  });
+});

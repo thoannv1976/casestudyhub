@@ -6,6 +6,11 @@ export interface SessionUser {
   email: string;
   role: UserRole;
   preferredLanguage?: Locale;
+  /**
+   * Set on an account an admin created with a temporary password. Until it is
+   * cleared the app lets the user reach nothing but the change-password page.
+   */
+  mustChangePassword?: boolean;
 }
 
 export const SESSION_COOKIE_NAME = '__session';
