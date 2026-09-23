@@ -32,16 +32,21 @@ gcloud config set project "$PROJECT_ID" --quiet
 
 api_call() {
   # api_call METHOD URL [BODY] -> in ra body phản hồi, không làm dừng script khi lỗi
+  # x-goog-user-project: Identity Toolkit từ chối (403) token của người dùng
+  # nếu không chỉ rõ project dùng để tính quota.
   local method="$1" url="$2" body="${3:-}"
   local token
   token="$(gcloud auth print-access-token)"
   if [[ -n "$body" ]]; then
     curl -sS -X "$method" "$url" \
       -H "Authorization: Bearer $token" \
+      -H "x-goog-user-project: $PROJECT_ID" \
       -H "Content-Type: application/json" \
       -d "$body" || true
   else
-    curl -sS -X "$method" "$url" -H "Authorization: Bearer $token" || true
+    curl -sS -X "$method" "$url" \
+      -H "Authorization: Bearer $token" \
+      -H "x-goog-user-project: $PROJECT_ID" || true
   fi
 }
 
