@@ -132,6 +132,20 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ----- assignments and submissions -------------------------------------
+    match /assignments/{assignmentId} {
+      // Everyone in the class can see what has been set and when it is due.
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /submissions/{submissionId} {
+      // A group's work is private to that group and the staff marking it.
+      // Reading is done server-side, where membership can be checked; the
+      // client never queries this collection directly.
+      allow read, write: if false;
+    }
+
     // Rate limit counters are server bookkeeping. A client that could read
     // them would know how many attempts it has left; one that could write
     // them would simply reset the limit.

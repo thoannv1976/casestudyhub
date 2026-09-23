@@ -234,7 +234,14 @@
     "fileEmpty": "File rỗng.",
     "fileTooLarge": "File quá lớn.",
     "fileFormatRejected": "Định dạng file này không được chấp nhận ở đây.",
-    "fileFormatNotUploadable": "Mục này không nhận file."
+    "fileFormatNotUploadable": "Mục này không nhận file.",
+    "assignmentExists": "Nhóm này đã được giao case này rồi.",
+    "assignmentNotFound": "Bài giao này không còn tồn tại.",
+    "notYourAssignment": "Đây là bài của nhóm khác.",
+    "deliverableNotFound": "Mục nộp này không thuộc khung học phần.",
+    "submissionNotFound": "Bài nộp này không còn tồn tại.",
+    "onlyGroupMembersSubmit": "Chỉ thành viên trong nhóm mới nộp bài được.",
+    "presentationInPast": "Hãy chọn ngày thuyết trình trong tương lai."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -446,5 +453,36 @@
     "unpublish": "Thu hồi khỏi sinh viên",
     "published": "Đã công bố",
     "draft": "Bản nháp"
+  },
+  "assignments": {
+    "title": "Giao Case Study",
+    "group": "Nhóm",
+    "case": "Case study",
+    "presentationDate": "Ngày giờ thuyết trình",
+    "deadlineDerived": "Hạn nộp suy ra từ khung học phần: 24 giờ trước thời điểm này.",
+    "assign": "Giao case này",
+    "assigned": "Đã giao case cho nhóm.",
+    "needsGroupsAndCase": "Hãy tạo nhóm và công bố một case study trước.",
+    "none": "Chưa giao case nào.",
+    "deadline": "Hạn nộp",
+    "handedIn": "Đã nộp",
+    "nothingYet": "Chưa có gì",
+    "itemCount": "{count} mục",
+    "lateCount": "{count} nộp muộn"
+  },
+  "workspace": {
+    "title": "Bài làm của nhóm",
+    "case": "Case study",
+    "presentation": "Thuyết trình",
+    "deadline": "Hạn nộp",
+    "closed": "đã đóng",
+    "missing": "Chưa nộp",
+    "version": "Phiên bản {version}",
+    "versionLate": "Phiên bản {version} · muộn",
+    "late": "muộn",
+    "submitted": "Đã nộp, phiên bản {version}.",
+    "submittedLate": "Đã nộp, phiên bản {version}, sau hạn.",
+    "uploadFor": "Tải lên {deliverable}",
+    "lateWarning": "Đã quá hạn nộp. Bạn vẫn nộp được, và bài sẽ được ghi nhận là nộp muộn."
   }
 }

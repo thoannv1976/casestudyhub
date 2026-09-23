@@ -393,6 +393,105 @@ test('publishing the case makes it readable by the class', async ({ page }) => {
   expect(response.headers()['content-disposition']).toContain('attachment');
 });
 
+test('a lecturer sets the case for the group', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  // Far enough ahead that the submission window is open.
+  const presentation = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
+  const localValue = new Date(presentation.getTime() - presentation.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+
+  await page.locator('#assignGroupId').selectOption({ label: 'Group 1' });
+  await page.locator('#presentationDate').fill(localValue);
+  await page.getByRole('button', { name: 'Set this case' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('Case set');
+  await expect(page.getByRole('row').filter({ hasText: 'Group 1' })).toContainText('Nothing yet');
+});
+
+test('the group sees what it owes and hands in the slides', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const slides = page.getByRole('listitem').filter({ hasText: 'Presentation slides' });
+  await expect(slides).toContainText('Not handed in');
+
+  await slides.locator('input[type="file"]').setInputFiles({
+    name: 'group1-slides.pdf',
+    mimeType: 'application/pdf',
+    buffer: TINY_PDF,
+  });
+
+  await expect(page.getByTestId('alert-success')).toContainText('version 1');
+  await expect(slides).toContainText('v1 · group1-slides.pdf');
+});
+
+test('handing in again creates a version rather than overwriting', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const slides = page.getByRole('listitem').filter({ hasText: 'Presentation slides' });
+  await slides.locator('input[type="file"]').setInputFiles({
+    name: 'group1-slides-v2.pdf',
+    mimeType: 'application/pdf',
+    buffer: TINY_PDF,
+  });
+
+  await expect(page.getByTestId('alert-success')).toContainText('version 2');
+  // The first version is still listed: a lecturer must be able to see what
+  // was in place before.
+  await expect(slides).toContainText('v1 · group1-slides.pdf');
+  await expect(slides).toContainText('v2 · group1-slides-v2.pdf');
+});
+
+test('a deliverable refuses a file the framework does not allow', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  // The slides deliverable takes a PDF; a Word file is not one.
+  const slides = page.getByRole('listitem').filter({ hasText: 'Presentation slides' });
+  await slides.locator('input[type="file"]').setInputFiles({
+    name: 'slides.docx',
+    mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    buffer: Buffer.from('PK not really a docx', 'utf8'),
+  });
+
+  await expect(page.getByTestId('alert-error')).toContainText('not accepted');
+});
+
+test('a student from another group cannot read the submitted file', async ({ page, request }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const href = await page.getByRole('link', { name: /group1-slides-v2\.pdf/ }).getAttribute('href');
+  expect(href).toBeTruthy();
+
+  // The same address, fetched without this student's session, gives nothing.
+  const anonymous = await request.get(href ?? '');
+  expect(anonymous.status()).toBe(401);
+});
+
+test('the lecturer sees the group has handed something in', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await expect(page.getByRole('row').filter({ hasText: 'Group 1' })).toContainText('1 item');
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

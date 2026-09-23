@@ -234,7 +234,14 @@
     "fileEmpty": "That file is empty.",
     "fileTooLarge": "That file is too large.",
     "fileFormatRejected": "That file type is not accepted here.",
-    "fileFormatNotUploadable": "This item does not take a file."
+    "fileFormatNotUploadable": "This item does not take a file.",
+    "assignmentExists": "This group already has this case.",
+    "assignmentNotFound": "That assignment no longer exists.",
+    "notYourAssignment": "This belongs to another group.",
+    "deliverableNotFound": "That deliverable is not part of this course framework.",
+    "submissionNotFound": "That submission no longer exists.",
+    "onlyGroupMembersSubmit": "Only members of the group can hand in work.",
+    "presentationInPast": "Choose a presentation date in the future."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -446,5 +453,36 @@
     "unpublish": "Withdraw from students",
     "published": "Published",
     "draft": "Draft"
+  },
+  "assignments": {
+    "title": "Case assignments",
+    "group": "Group",
+    "case": "Case study",
+    "presentationDate": "Presentation date and time",
+    "deadlineDerived": "The submission deadline follows from the course framework: 24 hours before this.",
+    "assign": "Set this case",
+    "assigned": "Case set for the group.",
+    "needsGroupsAndCase": "Create groups and publish a case study first.",
+    "none": "No case has been set yet.",
+    "deadline": "Deadline",
+    "handedIn": "Handed in",
+    "nothingYet": "Nothing yet",
+    "itemCount": "{count} item(s)",
+    "lateCount": "{count} late"
+  },
+  "workspace": {
+    "title": "Your group's work",
+    "case": "Case study",
+    "presentation": "Presentation",
+    "deadline": "Deadline",
+    "closed": "closed",
+    "missing": "Not handed in",
+    "version": "Version {version}",
+    "versionLate": "Version {version} · late",
+    "late": "late",
+    "submitted": "Handed in as version {version}.",
+    "submittedLate": "Handed in as version {version}, after the deadline.",
+    "uploadFor": "Upload {deliverable}",
+    "lateWarning": "The deadline has passed. You can still hand in, and it will be recorded as late."
   }
 }

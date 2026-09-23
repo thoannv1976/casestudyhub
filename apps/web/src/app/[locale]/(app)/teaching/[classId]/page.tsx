@@ -4,13 +4,17 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
   assertCanManageClass,
   getClassById,
+  listAssignments,
+  listCases,
   listGroups,
   listMembers,
   listRoster,
+  listSubmissions,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { AssignmentManager } from './assignment-manager';
 import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
 
@@ -36,6 +40,7 @@ export default async function ClassDetailPage({
 
   const user = await requireSessionUser();
   const t = await getTranslations('roster');
+  const tAssignments = await getTranslations('assignments');
   const tGroups = await getTranslations('groups');
   const tTeaching = await getTranslations('teaching');
   const tError = await getTranslations('errors');
@@ -54,11 +59,21 @@ export default async function ClassDetailPage({
     return <Alert tone="error">{tError('notYourClass')}</Alert>;
   }
 
-  const [roster, groups, members] = await Promise.all([
+  const [roster, groups, members, assignments, cases] = await Promise.all([
     listRoster(classId),
     listGroups(classId),
     listMembers(classId),
+    listAssignments(classId),
+    listCases(),
   ]);
+
+  const submissionsByAssignment = Object.fromEntries(
+    await Promise.all(
+      assignments.map(
+        async (assignment) => [assignment.id, await listSubmissions(assignment.id)] as const,
+      ),
+    ),
+  );
   const joined = roster.filter((row) => row.studentUid && row.status === 'active').length;
   const expected = roster.filter((row) => row.status !== 'removed').length;
 
@@ -94,6 +109,19 @@ export default async function ClassDetailPage({
         <CardTitle>{tGroups('title')}</CardTitle>
         <div className="mt-4">
           <GroupManager classId={classId} groups={groups} members={members} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{tAssignments('title')}</CardTitle>
+        <div className="mt-4">
+          <AssignmentManager
+            classId={classId}
+            groups={groups}
+            cases={cases}
+            assignments={assignments}
+            submissionsByAssignment={submissionsByAssignment}
+          />
         </div>
       </Card>
     </div>

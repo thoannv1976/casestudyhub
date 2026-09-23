@@ -12,7 +12,7 @@ Mỗi milestone là một PR riêng, có test xanh trước khi đẩy lên.
 | 4   | Duyệt ghi danh + E2E     | Giảng viên duyệt/từ chối sinh viên đang chờ; bộ E2E Playwright chạy trên bản build production + Firebase Emulator trong CI                                                                                                                            | ✅         |
 | 5   | Nhóm và phân vai         | Ba chế độ tạo nhóm, join bằng transaction, khóa nhóm, Auto Assign Roles theo bảng gộp vai của Guide; test đồng thời chứng minh acceptance test 2 và 11                                                                                                | ✅         |
 | 6   | Thư viện Case Study      | Tạo case, upload PDF/DOCX/PPTX/ảnh qua server, công bố cho sinh viên; file không bao giờ public, mọi lượt tải đều qua kiểm tra quyền                                                                                                                  | ✅         |
-| 7   | Hoàn thiện & deploy      | Accessibility, seed dữ liệu demo (lớp ECOM-A01 + case Amazon), bộ acceptance test, deploy Cloud Run                                                                                                                                                   | ⏳         |
+| 7   | Giao bài và nộp bài      | Giao case cho nhóm, hạn nộp suy ra từ policy theo giờ server; mỗi lần nộp là một phiên bản mới, không ghi đè; cờ nộp muộn; bảng theo dõi tiến độ                                                                                                      | ✅         |
 
 **Kết quả Phase 1:** giảng viên và sinh viên dùng được để tổ chức một học phần
 Case Study thực tế, từ đăng ký đến nộp bài.

@@ -434,3 +434,63 @@ describe('case study library', () => {
     );
   });
 });
+
+describe('assignments and submissions', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'assignments', 'A1'), {
+        id: 'A1',
+        classId: 'ECOM-A01',
+        groupId: 'G1',
+        caseStudyId: 'published_case',
+        submissionDeadline: '2026-10-01T02:00:00.000Z',
+        status: 'submission_open',
+      });
+      await setDoc(doc(db, 'submissions', 'S1'), {
+        id: 'S1',
+        assignmentId: 'A1',
+        groupId: 'G1',
+        deliverableId: 'slides-pdf',
+        versionNumber: 1,
+        isLate: false,
+        status: 'ready',
+      });
+    });
+  });
+
+  it('lets the class see what has been set and when it is due', async () => {
+    await assertSucceeds(getDoc(doc(student(), 'assignments', 'A1')));
+  });
+
+  it('stops a student moving their own deadline', async () => {
+    await assertFails(
+      updateDoc(doc(student(), 'assignments', 'A1'), {
+        submissionDeadline: '2027-01-01T00:00:00.000Z',
+      }),
+    );
+  });
+
+  it('stops even a lecturer changing a deadline without the audited path', async () => {
+    await assertFails(updateDoc(doc(lecturer(), 'assignments', 'A1'), { status: 'completed' }));
+  });
+
+  it('keeps submissions out of every client, so membership is checked server-side', async () => {
+    await assertFails(getDoc(doc(student(), 'submissions', 'S1')));
+    await assertFails(getDoc(doc(otherStudent(), 'submissions', 'S1')));
+    await assertFails(getDoc(doc(lecturer(), 'submissions', 'S1')));
+  });
+
+  it('stops a student rewriting a submission to look on time', async () => {
+    await assertFails(updateDoc(doc(student(), 'submissions', 'S1'), { isLate: false }));
+    await assertFails(
+      setDoc(doc(student(), 'submissions', 'forged'), {
+        assignmentId: 'A1',
+        groupId: 'G1',
+        deliverableId: 'slides-pdf',
+        versionNumber: 99,
+        isLate: false,
+      }),
+    );
+  });
+});
