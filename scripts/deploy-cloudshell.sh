@@ -55,7 +55,6 @@ echo "▶ [4/5] Build image (khoảng 4–6 phút)..."
 gcloud builds submit \
   --config cloudbuild.yaml \
   --substitutions="_IMAGE=${IMAGE}" \
-  --region="$REGION" \
   --quiet
 
 echo "▶ [5/5] Deploy lên Cloud Run..."
