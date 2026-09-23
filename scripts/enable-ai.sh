@@ -17,7 +17,7 @@ set -euo pipefail
 PROJECT_ID="${PROJECT_ID:-$(gcloud config get-value project 2>/dev/null)}"
 REGION="${REGION:-asia-southeast1}"
 SERVICE="${SERVICE:-casestudyhub-web}"
-RUNTIME_SA_ID="${RUNTIME_SA_ID:-casestudyhub-run}"
+RUNTIME_SA_ID="${RUNTIME_SA_ID:-casestudyhub-runtime}"
 # 'global' phục vụ Gemini ở mọi nơi và ít bị giới hạn theo vùng nhất.
 AI_LOCATION="${AI_LOCATION:-global}"
 AI_MODEL="${AI_MODEL:-gemini-2.5-flash}"
