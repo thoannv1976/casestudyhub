@@ -25,6 +25,13 @@ const LECTURER = {
 };
 const CLASS_CODE = `E2E-${RUN}`;
 
+/** Seeded by e2e/seed.mjs, so a group can reach the required four members. */
+const SEEDED_STUDENTS = [2, 3, 4].map((index) => ({
+  email: `student${index}@e2e.test`,
+  password: 'student2026',
+  fullName: `Seeded Student ${index}`,
+}));
+
 /**
  * Signing in ends with a navigation. Without waiting for it, the next step
  * opens a page before the session cookie is set and lands back on sign-in -
@@ -190,6 +197,125 @@ test('the lecturer sees the student on the class roster', async ({ page }) => {
   await expect(row).toHaveCount(1);
   await expect(row.getByText('Signed up')).toBeVisible();
   await expect(row).toContainText(STUDENT.fullName);
+});
+
+test('a lecturer creates groups the class can join', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.locator('#count').fill('2');
+  await page.locator('#maxMembers').fill('4');
+  await page.locator('#formationMode').selectOption('student_self_join');
+  await page.getByRole('button', { name: 'Create groups' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('Created 2');
+  await expect(page.getByRole('heading', { name: 'Group 1' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Group 2' })).toBeVisible();
+});
+
+test('a student joins a group', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Group 1' })
+    .getByRole('button', { name: 'Join this group' })
+    .click();
+
+  await expect(page.getByText('Your group')).toBeVisible();
+  await expect(page.getByText(STUDENT.fullName)).toBeVisible();
+});
+
+test('a student cannot hold two groups in one class', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  // The second group offers no join button at all once a student has one.
+  await expect(
+    page.getByRole('listitem').filter({ hasText: 'Group 2' }).getByRole('button', {
+      name: 'Join this group',
+    }),
+  ).toHaveCount(0);
+});
+
+test('three more students fill the group to the four the framework requires', async ({ page }) => {
+  for (const student of SEEDED_STUDENTS) {
+    await signIn(page, student.email, student.password);
+
+    await page.goto('/en/classes');
+    await page.locator('#classCode').fill(CLASS_CODE);
+    await page.getByRole('button', { name: 'Join class' }).click();
+    await expect(page.getByTestId('alert-success')).toContainText('You joined');
+
+    await page.getByText(CLASS_CODE).click();
+    await page.waitForURL(/\/classes\/.+/);
+    await page
+      .getByRole('listitem')
+      .filter({ hasText: 'Group 1' })
+      .getByRole('button', { name: 'Join this group' })
+      .click();
+    await expect(page.getByText('Your group')).toBeVisible();
+
+    await signOut(page);
+  }
+});
+
+test('the fifth student is refused a group of four that is already full', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  // The seat count is what the transaction protects; the interface must show
+  // the same truth.
+  await expect(page.getByRole('listitem').filter({ hasText: 'Group 1' })).toContainText('4/4');
+});
+
+test('the lecturer assigns the presentation roles automatically', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const groupOne = page.getByRole('listitem').filter({ hasText: 'Group 1' });
+  await groupOne.getByRole('button', { name: 'Auto assign roles' }).click();
+
+  // The merge table for a team of four: member 1 also takes R5, member 4 also
+  // takes R6, and R3 and R4 are never dropped.
+  await expect(groupOne.getByText('R1 + R5')).toBeVisible();
+  await expect(groupOne.getByText('R2', { exact: true })).toBeVisible();
+  await expect(groupOne.getByText('R3', { exact: true })).toBeVisible();
+  await expect(groupOne.getByText('R4 + R6')).toBeVisible();
+});
+
+test('roles cannot be allocated to a group below the required size', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  // Group 2 is empty, so the button the framework protects stays unavailable.
+  await expect(
+    page.getByRole('listitem').filter({ hasText: 'Group 2' }).getByRole('button', {
+      name: 'Auto assign roles',
+    }),
+  ).toBeDisabled();
+});
+
+test('the student sees the role they now own', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  await expect(page.getByText('Context setter')).toBeVisible();
 });
 
 test('a student is refused the administration pages', async ({ page }) => {

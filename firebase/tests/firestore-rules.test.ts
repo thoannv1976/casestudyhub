@@ -303,3 +303,77 @@ describe('rate limit counters', () => {
     await assertFails(setDoc(doc(admin(), 'rateLimits', 'abc'), { count: 0 }));
   });
 });
+
+describe('groups and membership', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'groups', 'G1'), {
+        id: 'G1',
+        groupCode: 'G01',
+        groupName: 'Group 1',
+        classId: 'ECOM-A01',
+        maxMembers: 6,
+        memberCount: 1,
+        formationMode: 'student_self_join',
+        locked: false,
+        status: 'forming',
+      });
+      await setDoc(doc(db, 'groupMembers', 'ECOM-A01__student_a'), {
+        id: 'ECOM-A01__student_a',
+        groupId: 'G1',
+        classId: 'ECOM-A01',
+        studentUid: STUDENT_UID,
+        studentId: 'SV001',
+        fullName: 'Nguyen Van A',
+        roleIds: ['R1'],
+        isLeader: true,
+      });
+    });
+  });
+
+  it('lets a signed-in student see the groups and who is in them', async () => {
+    await assertSucceeds(getDoc(doc(student(), 'groups', 'G1')));
+    await assertSucceeds(getDocs(collection(student(), 'groupMembers')));
+  });
+
+  it('stops an anonymous visitor seeing them', async () => {
+    await assertFails(getDoc(doc(anonymous(), 'groups', 'G1')));
+    await assertFails(getDoc(doc(anonymous(), 'groupMembers', 'ECOM-A01__student_a')));
+  });
+
+  it('stops a student joining by writing a membership document', async () => {
+    // Joining must go through the transaction that checks the free seat and
+    // the one-group-per-class rule.
+    await assertFails(
+      setDoc(doc(otherStudent(), 'groupMembers', 'ECOM-A01__student_b'), {
+        groupId: 'G1',
+        classId: 'ECOM-A01',
+        studentUid: OTHER_STUDENT_UID,
+        studentId: 'SV002',
+        fullName: 'Tran Thi B',
+        roleIds: [],
+      }),
+    );
+  });
+
+  it('stops a student making room by editing the member count', async () => {
+    await assertFails(updateDoc(doc(student(), 'groups', 'G1'), { memberCount: 0 }));
+    await assertFails(updateDoc(doc(student(), 'groups', 'G1'), { maxMembers: 99 }));
+  });
+
+  it('stops a student giving themselves a different presentation role', async () => {
+    await assertFails(
+      updateDoc(doc(student(), 'groupMembers', 'ECOM-A01__student_a'), { roleIds: ['R3'] }),
+    );
+  });
+
+  it('stops a student unlocking a locked group or leaving by deletion', async () => {
+    await assertFails(updateDoc(doc(student(), 'groups', 'G1'), { locked: false }));
+    await assertFails(deleteDoc(doc(student(), 'groupMembers', 'ECOM-A01__student_a')));
+  });
+
+  it('stops even a lecturer writing directly', async () => {
+    await assertFails(updateDoc(doc(lecturer(), 'groups', 'G1'), { locked: true }));
+  });
+});

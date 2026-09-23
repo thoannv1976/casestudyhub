@@ -44,3 +44,43 @@ await db.collection('users').doc(record.uid).set({
 });
 
 console.log(`Seeded administrator ${ADMIN.email} (${record.uid})`);
+
+/**
+ * Three more students, so a group can reach the four members the course
+ * framework requires before roles may be allocated. The first student still
+ * registers through the interface - that path needs covering too.
+ */
+for (const index of [2, 3, 4]) {
+  const student = {
+    studentId: `SVSEED${index}`,
+    email: `student${index}@e2e.test`,
+    password: 'student2026',
+    fullName: `Seeded Student ${index}`,
+  };
+
+  const created = await auth.createUser({
+    email: student.email,
+    password: student.password,
+    displayName: student.fullName,
+  });
+  await auth.setCustomUserClaims(created.uid, { role: 'student', preferredLanguage: 'en' });
+
+  await db.collection('users').doc(created.uid).set({
+    uid: created.uid,
+    studentId: student.studentId,
+    fullName: student.fullName,
+    email: student.email,
+    globalRole: 'student',
+    preferredLanguage: 'en',
+    status: 'active',
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  await db.collection('studentIdIndex').doc(student.studentId).set({
+    uid: created.uid,
+    studentId: student.studentId,
+    createdAt: FieldValue.serverTimestamp(),
+  });
+
+  console.log(`Seeded student ${student.email}`);
+}

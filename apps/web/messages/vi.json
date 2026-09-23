@@ -150,7 +150,7 @@
     "notFound": "Không tìm thấy nội dung bạn cần.",
     "groupFull": "Nhóm này đã đủ thành viên.",
     "groupTooSmall": "Nhóm có ít thành viên hơn quy định của học phần.",
-    "alreadyInGroup": "Bạn đã tham gia một nhóm cho case này.",
+    "alreadyInGroup": "Bạn đã thuộc một nhóm trong lớp này.",
     "unexpected": "Đã có lỗi xảy ra. Vui lòng thử lại.",
     "validationFailed": "Vui lòng kiểm tra lại các ô được đánh dấu.",
     "passwordTooShort": "Mật khẩu phải có ít nhất 8 ký tự.",
@@ -212,7 +212,17 @@
     "importSkippedAlreadyJoined": "Bỏ qua: sinh viên này đã đăng ký",
     "alreadyApproved": "Sinh viên này đã ở trong lớp.",
     "cannotApproveRemoved": "Sinh viên này đã bị loại khỏi lớp.",
-    "nothingToApprove": "Sinh viên này chưa đăng ký tài khoản nên chưa có gì để duyệt."
+    "nothingToApprove": "Sinh viên này chưa đăng ký tài khoản nên chưa có gì để duyệt.",
+    "groupNotFound": "Nhóm này không còn tồn tại.",
+    "groupLocked": "Nhóm này đã khóa. Vui lòng liên hệ giảng viên.",
+    "groupNotSelfJoin": "Giảng viên là người xếp thành viên cho nhóm này.",
+    "studentAlreadyGrouped": "Sinh viên này đã thuộc một nhóm trong lớp.",
+    "notInGroup": "Sinh viên này không thuộc nhóm nào.",
+    "groupEmpty": "Nhóm chưa có thành viên để phân vai.",
+    "noGroupsYet": "Hãy tạo nhóm trước khi chia lớp.",
+    "groupCountInvalid": "Chọn từ 1 đến 50 nhóm.",
+    "maxMembersInvalid": "Chọn từ 2 đến 12 thành viên mỗi nhóm.",
+    "notInThisClass": "Bạn không thuộc lớp này."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -285,7 +295,8 @@
     "empty": "Bạn chưa tham gia lớp nào. Hãy nhập mã lớp giảng viên đưa.",
     "statusActive": "Đã vào lớp",
     "statusPending": "Chờ duyệt",
-    "studentId": "Mã sinh viên"
+    "studentId": "Mã sinh viên",
+    "groupsHint": "Tham gia một nhóm, hoặc xem nhóm của bạn và vai trò bạn đảm nhiệm."
   },
   "teaching": {
     "title": "Lớp giảng dạy",
@@ -376,5 +387,29 @@
     "coursesTitle": "Các học phần",
     "noCourses": "Chưa có học phần nào.",
     "semesterCount": "Đã có {count} học kỳ."
+  },
+  "groups": {
+    "title": "Nhóm",
+    "count": "Số nhóm",
+    "maxMembers": "Số thành viên mỗi nhóm",
+    "maxMembersHint": "Khung của học phần quy định 4–6.",
+    "formationMode": "Cách hình thành nhóm",
+    "modeSelfJoin": "Sinh viên tự tham gia",
+    "modeLecturer": "Tôi tự xếp sinh viên",
+    "modeRandom": "Chia lớp ngẫu nhiên ngay",
+    "createGroups": "Tạo nhóm",
+    "created": "Đã tạo {count} nhóm.",
+    "createdAndPlaced": "Đã tạo {created} nhóm và xếp {placed} sinh viên.",
+    "empty": "Chưa có nhóm nào. Hãy tạo ở phía trên.",
+    "noneYet": "Giảng viên chưa tạo nhóm cho lớp này.",
+    "noMembers": "Chưa có thành viên",
+    "autoAssign": "Tự động phân vai",
+    "lock": "Khóa nhóm",
+    "unlock": "Mở khóa",
+    "locked": "Đã khóa",
+    "join": "Tham gia nhóm này",
+    "full": "Đã đủ",
+    "yourGroup": "Nhóm của bạn",
+    "removeMember": "Loại {name} khỏi nhóm"
   }
 }

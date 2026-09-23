@@ -1,10 +1,17 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { assertCanManageClass, getClassById, listRoster } from '@casestudyhub/core';
+import {
+  assertCanManageClass,
+  getClassById,
+  listGroups,
+  listMembers,
+  listRoster,
+} from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
 
 export const dynamic = 'force-dynamic';
@@ -29,6 +36,7 @@ export default async function ClassDetailPage({
 
   const user = await requireSessionUser();
   const t = await getTranslations('roster');
+  const tGroups = await getTranslations('groups');
   const tTeaching = await getTranslations('teaching');
   const tError = await getTranslations('errors');
 
@@ -46,7 +54,11 @@ export default async function ClassDetailPage({
     return <Alert tone="error">{tError('notYourClass')}</Alert>;
   }
 
-  const roster = await listRoster(classId);
+  const [roster, groups, members] = await Promise.all([
+    listRoster(classId),
+    listGroups(classId),
+    listMembers(classId),
+  ]);
   const joined = roster.filter((row) => row.studentUid && row.status === 'active').length;
   const expected = roster.filter((row) => row.status !== 'removed').length;
 
@@ -75,6 +87,13 @@ export default async function ClassDetailPage({
         <CardTitle>{t('title')}</CardTitle>
         <div className="mt-4">
           <RosterManager classId={classId} roster={roster} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{tGroups('title')}</CardTitle>
+        <div className="mt-4">
+          <GroupManager classId={classId} groups={groups} members={members} />
         </div>
       </Card>
     </div>

@@ -138,6 +138,20 @@ nhiều chunk — điều `next dev` không làm. Toàn bộ 87 unit test và 30
     dữ liệu người dùng nào.
 12. Khách chưa đăng nhập bị đẩy về trang đăng nhập.
 
+## Kiểm thử đồng thời (PR 5)
+
+`firebase/tests/group-concurrency.test.ts` chạy code nghiệp vụ thật qua Admin
+SDK trên emulator, vì Security Rules **không diễn đạt được** quy tắc "chỉ một
+người lấy được chỗ cuối" — đó là việc của transaction, và cách kiểm chứng trung
+thực duy nhất là cho nhiều sinh viên cùng với tay vào một chỗ.
+
+- Hai sinh viên cùng lúc giành chỗ cuối → **đúng một người được**, `memberCount`
+  bằng 1 (acceptance test 11).
+- Sáu sinh viên cùng lúc vào nhóm 4 chỗ → **đúng 4 người được**.
+- Một sinh viên bấm vào hai nhóm cùng lúc → chỉ một nhóm nhận (acceptance test 2).
+- Vào nhóm thứ hai tuần tự cũng bị từ chối.
+- Nhóm đã khóa không nhận thêm ai; nhóm do giảng viên xếp thì sinh viên không tự vào được.
+
 ## Kiểm thử Security Rules
 
 ```bash

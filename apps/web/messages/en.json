@@ -150,7 +150,7 @@
     "notFound": "We could not find what you were looking for.",
     "groupFull": "This group is already full.",
     "groupTooSmall": "This group has fewer members than the course policy allows.",
-    "alreadyInGroup": "You already belong to a group for this case.",
+    "alreadyInGroup": "You already belong to a group in this class.",
     "unexpected": "Something went wrong. Please try again.",
     "validationFailed": "Please check the highlighted fields.",
     "passwordTooShort": "Password must be at least 8 characters.",
@@ -212,7 +212,17 @@
     "importSkippedAlreadyJoined": "Skipped: this student already signed up",
     "alreadyApproved": "This student is already in the class.",
     "cannotApproveRemoved": "This student was removed from the class.",
-    "nothingToApprove": "This student has not signed up yet, so there is nothing to approve."
+    "nothingToApprove": "This student has not signed up yet, so there is nothing to approve.",
+    "groupNotFound": "That group no longer exists.",
+    "groupLocked": "This group is locked. Please ask your lecturer.",
+    "groupNotSelfJoin": "Your lecturer assigns the members of this group.",
+    "studentAlreadyGrouped": "This student already belongs to a group in this class.",
+    "notInGroup": "This student is not in a group.",
+    "groupEmpty": "This group has no members to assign roles to.",
+    "noGroupsYet": "Create the groups before dividing the class.",
+    "groupCountInvalid": "Choose between 1 and 50 groups.",
+    "maxMembersInvalid": "Choose between 2 and 12 members per group.",
+    "notInThisClass": "You are not enrolled in this class."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -285,7 +295,8 @@
     "empty": "You have not joined a class yet. Enter the code your lecturer gave you.",
     "statusActive": "Enrolled",
     "statusPending": "Awaiting approval",
-    "studentId": "Student ID"
+    "studentId": "Student ID",
+    "groupsHint": "Join a group, or see the one you are in and the role you own."
   },
   "teaching": {
     "title": "Teaching",
@@ -376,5 +387,29 @@
     "coursesTitle": "Courses",
     "noCourses": "No courses yet.",
     "semesterCount": "{count} semester(s) defined."
+  },
+  "groups": {
+    "title": "Groups",
+    "count": "How many groups",
+    "maxMembers": "Members per group",
+    "maxMembersHint": "The course framework expects 4–6.",
+    "formationMode": "How groups are filled",
+    "modeSelfJoin": "Students join themselves",
+    "modeLecturer": "I place students myself",
+    "modeRandom": "Divide the class at random now",
+    "createGroups": "Create groups",
+    "created": "Created {count} group(s).",
+    "createdAndPlaced": "Created {created} group(s) and placed {placed} student(s).",
+    "empty": "No groups yet. Create them above.",
+    "noneYet": "Your lecturer has not created the groups yet.",
+    "noMembers": "No members yet",
+    "autoAssign": "Auto assign roles",
+    "lock": "Lock",
+    "unlock": "Unlock",
+    "locked": "Locked",
+    "join": "Join this group",
+    "full": "Full",
+    "yourGroup": "Your group",
+    "removeMember": "Remove {name} from this group"
   }
 }
