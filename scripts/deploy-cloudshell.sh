@@ -12,6 +12,7 @@ PROJECT_ID="${PROJECT_ID:-casestudy1-509414}"
 REGION="${REGION:-asia-southeast1}"
 REPO="${REPO:-casestudyhub}"
 SERVICE="${SERVICE:-casestudyhub-web}"
+BUCKET_NAME="${BUCKET_NAME:-${PROJECT_ID}-files}"
 
 echo "▶ Project : $PROJECT_ID"
 echo "▶ Region  : $REGION"
@@ -100,7 +101,7 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --memory 1Gi \
   --cpu 1 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${PROJECT_ID}.firebasestorage.app,NODE_ENV=production" \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${BUCKET_NAME},NODE_ENV=production" \
   --quiet
 
 URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')"

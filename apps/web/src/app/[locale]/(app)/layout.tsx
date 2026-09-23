@@ -41,6 +41,7 @@ export default async function AppLayout({
   if (user.role === 'lecturer' || user.role === 'admin') {
     items.push({ href: '/teaching', labelKey: 'teaching' });
   }
+  items.push({ href: '/cases', labelKey: 'caseLibrary' });
   items.push({ href: '/profile', labelKey: 'profile' });
   if (user.role === 'admin') {
     items.push({ href: '/admin', labelKey: 'admin' });

@@ -61,6 +61,9 @@ export default defineConfig({
       FIREBASE_STORAGE_BUCKET: 'demo-casestudyhub.appspot.com',
       FIRESTORE_EMULATOR_HOST: process.env.FIRESTORE_EMULATOR_HOST ?? '127.0.0.1:8080',
       FIREBASE_AUTH_EMULATOR_HOST: process.env.FIREBASE_AUTH_EMULATOR_HOST ?? '127.0.0.1:9099',
+      // @google-cloud/storage, which the Admin SDK uses underneath, reads this
+      // one and wants the protocol; firebase-tools only sets its own variant.
+      STORAGE_EMULATOR_HOST: `http://${process.env.FIREBASE_STORAGE_EMULATOR_HOST ?? '127.0.0.1:9199'}`,
     },
   },
 });

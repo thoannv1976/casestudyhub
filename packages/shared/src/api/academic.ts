@@ -118,3 +118,30 @@ export type CreateClassRequest = z.infer<typeof createClassSchema>;
 export type JoinClassRequest = z.infer<typeof joinClassSchema>;
 export type CreateStaffAccountRequest = z.infer<typeof createStaffAccountSchema>;
 export type ChangePasswordRequest = z.infer<typeof changePasswordSchema>;
+
+/** Creating a case study in the library (SRS 5.2). */
+export const createCaseSchema = z.object({
+  caseCode: z
+    .string({ error: 'errors.caseCodeInvalid' })
+    .trim()
+    .min(2, 'errors.caseCodeInvalid')
+    .max(32, 'errors.caseCodeInvalid')
+    .regex(/^[A-Za-z0-9-]+$/, 'errors.caseCodeInvalid'),
+  title: z.string({ error: 'errors.nameInvalid' }).trim().min(2, 'errors.nameInvalid').max(200),
+  subtitle: z.string().trim().max(300).optional(),
+  company: z.string().trim().max(160).optional(),
+  industry: z.string().trim().max(160).optional(),
+  courseId: z.string().min(1, 'errors.courseRequired'),
+  chapter: z.string().trim().max(160).optional(),
+  description: z.string().trim().max(4000).optional(),
+  language: localeSchema,
+  learningObjectives: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
+  cloIds: z.array(z.string().trim().min(1).max(16)).max(20).default([]),
+  mainQuestions: z.array(z.string().trim().min(1).max(1000)).max(20).default([]),
+  references: z.array(z.string().trim().min(1).max(500)).max(50).default([]),
+});
+export type CreateCaseInput2 = z.input<typeof createCaseSchema>;
+
+export const setCaseStatusSchema = z.object({
+  status: z.enum(['draft', 'published', 'archived'], { error: 'errors.statusInvalid' }),
+});

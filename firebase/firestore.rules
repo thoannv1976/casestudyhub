@@ -121,6 +121,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ----- case study library ----------------------------------------------
+    match /caseStudies/{caseId} {
+      // A student reads a case only once the lecturer published it; a draft is
+      // working material. Staff see everything.
+      allow get, list: if isAdmin() || isLecturer()
+        || (isSignedIn() && resource.data.status == 'published');
+      // Uploads and publishing go through the server, which validates the file
+      // and records who did it.
+      allow write: if false;
+    }
+
     // Rate limit counters are server bookkeeping. A client that could read
     // them would know how many attempts it has left; one that could write
     // them would simply reset the limit.

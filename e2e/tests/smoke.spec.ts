@@ -318,6 +318,81 @@ test('the student sees the role they now own', async ({ page }) => {
   await expect(page.getByText('Context setter')).toBeVisible();
 });
 
+/** The smallest thing a PDF reader will still call a PDF. */
+const TINY_PDF = Buffer.from(
+  '%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n' +
+    '2 0 obj<</Type/Pages/Kids[]/Count 0>>endobj\n' +
+    'trailer<</Root 1 0 R>>\n%%EOF\n',
+  'utf8',
+);
+
+test('a lecturer adds a case study and uploads its material', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/cases');
+
+  await page.locator('#caseCode').fill(`CASE${RUN}`);
+  await page.locator('#title').fill('Amazon');
+  await page.locator('#company').fill('Amazon.com, Inc.');
+  await page.locator('#cloIds').fill('CLO1, CLO2');
+  await page.getByRole('button', { name: 'Add case study' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('Case study created');
+
+  const study = page.getByRole('listitem').filter({ hasText: `CASE${RUN}` });
+  await expect(study).toContainText('Draft');
+
+  await study.locator('input[type="file"]').setInputFiles({
+    name: 'amazon-case.pdf',
+    mimeType: 'application/pdf',
+    buffer: TINY_PDF,
+  });
+  await expect(page.getByTestId('alert-success')).toContainText('amazon-case.pdf');
+});
+
+test('a file wearing the wrong type is refused', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/cases');
+
+  const study = page.getByRole('listitem').filter({ hasText: `CASE${RUN}` });
+  await study.locator('input[type="file"]').setInputFiles({
+    name: 'payload.pdf',
+    mimeType: 'application/x-msdownload',
+    buffer: Buffer.from('MZ not a pdf at all', 'utf8'),
+  });
+
+  await expect(page.getByTestId('alert-error')).toContainText('not accepted');
+});
+
+test('a draft case stays invisible to students until it is published', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/cases');
+  await expect(page.getByText(`CASE${RUN}`)).toHaveCount(0);
+});
+
+test('publishing the case makes it readable by the class', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/cases');
+
+  const study = page.getByRole('listitem').filter({ hasText: `CASE${RUN}` });
+  await study.getByRole('button', { name: 'Publish to students' }).click();
+  await expect(study).toContainText('Published');
+
+  await signOut(page);
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/cases');
+
+  const studentView = page.getByRole('listitem').filter({ hasText: `CASE${RUN}` });
+  await expect(studentView).toContainText('Amazon');
+
+  // The download goes through the server, which is what makes the check above
+  // impossible to walk around with a shared link.
+  const link = studentView.getByRole('link', { name: 'amazon-case.pdf' });
+  const href = await link.getAttribute('href');
+  const response = await page.request.get(href ?? '');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('application/pdf');
+  expect(response.headers()['content-disposition']).toContain('attachment');
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

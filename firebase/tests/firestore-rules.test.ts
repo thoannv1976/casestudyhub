@@ -377,3 +377,60 @@ describe('groups and membership', () => {
     await assertFails(updateDoc(doc(lecturer(), 'groups', 'G1'), { locked: true }));
   });
 });
+
+describe('case study library', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'caseStudies', 'published_case'), {
+        id: 'published_case',
+        caseCode: 'CASE01',
+        title: 'Amazon',
+        courseId: 'ECOM2026',
+        language: 'en',
+        status: 'published',
+        attachments: [],
+      });
+      await setDoc(doc(db, 'caseStudies', 'draft_case'), {
+        id: 'draft_case',
+        caseCode: 'CASE02',
+        title: 'Walmart',
+        courseId: 'ECOM2026',
+        language: 'en',
+        status: 'draft',
+        attachments: [],
+      });
+    });
+  });
+
+  it('lets a student read a published case', async () => {
+    await assertSucceeds(getDoc(doc(student(), 'caseStudies', 'published_case')));
+  });
+
+  it('stops a student reading a case the lecturer is still preparing', async () => {
+    await assertFails(getDoc(doc(student(), 'caseStudies', 'draft_case')));
+  });
+
+  it('lets a lecturer read a draft', async () => {
+    await assertSucceeds(getDoc(doc(lecturer(), 'caseStudies', 'draft_case')));
+  });
+
+  it('stops an anonymous visitor reading any case', async () => {
+    await assertFails(getDoc(doc(anonymous(), 'caseStudies', 'published_case')));
+  });
+
+  it('stops a student publishing a case or attaching a file', async () => {
+    await assertFails(
+      updateDoc(doc(student(), 'caseStudies', 'draft_case'), { status: 'published' }),
+    );
+    await assertFails(
+      updateDoc(doc(student(), 'caseStudies', 'published_case'), { attachments: [] }),
+    );
+  });
+
+  it('stops even a lecturer writing a case directly', async () => {
+    await assertFails(
+      updateDoc(doc(lecturer(), 'caseStudies', 'draft_case'), { status: 'published' }),
+    );
+  });
+});

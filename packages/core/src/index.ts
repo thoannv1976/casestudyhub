@@ -12,6 +12,7 @@ export * from './academic/structure';
 export * from './academic/enrollment';
 export * from './academic/rate-limit';
 export * from './groups/groups';
+export * from './cases/cases';
 
 // Next.js-specific entry points are NOT re-exported here: `auth/session` and
 // `auth/authorize` import `next/headers`, which only resolves inside the web

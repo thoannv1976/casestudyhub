@@ -3,6 +3,7 @@ export * from './domain/academic';
 export * from './domain/roles';
 export * from './domain/rubric';
 export * from './domain/case-study';
+export * from './domain/files';
 export * from './policy/presentation-policy';
 export * from './policy/role-allocation';
 export * from './policy/grading';

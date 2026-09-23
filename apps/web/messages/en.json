@@ -222,7 +222,19 @@
     "noGroupsYet": "Create the groups before dividing the class.",
     "groupCountInvalid": "Choose between 1 and 50 groups.",
     "maxMembersInvalid": "Choose between 2 and 12 members per group.",
-    "notInThisClass": "You are not enrolled in this class."
+    "notInThisClass": "You are not enrolled in this class.",
+    "caseCodeTaken": "A case study already uses this code.",
+    "caseCodeInvalid": "Case code must be 2–32 characters: letters, digits or hyphen.",
+    "caseNotFound": "That case study no longer exists.",
+    "caseNotPublished": "This case study has not been published yet.",
+    "caseHasNoMaterial": "Upload the case material before publishing it.",
+    "corruptCase": "This case study could not be read.",
+    "attachmentNotFound": "That file is no longer attached to this case study.",
+    "fileMissing": "Please choose a file.",
+    "fileEmpty": "That file is empty.",
+    "fileTooLarge": "That file is too large.",
+    "fileFormatRejected": "That file type is not accepted here.",
+    "fileFormatNotUploadable": "This item does not take a file."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -411,5 +423,28 @@
     "full": "Full",
     "yourGroup": "Your group",
     "removeMember": "Remove {name} from this group"
+  },
+  "cases": {
+    "title": "Case study library",
+    "subtitle": "Source material, reusable across classes and semesters. Students see a case only once it is published.",
+    "subtitleStudent": "The cases your lecturers have published.",
+    "caseCode": "Case code",
+    "caseTitle": "Title",
+    "company": "Company",
+    "course": "Course",
+    "clos": "Learning outcomes",
+    "closHint": "Separated by commas, for example CLO1, CLO2, CLO4, CLO6.",
+    "language": "Document language",
+    "createCase": "Add case study",
+    "created": "Case study created. Upload its material below, then publish it.",
+    "needsCourse": "Create a course first, under Administration.",
+    "empty": "No case studies yet.",
+    "noFiles": "No material uploaded yet.",
+    "uploadLabel": "Upload case material (PDF, DOCX, PPTX or image)",
+    "uploaded": "Uploaded {fileName}.",
+    "publish": "Publish to students",
+    "unpublish": "Withdraw from students",
+    "published": "Published",
+    "draft": "Draft"
   }
 }

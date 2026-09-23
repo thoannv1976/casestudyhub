@@ -22,6 +22,8 @@ export const AUDIT_ACTIONS = [
   'group.random_distribution',
   'group.roles_assigned',
   'case.published',
+  'case.attachment_added',
+  'case.attachment_removed',
   'assignment.deadline_changed',
   'submission.resubmission_allowed',
   'grade.drafted',

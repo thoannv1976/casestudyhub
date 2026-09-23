@@ -222,7 +222,19 @@
     "noGroupsYet": "Hãy tạo nhóm trước khi chia lớp.",
     "groupCountInvalid": "Chọn từ 1 đến 50 nhóm.",
     "maxMembersInvalid": "Chọn từ 2 đến 12 thành viên mỗi nhóm.",
-    "notInThisClass": "Bạn không thuộc lớp này."
+    "notInThisClass": "Bạn không thuộc lớp này.",
+    "caseCodeTaken": "Đã có case study dùng mã này.",
+    "caseCodeInvalid": "Mã case phải có 2–32 ký tự: chữ, số hoặc gạch ngang.",
+    "caseNotFound": "Case study này không còn tồn tại.",
+    "caseNotPublished": "Case study này chưa được công bố.",
+    "caseHasNoMaterial": "Hãy tải học liệu lên trước khi công bố.",
+    "corruptCase": "Không đọc được case study này.",
+    "attachmentNotFound": "File này không còn thuộc case study.",
+    "fileMissing": "Vui lòng chọn một file.",
+    "fileEmpty": "File rỗng.",
+    "fileTooLarge": "File quá lớn.",
+    "fileFormatRejected": "Định dạng file này không được chấp nhận ở đây.",
+    "fileFormatNotUploadable": "Mục này không nhận file."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -411,5 +423,28 @@
     "full": "Đã đủ",
     "yourGroup": "Nhóm của bạn",
     "removeMember": "Loại {name} khỏi nhóm"
+  },
+  "cases": {
+    "title": "Thư viện Case Study",
+    "subtitle": "Học liệu gốc, dùng lại được cho nhiều lớp và nhiều học kỳ. Sinh viên chỉ thấy case sau khi được công bố.",
+    "subtitleStudent": "Các case study giảng viên đã công bố.",
+    "caseCode": "Mã case",
+    "caseTitle": "Tiêu đề",
+    "company": "Doanh nghiệp",
+    "course": "Học phần",
+    "clos": "Chuẩn đầu ra (CLO)",
+    "closHint": "Cách nhau bằng dấu phẩy, ví dụ CLO1, CLO2, CLO4, CLO6.",
+    "language": "Ngôn ngữ tài liệu",
+    "createCase": "Thêm case study",
+    "created": "Đã tạo case study. Hãy tải học liệu lên rồi công bố.",
+    "needsCourse": "Hãy tạo học phần trước, trong mục Quản trị.",
+    "empty": "Chưa có case study nào.",
+    "noFiles": "Chưa có tài liệu nào.",
+    "uploadLabel": "Tải học liệu lên (PDF, DOCX, PPTX hoặc ảnh)",
+    "uploaded": "Đã tải lên {fileName}.",
+    "publish": "Công bố cho sinh viên",
+    "unpublish": "Thu hồi khỏi sinh viên",
+    "published": "Đã công bố",
+    "draft": "Bản nháp"
   }
 }
