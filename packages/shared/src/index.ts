@@ -6,4 +6,7 @@ export * from './domain/case-study';
 export * from './policy/presentation-policy';
 export * from './policy/role-allocation';
 export * from './policy/grading';
+export * from './api/auth';
+export * from './api/academic';
+export * from './import/csv';
 export * from './collections';

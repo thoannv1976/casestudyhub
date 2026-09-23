@@ -41,3 +41,74 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  image:
+    name: Container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # CI used to prove only that `next build` succeeds. That is not the same as
+    # proving the image Cloud Run runs can be built and started: a dependency
+    # npm places inside a workspace folder, or a file the Dockerfile forgets to
+    # copy, breaks the image while `npm run build` stays green. This job builds
+    # the real image and starts it.
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Build the Cloud Run image
+        run: docker build --file infra/Dockerfile --tag casestudyhub-web:ci .
+
+      - name: Start the container
+        run: |
+          docker run --detach --name web --publish 8080:8080 \
+            --env GOOGLE_CLOUD_PROJECT=ci-placeholder \
+            --env FIREBASE_STORAGE_BUCKET=ci-placeholder.firebasestorage.app \
+            casestudyhub-web:ci
+
+      - name: Probe the running container
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --silent --fail http://127.0.0.1:8080/api/health > /dev/null; then
+              echo "Healthy after ${attempt} attempt(s)"
+              curl --silent --fail http://127.0.0.1:8080/api/health
+              echo
+              # Both locales must render from the image, not just the API.
+              curl --silent --fail http://127.0.0.1:8080/vi > /dev/null
+              curl --silent --fail http://127.0.0.1:8080/en > /dev/null
+              echo "Both locales render."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "The container never became healthy. Logs:"
+          docker logs web
+          exit 1
+
+      - name: Container logs on failure
+        if: failure()
+        run: docker logs web || true
+
+  rules:
+    name: Firestore security rules
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The Firestore emulator is a Java process.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Rules tests against the Firebase Emulator
+        run: npm run test:rules

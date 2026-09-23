@@ -36,12 +36,26 @@ export function getAdminApp(): App {
   );
 }
 
-let firestore: Firestore | null = null;
+// Cached on globalThis, not in a module variable: Next.js bundles this package
+// into several server chunks, each with its own copy of the module, while
+// getFirestore() returns one shared instance per app. A module-level cache let
+// a second copy call settings() on an instance already in use, which throws
+// "Firestore has already been initialized".
+const FIRESTORE_KEY = Symbol.for('casestudyhub.firestore');
+type FirestoreGlobal = typeof globalThis & { [FIRESTORE_KEY]?: Firestore };
 
 export function getDb(): Firestore {
-  if (firestore) return firestore;
-  firestore = getFirestore(getAdminApp());
-  firestore.settings({ ignoreUndefinedProperties: true });
+  const store = globalThis as FirestoreGlobal;
+  const cached = store[FIRESTORE_KEY];
+  if (cached) return cached;
+
+  const firestore = getFirestore(getAdminApp());
+  try {
+    firestore.settings({ ignoreUndefinedProperties: true });
+  } catch {
+    // Already configured by an earlier caller in this process.
+  }
+  store[FIRESTORE_KEY] = firestore;
   return firestore;
 }
 

@@ -20,10 +20,13 @@
     "test:watch": "vitest",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
-    "emulators": "cd firebase && firebase emulators:start --project demo-casestudyhub"
+    "emulators": "cd firebase && firebase emulators:start --project demo-casestudyhub",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-casestudyhub --config firebase/firebase.json \"vitest run --config vitest.rules.config.mts\""
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
     "@types/node": "^22.10.0",
+    "firebase-tools": "^14.27.0",
     "prettier": "^3.4.2",
     "typescript": "5.9.3",
     "vitest": "^5.0.1"
