@@ -660,3 +660,78 @@ describe('peer assessment', () => {
     await assertFails(deleteDoc(doc(student(), 'peerReviews', 'PS1__student_b')));
   });
 });
+
+describe('marking and grades', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'lecturerAssessments', 'A1'), {
+        id: 'A1',
+        assignmentId: 'A1',
+        classId: 'C1',
+        groupId: 'G1',
+        caseStudyId: 'CS1',
+        criterionScores: { understanding: 18 },
+        groupScoreRaw: 88,
+        latePenaltyWaived: false,
+        individual: {},
+        rubricId: 'rubric-standard-100',
+        rubricVersion: '2026.1',
+        policyId: 'ecom-2026-standard',
+        policyVersion: '2026.1',
+        status: 'draft',
+        assessedByUid: LECTURER_UID,
+        assessedByName: 'Tran Thi B',
+        updatedAt: '2026-10-01T02:00:00.000Z',
+      });
+      await setDoc(doc(db, 'grades', 'A1__student_a'), {
+        id: 'A1__student_a',
+        assignmentId: 'A1',
+        groupId: 'G1',
+        studentUid: STUDENT_UID,
+        groupScore: 88,
+        individualScore: 70,
+        finalScore: 84.4,
+        policyId: 'ecom-2026-standard',
+        policyVersion: '2026.1',
+        status: 'published',
+      });
+    });
+  });
+
+  it('keeps a draft mark out of every client, students included', async () => {
+    // A draft is the lecturer's working note. A student who could read it
+    // would learn their mark before the lecturer decided to give it.
+    await assertFails(getDoc(doc(student(), 'lecturerAssessments', 'A1')));
+    await assertFails(getDocs(collection(student(), 'lecturerAssessments')));
+  });
+
+  it('serves a published grade through the server, not through the client', async () => {
+    // Reading is fine; what a rule cannot express is "published grades only,
+    // and only your own", so the route handler does both.
+    await assertFails(getDoc(doc(student(), 'grades', 'A1__student_a')));
+    await assertFails(getDocs(collection(student(), 'grades')));
+  });
+
+  it('stops a student improving their own mark', async () => {
+    await assertFails(updateDoc(doc(student(), 'grades', 'A1__student_a'), { finalScore: 100 }));
+    await assertFails(
+      setDoc(doc(student(), 'grades', 'A1__forged'), {
+        assignmentId: 'A1',
+        studentUid: STUDENT_UID,
+        finalScore: 100,
+        status: 'published',
+      }),
+    );
+    await assertFails(deleteDoc(doc(student(), 'grades', 'A1__student_a')));
+  });
+
+  it('stops even a lecturer publishing a grade round the back of the engine', async () => {
+    // Publishing computes every member's mark from the frozen policy version
+    // in one transaction. A direct write would skip all of it.
+    await assertFails(
+      updateDoc(doc(lecturer(), 'lecturerAssessments', 'A1'), { status: 'published' }),
+    );
+    await assertFails(updateDoc(doc(lecturer(), 'grades', 'A1__student_a'), { finalScore: 100 }));
+  });
+});

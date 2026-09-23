@@ -27,6 +27,7 @@ export const AUDIT_ACTIONS = [
   'assignment.created',
   'assignment.deadline_changed',
   'submission.created',
+  'class.lecturer_added',
   'session.started',
   'session.status_changed',
   'question.selected',

@@ -10,6 +10,7 @@ import {
   listClassesOfStudent,
   listGroups,
   listMembers,
+  listPublishedGradesOfStudent,
   listSessions,
   listSubmissions,
 } from '@casestudyhub/core';
@@ -46,6 +47,7 @@ export default async function StudentClassPage({
   const tClasses = await getTranslations('classes');
   const tWorkspace = await getTranslations('workspace');
   const tSession = await getTranslations('session');
+  const tGrading = await getTranslations('grading');
   const tError = await getTranslations('errors');
 
   const details = await getClassById(classId);
@@ -78,6 +80,14 @@ export default async function StudentClassPage({
     ? await Promise.all([listSubmissions(assignment.id), getCase(assignment.caseStudyId)])
     : [[], null];
 
+  // A mark exists for a student only once the lecturer published it; a draft
+  // is the lecturer's working note, not a result.
+  const grade = assignment
+    ? ((await listPublishedGradesOfStudent(user.uid)).find(
+        (row) => row.assignmentId === assignment.id,
+      ) ?? null)
+    : null;
+
   // The server decides whether the window has closed, so every viewer of this
   // page sees the same answer whatever their device clock says.
   const overdue = assignment ? lateAtServerTime(assignment) : false;
@@ -102,6 +112,24 @@ export default async function StudentClassPage({
               overdue={overdue}
             />
           </div>
+        </Card>
+      ) : null}
+
+      {grade ? (
+        <Card>
+          <CardTitle>{tGrading('yourMark')}</CardTitle>
+          <p className="mt-3 text-3xl font-semibold tabular-nums">{grade.finalScore}</p>
+          <p className="text-muted mt-2 text-sm">
+            {tGrading('yourMarkBreakdown', {
+              group: grade.groupScore,
+              individual: grade.individualScore,
+              team: Math.round(DEFAULT_PRESENTATION_POLICY.grading.teamWeight * 100),
+              solo: Math.round(DEFAULT_PRESENTATION_POLICY.grading.individualWeight * 100),
+            })}
+          </p>
+          <p className="text-muted mt-1 text-xs">
+            {tGrading('policyVersion', { version: grade.policyVersion })}
+          </p>
         </Card>
       ) : null}
 

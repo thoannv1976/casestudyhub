@@ -262,7 +262,16 @@
     "cannotReviewOwnGroup": "You cannot score your own group.",
     "peerScoreRequired": "Please give a score for every criterion.",
     "peerScoreOutOfRange": "A score cannot be higher than the points the criterion is worth.",
-    "peerScoreUnknownCriterion": "That is not a criterion in this rubric."
+    "peerScoreUnknownCriterion": "That is not a criterion in this rubric.",
+    "gradeAlreadyPublished": "This grade has been published. Changing it is a new decision, with its own record.",
+    "assessmentNotFound": "This group has not been marked yet.",
+    "criterionScoreRequired": "Please award points for every criterion.",
+    "criterionScoreOutOfRange": "A score is higher than the points that criterion is worth.",
+    "individualScoreRequired": "Please give every member an individual score.",
+    "waiverNeedsReason": "Waiving the late penalty needs a reason of at least 10 characters.",
+    "noGroupMembersToGrade": "This group has no members to grade.",
+    "noAccountWithThatEmail": "No account on this platform uses that email address.",
+    "notALecturerAccount": "That account is not a lecturer account."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -356,7 +365,13 @@
     "joinModeClosed": "Closed, nobody can join",
     "needsCourseAndSemester": "Create a course and a semester first, under Administration.",
     "empty": "You have no classes yet.",
-    "studentsShort": "students"
+    "studentsShort": "students",
+    "staffTitle": "Teaching staff",
+    "staffHint": "Marking belongs to the lecturer of the class. Add the lecturer here so they can reach it.",
+    "addLecturer": "Lecturer email",
+    "addLecturerHint": "The account must already exist and be a lecturer account.",
+    "addLecturerAction": "Add lecturer",
+    "lecturerAdded": "{name} now teaches this class."
   },
   "roster": {
     "title": "Student list",
@@ -540,7 +555,8 @@
       "completed": "Finished"
     },
     "openPeerReview": "Open scoring",
-    "closePeerReview": "Close scoring"
+    "closePeerReview": "Close scoring",
+    "mark": "Mark"
   },
   "questions": {
     "title": "Question wall",
@@ -591,5 +607,54 @@
     "noScores": "Nobody has scored this group yet.",
     "overall": "{count} scores · mean {mean} · median {median} · from {lowest} to {highest}",
     "range": "from {lowest} to {highest}"
+  },
+  "grading": {
+    "title": "Marking",
+    "status": {
+      "unmarked": "Not marked",
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "evidenceTitle": "What the room produced",
+    "evidenceHint": "Evidence, not marks. The clock, the Q&A checklist and the class scores are here to be read; the points below are yours.",
+    "evidenceOnTime": "The group handed in on time.",
+    "evidenceLate": "The group handed in late. The framework deducts {points} points.",
+    "evidenceQuestions": "The class asked {count, plural, one {# question} other {# questions}}; {answered} answered aloud.",
+    "evidenceEveryMemberAnswered": "Every member answered at least one question.",
+    "evidenceMembersSilent": "Did not answer a question: {names}",
+    "evidenceNoSession": "No session was run for this presentation.",
+    "evidenceNoPeerScores": "The class did not score this group.",
+    "evidencePeerScores": "{count, plural, one {# score} other {# scores}} from the class · mean {mean} · median {median}",
+    "markTitle": "Your marking",
+    "groupScore": "Group score, out of {max}",
+    "lecturerOnlyCriterion": "Judged in the room. AI never proposes a score for this one.",
+    "comment": "Feedback for the group",
+    "latePenalty": "Late penalty: {points} points",
+    "waivePenalty": "Waive the late penalty",
+    "waiverReason": "Reason",
+    "waiverReasonHint": "Recorded with the grade, so the decision can be explained later.",
+    "individualScores": "Individual scores ({weight}% of the final mark)",
+    "individualScore": "Score out of {max}",
+    "didNotPresent": "Did not present",
+    "failedOwnRoleQuestion": "Could not answer a question belonging to their own role",
+    "note": "Note",
+    "noMembers": "This group has no members.",
+    "save": "Save marking",
+    "previewTitle": "What each member would get",
+    "previewHint": "Group {team}% + individual {individual}%, on the framework in force.",
+    "penaltyApplied": "late −{points}",
+    "forfeit": {
+      "absent": "individual share forfeited: absent",
+      "unanswered_own_role": "individual share forfeited: own-role question"
+    },
+    "publish": "Publish to students",
+    "publishHint": "Publishing shows every member of the group their mark. It cannot be edited afterwards.",
+    "publishIsLecturerOnly": "Publishing a grade is the lecturer’s decision.",
+    "publishedNotice": "These grades have been published to the group.",
+    "publishedDetail": "Group score {score}, published on {when}.",
+    "yourMark": "Your mark",
+    "yourMarkBreakdown": "Group {group} ({team}%) + individual {individual} ({solo}%)",
+    "policyVersion": "Framework version {version}",
+    "clockStillRunning": "The clock is still running for this session, so the times below are what has been banked so far."
   }
 }

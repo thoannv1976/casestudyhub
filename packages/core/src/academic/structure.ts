@@ -239,3 +239,82 @@ export async function listCourses(): Promise<NamedRecord[]> {
     name: `${doc.get('code') as string} — ${doc.get('name') as string}`,
   }));
 }
+
+export interface ClassLecturer {
+  uid: string;
+  fullName: string;
+  email: string;
+}
+
+export async function listClassLecturers(classId: string): Promise<ClassLecturer[]> {
+  const snapshot = await getDb().collection(COLLECTIONS.classes).doc(classId).get();
+  if (!snapshot.exists) throw new AppError('NOT_FOUND', 'errors.classNotFound');
+
+  const lecturerIds = (snapshot.get('lecturerIds') as string[] | undefined) ?? [];
+  if (lecturerIds.length === 0) return [];
+
+  const profiles = await getDb().getAll(
+    ...lecturerIds.map((uid) => getDb().collection(COLLECTIONS.users).doc(uid)),
+  );
+
+  return profiles
+    .filter((profile) => profile.exists)
+    .map((profile) => ({
+      uid: profile.id,
+      fullName: (profile.get('fullName') as string | undefined) ?? profile.id,
+      email: (profile.get('email') as string | undefined) ?? '',
+    }));
+}
+
+/**
+ * Puts another lecturer in charge of a class.
+ *
+ * Until this existed, a lecturer account created by an administrator could
+ * reach no class at all: `createClass` names its creator as the only lecturer,
+ * and every teaching screen goes through `assertCanManageClass`. Marking is
+ * the lecturer's alone (SRS 13), so the class has to be able to acquire one.
+ */
+export async function addClassLecturer(
+  actor: SessionUser,
+  classId: string,
+  email: string,
+): Promise<ClassLecturer> {
+  await assertCanManageClass(actor, classId);
+
+  const matches = await getDb()
+    .collection(COLLECTIONS.users)
+    .where('email', '==', email.trim().toLowerCase())
+    .limit(1)
+    .get();
+
+  const profile = matches.docs[0];
+  if (!profile) throw new AppError('NOT_FOUND', 'errors.noAccountWithThatEmail');
+
+  const role = profile.get('globalRole') as string | undefined;
+  if (role !== 'lecturer' && role !== 'admin') {
+    throw new AppError('POLICY_VIOLATION', 'errors.notALecturerAccount');
+  }
+
+  await getDb()
+    .collection(COLLECTIONS.classes)
+    .doc(classId)
+    .update({
+      lecturerIds: FieldValue.arrayUnion(profile.id),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+  await writeAuditLog({
+    action: 'class.lecturer_added',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.classes}/${classId}`,
+    classId,
+    after: { lecturerUid: profile.id },
+  });
+
+  return {
+    uid: profile.id,
+    fullName: (profile.get('fullName') as string | undefined) ?? profile.id,
+    email: (profile.get('email') as string | undefined) ?? email,
+  };
+}

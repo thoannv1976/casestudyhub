@@ -46,6 +46,7 @@ const AUDIENCE = {
 let slidesHref = '';
 let reportHref = '';
 let sessionUrl = '';
+let gradeUrl = '';
 
 /**
  * Signing in ends with a navigation. Without waiting for it, the next step
@@ -874,6 +875,198 @@ test('a student from another class cannot reach the room at all', async ({ page 
   const questions = await page.request.get(`/api${sessionUrl}/questions`);
   expect(questions.status()).toBe(403);
   expect((await page.request.get(slidesHref)).status()).toBe(403);
+});
+
+/**
+ * Marking and publishing (SRS Module 13). The lecturer decides; everything the
+ * class produced is evidence beside the decision, never the decision itself.
+ */
+
+test('the class acquires its lecturer, who could reach nothing before', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  // Created by the admin, so this lecturer is not on it yet.
+  await expect(page.getByText(CLASS_CODE)).toHaveCount(0);
+  await signOut(page);
+
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.locator('#lecturerEmail').fill(LECTURER.email);
+  await page.getByRole('button', { name: 'Add lecturer' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText(LECTURER.fullName);
+
+  await signOut(page);
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await expect(page.getByText(CLASS_CODE)).toBeVisible();
+});
+
+test('an email belonging to nobody is refused, and a student is not a lecturer', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.locator('#lecturerEmail').fill(`nobody.${RUN}@e2e.test`);
+  await page.getByRole('button', { name: 'Add lecturer' }).click();
+  await expect(page.getByTestId('alert-error')).toContainText('No account');
+
+  await page.locator('#lecturerEmail').fill(STUDENT.email);
+  await page.getByRole('button', { name: 'Add lecturer' }).click();
+  await expect(page.getByTestId('alert-error')).toContainText('not a lecturer account');
+});
+
+test('the marking screen lays the evidence out beside the rubric', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.getByRole('link', { name: 'Mark' }).first().click();
+  await page.waitForURL(/\/grade\/.+/);
+  gradeUrl = new URL(page.url()).pathname.replace(/^\/[a-z]{2}(?=\/)/, '');
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Marking' })).toBeVisible();
+  await expect(page.getByText('Not marked')).toBeVisible();
+  await expect(page.getByText('The group handed in on time.')).toBeVisible();
+  await expect(page.getByText('The class asked 1 question;')).toBeVisible();
+  await expect(page.getByText('1 score from the class')).toBeVisible();
+  // The criterion AI may never score is labelled as the lecturer's own.
+  await expect(page.getByText('Judged in the room')).toBeVisible();
+});
+
+test('marking computes every member\u2019s mark before anything is published', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+
+  await page.locator('#understanding').fill('18');
+  await page.locator('#analysis').fill('22');
+  await page.locator('#evidence').fill('12');
+  await page.locator('#critique').fill('13');
+  await page.locator('#transferDecision').fill('13');
+  await page.locator('#delivery').fill('8');
+  await page.locator('#comment').fill('Clear on the model; the numbers needed one more slide.');
+
+  // 86 for the group. Everyone gets 70 individually except one who was absent.
+  const scores = page.locator('input[name^="score_"]');
+  const count = await scores.count();
+  expect(count).toBe(4);
+  for (let index = 0; index < count; index += 1) {
+    await scores.nth(index).fill('70');
+  }
+  await page.locator('input[name^="absent_"]').first().check();
+
+  await page.getByRole('button', { name: 'Save marking' }).click();
+
+  await expect(page.getByText('What each member would get')).toBeVisible();
+  // 86 * 0.8 + 70 * 0.2 = 82.8, rounded to the whole point the framework marks
+  // in; the member who did not present forfeits the individual fifth.
+  const preview = page.getByTestId('grade-preview');
+  await expect(preview.getByRole('listitem').filter({ hasText: 'Seeded Student 2' })).toContainText(
+    '83',
+  );
+  await expect(preview.getByRole('listitem').filter({ hasText: STUDENT.fullName })).toContainText(
+    '69',
+  );
+  await expect(page.getByText('individual share forfeited: absent')).toBeVisible();
+});
+
+test('a student sees nothing while the mark is still a draft', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  await expect(page.getByText('Your mark')).toHaveCount(0);
+});
+
+test('a student cannot reach the marking screen or the endpoint behind it', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en${gradeUrl}`);
+  await expect(page.getByTestId('alert-error')).toContainText('do not have permission');
+
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+  const response = await page.request.get(`/api/assignments/${assignmentId}/assessment`);
+  expect(response.status()).toBe(403);
+});
+
+test('publishing is the lecturer\u2019s decision, not the administrator\u2019s', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${gradeUrl}`);
+
+  // The admin may mark, but the publish button is not offered...
+  await expect(page.getByText('Publishing a grade is the lecturer')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Publish to students' })).toHaveCount(0);
+
+  // ...and asking for it directly is refused.
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+  const response = await page.request.post(`/api/assignments/${assignmentId}/assessment`, {
+    data: { action: 'publish' },
+  });
+  expect(response.status()).toBe(403);
+});
+
+test('the lecturer publishes, and the group sees the mark', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+  await page.getByRole('button', { name: 'Publish to students' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('published');
+  await expect(page.getByText('Published', { exact: true })).toBeVisible();
+
+  await signOut(page);
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  await expect(page.getByText('Your mark')).toBeVisible();
+  // This student is the one who did not present, so they see 69, not 83.
+  await expect(page.getByText('69', { exact: true })).toBeVisible();
+  await expect(page.getByText('Framework version 2026.1')).toBeVisible();
+});
+
+test('a published mark cannot be quietly edited', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+
+  await expect(page.getByText('These grades have been published')).toBeVisible();
+  await expect(page.locator('#understanding')).toHaveCount(0);
+
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+  const response = await page.request.post(`/api/assignments/${assignmentId}/assessment`, {
+    data: {
+      criterionScores: {
+        understanding: 20,
+        analysis: 25,
+        evidence: 15,
+        critique: 15,
+        transferDecision: 15,
+        delivery: 10,
+      },
+      individual: {},
+    },
+  });
+  expect(response.status()).toBe(409);
+  expect((await response.json()).error.messageKey).toBe('errors.gradeAlreadyPublished');
+});
+
+test('a classmate cannot read somebody else\u2019s mark', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  // In the class, in another group, with no assignment of their own: nothing.
+  await expect(page.getByText('Your mark')).toHaveCount(0);
+  await expect(page.getByText('Framework version')).toHaveCount(0);
 });
 
 test('a student is refused the administration pages', async ({ page }) => {

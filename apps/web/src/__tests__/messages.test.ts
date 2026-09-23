@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOCALES,
+  addClassLecturerSchema,
   answerQuestionSchema,
   askQuestionSchema,
   changePasswordSchema,
@@ -12,6 +13,7 @@ import {
   profileUpdateSchema,
   registerRequestSchema,
   removeEnrollmentSchema,
+  saveLecturerAssessmentSchema,
   sessionRequestSchema,
 } from '@casestudyhub/shared';
 import en from '../../messages/en.json';
@@ -119,6 +121,13 @@ describe('validation messages are translated', () => {
     ...messagesOf(askQuestionSchema, { category: 'nope', text: 'hi' }),
     ...messagesOf(askQuestionSchema, { category: 'critical', text: 'x'.repeat(1001) }),
     ...messagesOf(answerQuestionSchema, { questionId: 'q1', answerText: 'no' }),
+    // Marking: what the lecturer sees when the form is incomplete.
+    ...messagesOf(saveLecturerAssessmentSchema, {
+      criterionScores: { understanding: 'not a number' },
+      individual: { uid1: { rawScore: 'x' } },
+      latePenaltyWaived: true,
+    }),
+    ...messagesOf(addClassLecturerSchema, { email: 'nope' }),
     // Import problems are shown to the lecturer the same way form errors are.
     ...parseStudentRoster('studentId,email\nSV001,a@x.edu.vn').problems.map((p) => p.messageKey),
     ...parseStudentRoster('').problems.map((p) => p.messageKey),

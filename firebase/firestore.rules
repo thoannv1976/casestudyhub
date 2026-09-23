@@ -183,6 +183,19 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ----- marking and grades ----------------------------------------------
+    // A lecturer's draft mark is a working note; a published grade is a
+    // statement to a student. Both are served from the server, which is the
+    // only place that can tell the two apart and compute the second from the
+    // policy version frozen into the assignment.
+    match /lecturerAssessments/{assessmentId} {
+      allow read, write: if false;
+    }
+
+    match /grades/{gradeId} {
+      allow read, write: if false;
+    }
+
     // Rate limit counters are server bookkeeping. A client that could read
     // them would know how many attempts it has left; one that could write
     // them would simply reset the limit.
@@ -200,8 +213,8 @@ service cloud.firestore {
     }
 
     // ----- everything else -------------------------------------------------
-    // Collections arriving in later phases (AI assessments, grades) stay closed
-    // until their module lands together with its rules and emulator tests.
+    // Collections arriving in later phases (AI assessments) stay closed until
+    // their module lands together with its rules and emulator tests.
     match /{document=**} {
       allow read, write: if false;
     }

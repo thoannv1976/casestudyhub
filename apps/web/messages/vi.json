@@ -262,7 +262,16 @@
     "cannotReviewOwnGroup": "Bạn không thể chấm điểm chính nhóm mình.",
     "peerScoreRequired": "Vui lòng cho điểm ở tất cả các tiêu chí.",
     "peerScoreOutOfRange": "Điểm không được vượt quá số điểm tối đa của tiêu chí.",
-    "peerScoreUnknownCriterion": "Đây không phải tiêu chí trong rubric này."
+    "peerScoreUnknownCriterion": "Đây không phải tiêu chí trong rubric này.",
+    "gradeAlreadyPublished": "Điểm này đã được công bố. Muốn thay đổi thì đó là một quyết định mới, có ghi nhận riêng.",
+    "assessmentNotFound": "Nhóm này chưa được chấm.",
+    "criterionScoreRequired": "Vui lòng cho điểm ở tất cả các tiêu chí.",
+    "criterionScoreOutOfRange": "Có điểm vượt quá số điểm tối đa của tiêu chí.",
+    "individualScoreRequired": "Vui lòng cho điểm cá nhân cho tất cả thành viên.",
+    "waiverNeedsReason": "Miễn trừ điểm phạt nộp muộn cần lý do ít nhất 10 ký tự.",
+    "noGroupMembersToGrade": "Nhóm này chưa có thành viên để chấm.",
+    "noAccountWithThatEmail": "Không có tài khoản nào trên hệ thống dùng email này.",
+    "notALecturerAccount": "Tài khoản đó không phải tài khoản giảng viên."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -356,7 +365,13 @@
     "joinModeClosed": "Đóng, không ai vào được",
     "needsCourseAndSemester": "Hãy tạo học phần và học kỳ trước, trong mục Quản trị.",
     "empty": "Bạn chưa có lớp nào.",
-    "studentsShort": "sinh viên"
+    "studentsShort": "sinh viên",
+    "staffTitle": "Giảng viên phụ trách",
+    "staffHint": "Việc chấm điểm thuộc về giảng viên của lớp. Thêm giảng viên ở đây để họ vào được màn hình chấm.",
+    "addLecturer": "Email giảng viên",
+    "addLecturerHint": "Tài khoản phải có sẵn và là tài khoản giảng viên.",
+    "addLecturerAction": "Thêm giảng viên",
+    "lecturerAdded": "{name} đã phụ trách lớp này."
   },
   "roster": {
     "title": "Danh sách sinh viên",
@@ -540,7 +555,8 @@
       "completed": "Đã kết thúc"
     },
     "openPeerReview": "Mở chấm điểm",
-    "closePeerReview": "Đóng chấm điểm"
+    "closePeerReview": "Đóng chấm điểm",
+    "mark": "Chấm điểm"
   },
   "questions": {
     "title": "Tường câu hỏi",
@@ -591,5 +607,54 @@
     "noScores": "Chưa có ai chấm nhóm này.",
     "overall": "{count} lượt chấm · trung bình {mean} · trung vị {median} · từ {lowest} đến {highest}",
     "range": "từ {lowest} đến {highest}"
+  },
+  "grading": {
+    "title": "Chấm điểm",
+    "status": {
+      "unmarked": "Chưa chấm",
+      "draft": "Bản nháp",
+      "published": "Đã công bố"
+    },
+    "evidenceTitle": "Những gì buổi học ghi lại",
+    "evidenceHint": "Đây là bằng chứng, không phải điểm. Đồng hồ, bảng kiểm hỏi đáp và điểm chấm chéo để giảng viên đọc; điểm bên dưới là của giảng viên.",
+    "evidenceOnTime": "Nhóm nộp đúng hạn.",
+    "evidenceLate": "Nhóm nộp muộn. Khung đánh giá trừ {points} điểm.",
+    "evidenceQuestions": "Cả lớp đặt {count, plural, other {# câu hỏi}}; {answered} câu được trả lời trực tiếp.",
+    "evidenceEveryMemberAnswered": "Mọi thành viên đều đã trả lời ít nhất một câu.",
+    "evidenceMembersSilent": "Chưa trả lời câu nào: {names}",
+    "evidenceNoSession": "Chưa mở phiên thuyết trình cho bài này.",
+    "evidenceNoPeerScores": "Lớp chưa chấm nhóm này.",
+    "evidencePeerScores": "{count, plural, other {# lượt chấm}} từ lớp · trung bình {mean} · trung vị {median}",
+    "markTitle": "Phần chấm của giảng viên",
+    "groupScore": "Điểm nhóm, trên {max}",
+    "lecturerOnlyCriterion": "Đánh giá trực tiếp trên lớp. AI không bao giờ đề xuất điểm tiêu chí này.",
+    "comment": "Nhận xét cho nhóm",
+    "latePenalty": "Điểm phạt nộp muộn: {points} điểm",
+    "waivePenalty": "Miễn điểm phạt nộp muộn",
+    "waiverReason": "Lý do",
+    "waiverReasonHint": "Được lưu cùng điểm, để sau này giải thích được quyết định.",
+    "individualScores": "Điểm cá nhân ({weight}% điểm cuối)",
+    "individualScore": "Điểm trên {max}",
+    "didNotPresent": "Không tham gia thuyết trình",
+    "failedOwnRoleQuestion": "Không trả lời được câu hỏi thuộc vai trò của mình",
+    "note": "Ghi chú",
+    "noMembers": "Nhóm này chưa có thành viên.",
+    "save": "Lưu phần chấm",
+    "previewTitle": "Điểm dự kiến của từng thành viên",
+    "previewHint": "Điểm nhóm {team}% + điểm cá nhân {individual}%, theo khung đang áp dụng.",
+    "penaltyApplied": "nộp muộn −{points}",
+    "forfeit": {
+      "absent": "mất phần điểm cá nhân: vắng mặt",
+      "unanswered_own_role": "mất phần điểm cá nhân: không trả lời được câu hỏi của vai mình"
+    },
+    "publish": "Công bố cho sinh viên",
+    "publishHint": "Công bố sẽ hiển thị điểm cho mọi thành viên của nhóm. Sau đó không sửa được nữa.",
+    "publishIsLecturerOnly": "Công bố điểm là quyết định của giảng viên.",
+    "publishedNotice": "Điểm đã được công bố cho nhóm.",
+    "publishedDetail": "Điểm nhóm {score}, công bố ngày {when}.",
+    "yourMark": "Điểm của bạn",
+    "yourMarkBreakdown": "Điểm nhóm {group} ({team}%) + điểm cá nhân {individual} ({solo}%)",
+    "policyVersion": "Khung đánh giá phiên bản {version}",
+    "clockStillRunning": "Đồng hồ của phiên này vẫn đang chạy, nên thời lượng bên dưới là phần đã được ghi nhận tới lúc này."
   }
 }

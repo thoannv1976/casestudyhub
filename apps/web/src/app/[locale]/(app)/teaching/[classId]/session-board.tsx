@@ -20,11 +20,15 @@ export function SessionBoard({
   groups,
   cases,
   sessions,
+  classId,
+  canGrade,
 }: {
   assignments: Assignment[];
   groups: Group[];
   cases: CaseStudy[];
   sessions: PresentationSession[];
+  classId: string;
+  canGrade: boolean;
 }) {
   const t = useTranslations('session');
   const tError = useTranslations();
@@ -97,6 +101,14 @@ export function SessionBoard({
                     {t('start')}
                   </Button>
                 )}
+                {canGrade ? (
+                  <Link
+                    href={`/teaching/${classId}/grade/${assignment.id}`}
+                    className="text-brand-600 dark:text-brand-300 text-sm font-medium underline"
+                  >
+                    {t('mark')}
+                  </Link>
+                ) : null}
               </div>
             </li>
           );

@@ -19,6 +19,7 @@ export * from './submissions/submissions';
 export * from './sessions/sessions';
 export * from './questions/questions';
 export * from './peer-reviews/peer-reviews';
+export * from './grading/assessments';
 
 // Next.js-specific entry points are NOT re-exported here: `auth/session` and
 // `auth/authorize` import `next/headers`, which only resolves inside the web

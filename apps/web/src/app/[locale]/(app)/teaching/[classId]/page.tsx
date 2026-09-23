@@ -6,6 +6,7 @@ import {
   getClassById,
   listAssignments,
   listCases,
+  listClassLecturers,
   listGroups,
   listMembers,
   listRoster,
@@ -19,6 +20,7 @@ import { AssignmentManager } from './assignment-manager';
 import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
 import { SessionBoard } from './session-board';
+import { StaffManager } from './staff-manager';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,6 +73,8 @@ export default async function ClassDetailPage({
     listSessions(classId),
   ]);
 
+  const lecturers = await listClassLecturers(classId);
+
   const submissionsByAssignment = Object.fromEntries(
     await Promise.all(
       assignments.map(
@@ -90,6 +94,14 @@ export default async function ClassDetailPage({
         </div>
         <Badge tone="brand">{t('joinedCount', { joined, expected })}</Badge>
       </div>
+
+      <Card>
+        <CardTitle>{tTeaching('staffTitle')}</CardTitle>
+        <p className="text-muted mt-2 text-sm">{tTeaching('staffHint')}</p>
+        <div className="mt-4">
+          <StaffManager classId={classId} lecturers={lecturers} />
+        </div>
+      </Card>
 
       <Card>
         <CardTitle>{tTeaching('joinMode')}</CardTitle>
@@ -125,6 +137,8 @@ export default async function ClassDetailPage({
             groups={groups}
             cases={cases}
             sessions={sessions}
+            classId={classId}
+            canGrade={user.role === 'lecturer' || user.role === 'admin'}
           />
         </div>
       </Card>
