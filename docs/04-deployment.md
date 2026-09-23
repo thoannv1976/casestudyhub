@@ -68,16 +68,30 @@ gcloud run services update-traffic casestudyhub-web \
 Security Rules không tự rollback: revert commit trong `firebase/` rồi đẩy lên
 `main`.
 
-## Deploy tay (khi cần)
+## Deploy tay từ Cloud Shell
+
+Dùng khi chưa cấu hình xong GitHub Actions, hoặc cần đẩy nhanh một nhánh chưa
+merge. Dockerfile nằm ở `infra/` nên phải build qua `cloudbuild.yaml`, không
+dùng được `gcloud builds submit --tag`.
 
 ```bash
-gcloud auth login
-gcloud config set project casestudy1-509414
-gcloud builds submit --tag asia-southeast1-docker.pkg.dev/casestudy1-509414/casestudyhub/casestudyhub-web
+export PROJECT_ID=casestudy1-509414
+export REGION=asia-southeast1
+export IMAGE=$REGION-docker.pkg.dev/$PROJECT_ID/casestudyhub/casestudyhub-web
+
+gcloud builds submit --config cloudbuild.yaml --substitutions=_IMAGE=$IMAGE
+
 gcloud run deploy casestudyhub-web \
-  --image asia-southeast1-docker.pkg.dev/casestudy1-509414/casestudyhub/casestudyhub-web \
-  --region asia-southeast1 --allow-unauthenticated
+  --image "$IMAGE:latest" \
+  --region "$REGION" \
+  --allow-unauthenticated \
+  --min-instances 0 --max-instances 4 --memory 1Gi \
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIREBASE_STORAGE_BUCKET=$PROJECT_ID.firebasestorage.app"
 ```
+
+Script đầy đủ cho lần deploy đầu tiên (bật API, tạo Artifact Registry, cấp
+quyền cho service account của Cloud Build) nằm ở
+[`scripts/deploy-cloudshell.sh`](../scripts/deploy-cloudshell.sh).
 
 ## Kiểm tra sau khi deploy
 

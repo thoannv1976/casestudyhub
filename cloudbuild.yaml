@@ -1,0 +1,25 @@
+# Build image cho Cloud Run.
+#
+# Dockerfile nằm ở infra/ nên phải chỉ định -f; build context là gốc repo vì
+# image cần cả apps/ lẫn packages/.
+#
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_IMAGE=asia-southeast1-docker.pkg.dev/PROJECT/casestudyhub/casestudyhub-web
+
+substitutions:
+  _IMAGE: ''
+
+steps:
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['build', '-f', 'infra/Dockerfile', '-t', '${_IMAGE}:latest', '.']
+
+images:
+  - '${_IMAGE}:latest'
+
+options:
+  machineType: 'E2_HIGHCPU_8'
+  # Build chạy bằng service account mặc định của project, vốn không có bucket
+  # log riêng; ghi thẳng vào Cloud Logging để tránh lỗi thiếu bucket.
+  logging: CLOUD_LOGGING_ONLY
+
+timeout: '1200s'

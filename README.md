@@ -81,6 +81,15 @@ emulator thay vì Firestore thật.
 Chuẩn bị một lần theo [`docs/01-gcp-setup.md`](./docs/01-gcp-setup.md); chi tiết
 quy trình trong [`docs/04-deployment.md`](./docs/04-deployment.md).
 
+Deploy ngay từ Google Cloud Shell, không cần cấu hình GitHub Actions trước:
+
+```bash
+git clone --branch claude/zealous-franklin-e428p0 \
+  https://github.com/thoannv1976/casestudyhub.git
+cd casestudyhub
+bash scripts/deploy-cloudshell.sh
+```
+
 ## Nguyên tắc bắt buộc khi viết code
 
 1. **Phân quyền kiểm tra hai lớp** — server-side và Firestore Security Rules.
