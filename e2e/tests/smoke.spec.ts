@@ -725,6 +725,119 @@ test('closing the window stops new questions without hiding the ones asked', asy
   await expect(page.getByRole('listitem').filter({ hasText: 'outearns retail' })).toBeVisible();
 });
 
+test('scoring is shut until the lecturer opens it', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.getByText('Scoring is not open.')).toBeVisible();
+
+  // And the form is not what enforces it.
+  const response = await page.request.post(`/api${sessionUrl}/peer-review`, {
+    data: {
+      scores: {
+        understanding: 20,
+        analysis: 25,
+        evidence: 15,
+        critique: 15,
+        transferDecision: 15,
+        delivery: 10,
+      },
+    },
+  });
+  expect(response.status()).toBe(422);
+});
+
+test('the class scores the group against the lecturer\u2019s own rubric', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${sessionUrl}`);
+  await page.getByRole('button', { name: 'Open scoring' }).click();
+  await expect(page.getByRole('button', { name: 'Close scoring' })).toBeVisible();
+  await signOut(page);
+
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await page.locator('#understanding').fill('18');
+  await page.locator('#analysis').fill('20');
+  await page.locator('#evidence').fill('11');
+  await page.locator('#critique').fill('12');
+  await page.locator('#transferDecision').fill('13');
+  await page.locator('#delivery').fill('8');
+  await page.locator('#comment').fill('Strong on the model, thin on the numbers.');
+  await page.getByRole('button', { name: 'Send score' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('82');
+});
+
+test('a score above what a criterion is worth is refused', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  // The browser stops it at the input, so the check that matters is the one
+  // behind it.
+  const response = await page.request.post(`/api${sessionUrl}/peer-review`, {
+    data: {
+      scores: {
+        understanding: 20,
+        analysis: 25,
+        evidence: 15,
+        critique: 15,
+        transferDecision: 15,
+        delivery: 40,
+      },
+    },
+  });
+  expect(response.status()).toBe(422);
+  expect((await response.json()).error.messageKey).toBe('errors.peerScoreOutOfRange');
+});
+
+test('the presenting group is not asked to score itself', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.locator('#understanding')).toHaveCount(0);
+
+  const response = await page.request.post(`/api${sessionUrl}/peer-review`, {
+    data: {
+      scores: {
+        understanding: 20,
+        analysis: 25,
+        evidence: 15,
+        critique: 15,
+        transferDecision: 15,
+        delivery: 10,
+      },
+    },
+  });
+  expect(response.status()).toBe(422);
+  expect((await response.json()).error.messageKey).toBe('errors.cannotReviewOwnGroup');
+});
+
+test('a classmate cannot read what somebody else gave', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+
+  const response = await page.request.get(`/api${sessionUrl}/peer-review`);
+  expect(response.status()).toBe(200);
+  const body = await response.json();
+  // Their own row, which is null here, and no sight of anyone else's.
+  expect(body.own).toBeNull();
+  expect(body.reviews).toBeUndefined();
+  expect(body.summary).toBeUndefined();
+});
+
+test('the lecturer reads the distribution, not a number to paste into a grade', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expect(page.getByText('What the class gave')).toBeVisible();
+  await expect(page.getByText('1 scores · mean 82.0 · median 82.0')).toBeVisible();
+  await expect(
+    page.getByText('never added to a final grade automatically', { exact: false }),
+  ).toBeVisible();
+});
+
 test('the slides stay open after the presentation ends', async ({ page }) => {
   await signIn(page, ADMIN.email, ADMIN.password);
   await page.goto(`/en${sessionUrl}`);

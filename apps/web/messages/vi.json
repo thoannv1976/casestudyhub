@@ -257,7 +257,12 @@
     "questionCategoryInvalid": "Vui lòng chọn loại câu hỏi.",
     "questionTooShort": "Câu hỏi cần ít nhất 10 ký tự.",
     "questionTooLong": "Câu hỏi tối đa 1000 ký tự.",
-    "answerTooShort": "Câu trả lời cần ít nhất 10 ký tự."
+    "answerTooShort": "Câu trả lời cần ít nhất 10 ký tự.",
+    "peerReviewClosed": "Phần chấm điểm cho buổi thuyết trình này đã đóng.",
+    "cannotReviewOwnGroup": "Bạn không thể chấm điểm chính nhóm mình.",
+    "peerScoreRequired": "Vui lòng cho điểm ở tất cả các tiêu chí.",
+    "peerScoreOutOfRange": "Điểm không được vượt quá số điểm tối đa của tiêu chí.",
+    "peerScoreUnknownCriterion": "Đây không phải tiêu chí trong rubric này."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -533,7 +538,9 @@
       "qa": "Hỏi đáp",
       "review": "Đánh giá",
       "completed": "Đã kết thúc"
-    }
+    },
+    "openPeerReview": "Mở chấm điểm",
+    "closePeerReview": "Đóng chấm điểm"
   },
   "questions": {
     "title": "Tường câu hỏi",
@@ -567,5 +574,22 @@
       "application": "Vận dụng",
       "decision": "Quyết định"
     }
+  },
+  "peerReview": {
+    "title": "Chấm điểm nhóm này",
+    "hint": "Chấm nhóm bạn vừa theo dõi, theo đúng rubric mà giảng viên dùng.",
+    "editHint": "Bạn đã chấm nhóm này. Gửi lại sẽ thay thế điểm cũ.",
+    "comment": "Ghi chú gửi giảng viên",
+    "commentHint": "Không bắt buộc. Nói điều mà con số chưa nói được.",
+    "evidenceOnly": "Điểm chấm chéo là bằng chứng để giảng viên tham khảo cùng với đánh giá của mình. Điểm này không bao giờ tự động cộng vào điểm cuối cùng.",
+    "submit": "Gửi điểm",
+    "update": "Cập nhật điểm",
+    "saved": "Đã ghi nhận điểm {total} của bạn.",
+    "closed": "Chưa mở chấm điểm.",
+    "closedWithScore": "Đã đóng chấm điểm. Điểm của bạn đã được ghi nhận.",
+    "summaryTitle": "Cả lớp đã chấm",
+    "noScores": "Chưa có ai chấm nhóm này.",
+    "overall": "{count} lượt chấm · trung bình {mean} · trung vị {median} · từ {lowest} đến {highest}",
+    "range": "từ {lowest} đến {highest}"
   }
 }

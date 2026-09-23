@@ -9,19 +9,27 @@ import {
   getAssignment,
   getCase,
   getClassById,
+  getOwnPeerReview,
   getSession,
   listGroups,
   listMembers,
+  listPeerReviews,
   listResponders,
   listSessionQuestions,
   listSubmissions,
   qaCompletion,
   votesOf,
 } from '@casestudyhub/core';
-import { DEFAULT_PRESENTATION_POLICY, redactForViewer, roleKeyOf } from '@casestudyhub/shared';
+import {
+  DEFAULT_PRESENTATION_POLICY,
+  redactForViewer,
+  roleKeyOf,
+  summarisePeerReviews,
+} from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { PeerReviewForm } from './peer-review';
 import { SessionTimer } from './session-timer';
 import { QuestionWall } from './question-wall';
 
@@ -59,6 +67,8 @@ export default async function SessionPage({
   const user = await requireSessionUser();
   const t = await getTranslations('session');
   const tQuestions = await getTranslations('questions');
+  const tPeer = await getTranslations('peerReview');
+  const tRubric = await getTranslations('rubric');
   const tRoles = await getTranslations('roles');
   const tError = await getTranslations('errors');
 
@@ -95,6 +105,14 @@ export default async function SessionPage({
   const slides = submissions.find(
     (submission) => submission.deliverableId === CLASS_VISIBLE_DELIVERABLE_ID,
   );
+
+  // A student reads back only their own score; the distribution is the
+  // lecturer's to read. Peers scoring each other's scores would be a spiral.
+  const ownReview = await getOwnPeerReview(sessionId, user.uid);
+  const peerReviews = isStaff ? await listPeerReviews(sessionId) : [];
+  const peerSummary = isStaff
+    ? summarisePeerReviews(peerReviews, DEFAULT_PRESENTATION_POLICY.rubric)
+    : null;
 
   // The Q&A checklist of the Guide is the lecturer's, not the class's: it
   // names members who have not yet answered anything.
@@ -204,6 +222,53 @@ export default async function SessionPage({
               </li>
             ) : null}
           </ul>
+        </Card>
+      ) : null}
+
+      {peerSummary ? (
+        <Card>
+          <CardTitle>{tPeer('summaryTitle')}</CardTitle>
+          <p className="text-muted mt-2 text-sm">{tPeer('evidenceOnly')}</p>
+          {peerSummary.count === 0 ? (
+            <p className="text-muted mt-4 text-sm">{tPeer('noScores')}</p>
+          ) : (
+            <>
+              <p className="mt-4 text-sm">
+                {tPeer('overall', {
+                  count: peerSummary.count,
+                  mean: peerSummary.mean.toFixed(1),
+                  median: peerSummary.median.toFixed(1),
+                  lowest: peerSummary.lowest,
+                  highest: peerSummary.highest,
+                })}
+              </p>
+              <ul className="mt-3 space-y-1 text-sm">
+                {DEFAULT_PRESENTATION_POLICY.rubric.criteria.map((criterion) => {
+                  const row = peerSummary.byCriterion[criterion.id];
+                  return (
+                    <li key={criterion.id} className="flex flex-wrap justify-between gap-2">
+                      <span>{tRubric(criterion.key.replace(/^rubric\./, ''))}</span>
+                      <span className="tabular-nums">
+                        {(row?.mean ?? 0).toFixed(1)} / {criterion.maxPoints}
+                        <span className="text-muted ml-2 text-xs">
+                          {tPeer('range', { lowest: row?.lowest ?? 0, highest: row?.highest ?? 0 })}
+                        </span>
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </Card>
+      ) : null}
+
+      {user.role === 'student' && !isPresenter ? (
+        <Card>
+          <CardTitle>{tPeer('title')}</CardTitle>
+          <div className="mt-4">
+            <PeerReviewForm sessionId={sessionId} own={ownReview} open={session.peerReviewOpen} />
+          </div>
         </Card>
       ) : null}
 

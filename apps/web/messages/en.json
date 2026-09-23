@@ -257,7 +257,12 @@
     "questionCategoryInvalid": "Please choose a question type.",
     "questionTooShort": "A question needs at least 10 characters.",
     "questionTooLong": "A question may be at most 1000 characters.",
-    "answerTooShort": "An answer needs at least 10 characters."
+    "answerTooShort": "An answer needs at least 10 characters.",
+    "peerReviewClosed": "Scoring is closed for this presentation.",
+    "cannotReviewOwnGroup": "You cannot score your own group.",
+    "peerScoreRequired": "Please give a score for every criterion.",
+    "peerScoreOutOfRange": "A score cannot be higher than the points the criterion is worth.",
+    "peerScoreUnknownCriterion": "That is not a criterion in this rubric."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -533,7 +538,9 @@
       "qa": "Q&A",
       "review": "Review",
       "completed": "Finished"
-    }
+    },
+    "openPeerReview": "Open scoring",
+    "closePeerReview": "Close scoring"
   },
   "questions": {
     "title": "Question wall",
@@ -567,5 +574,22 @@
       "application": "Application",
       "decision": "Decision"
     }
+  },
+  "peerReview": {
+    "title": "Score this group",
+    "hint": "Score the group you have just watched, against the same rubric the lecturer uses.",
+    "editHint": "You have already scored this group. Sending again replaces your score.",
+    "comment": "A note for the lecturer",
+    "commentHint": "Optional. Say what the number does not.",
+    "evidenceOnly": "Peer scores are evidence the lecturer reads alongside their own marking. They are never added to a final grade automatically.",
+    "submit": "Send score",
+    "update": "Update score",
+    "saved": "Your score of {total} was recorded.",
+    "closed": "Scoring is not open.",
+    "closedWithScore": "Scoring is closed. Your score was recorded.",
+    "summaryTitle": "What the class gave",
+    "noScores": "Nobody has scored this group yet.",
+    "overall": "{count} scores · mean {mean} · median {median} · from {lowest} to {highest}",
+    "range": "from {lowest} to {highest}"
   }
 }

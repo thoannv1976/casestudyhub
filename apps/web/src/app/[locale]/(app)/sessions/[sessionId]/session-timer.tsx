@@ -127,6 +127,19 @@ export function SessionTimer({
             >
               {session.questionsOpen ? t('closeQuestions') : t('openQuestions')}
             </Button>
+            <Button
+              variant="ghost"
+              disabled={busy}
+              onClick={() =>
+                void control({
+                  action: 'window',
+                  window: 'peerReview',
+                  open: !session.peerReviewOpen,
+                })
+              }
+            >
+              {session.peerReviewOpen ? t('closePeerReview') : t('openPeerReview')}
+            </Button>
           </div>
 
           <div className="flex flex-wrap gap-1">

@@ -612,3 +612,51 @@ describe('presentation sessions and the question wall', () => {
     );
   });
 });
+
+describe('peer assessment', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'peerReviews', 'PS1__student_b'), {
+        id: 'PS1__student_b',
+        sessionId: 'PS1',
+        classId: 'C1',
+        caseStudyId: 'CS1',
+        groupId: 'G1',
+        reviewerUid: OTHER_STUDENT_UID,
+        reviewerName: 'Tran Thi B',
+        reviewerStudentId: 'SV002',
+        reviewerGroupId: 'G2',
+        scores: { understanding: 18 },
+        total: 82,
+        rubricId: 'rubric-standard-100',
+        rubricVersion: '2026.1',
+        submittedAt: '2026-10-01T02:00:00.000Z',
+      });
+    });
+  });
+
+  it('keeps one student from reading what another gave', async () => {
+    // A class that could read each other's scores would start scoring each
+    // other's scores, and a group would see which classmates marked it down.
+    await assertFails(getDoc(doc(student(), 'peerReviews', 'PS1__student_b')));
+    await assertFails(getDocs(collection(student(), 'peerReviews')));
+  });
+
+  it('keeps the distribution behind the server even for the lecturer', async () => {
+    await assertFails(getDoc(doc(lecturer(), 'peerReviews', 'PS1__student_b')));
+    await assertFails(getDoc(doc(admin(), 'peerReviews', 'PS1__student_b')));
+  });
+
+  it('stops a student writing or editing a score directly', async () => {
+    await assertFails(
+      setDoc(doc(student(), 'peerReviews', 'PS1__student_a'), {
+        sessionId: 'PS1',
+        groupId: 'G1',
+        reviewerUid: STUDENT_UID,
+        total: 100,
+      }),
+    );
+    await assertFails(updateDoc(doc(student(), 'peerReviews', 'PS1__student_b'), { total: 0 }));
+    await assertFails(deleteDoc(doc(student(), 'peerReviews', 'PS1__student_b')));
+  });
+});
