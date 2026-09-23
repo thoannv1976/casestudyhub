@@ -2,8 +2,10 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
+  aiIsAvailable,
   assertCanManageClass,
   findSessionForAssignment,
+  getAiAssessment,
   getAssignment,
   getCase,
   getLecturerAssessment,
@@ -19,6 +21,7 @@ import { DEFAULT_PRESENTATION_POLICY, summarisePeerReviews } from '@casestudyhub
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { AiPanel } from './ai-panel';
 import { GradeForm } from './grade-form';
 
 export const dynamic = 'force-dynamic';
@@ -44,6 +47,7 @@ export default async function GradePage({
 
   const user = await requireSessionUser();
   const t = await getTranslations('grading');
+  const tAi = await getTranslations('ai');
   const tError = await getTranslations('errors');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
@@ -90,6 +94,7 @@ export default async function GradePage({
       )
     : null;
   const peerSummary = summarisePeerReviews(peerReviews, policy.rubric);
+  const aiAssessment = await getAiAssessment(assignmentId);
 
   // Time per role as the clock recorded it. Deliberately the banked figure and
   // not a live one: marking is done after the presentation, and a number that
@@ -173,6 +178,13 @@ export default async function GradePage({
             ))}
           </ul>
         ) : null}
+      </Card>
+
+      <Card>
+        <CardTitle>{tAi('title')}</CardTitle>
+        <div className="mt-4">
+          <AiPanel assignmentId={assignmentId} available={aiIsAvailable()} initial={aiAssessment} />
+        </div>
       </Card>
 
       <Card>

@@ -51,6 +51,12 @@ export const classQuestionSchema = z.object({
   answeredAt: z.string().optional(),
   /** Set when the answer came from the AI pass rather than from the room. */
   answeredByAi: z.boolean().default(false),
+  /**
+   * False when the AI said the case material does not contain the answer.
+   * Kept and shown rather than hidden: "the case does not say" is itself
+   * worth knowing, and it warns a reader not to treat the answer as sourced.
+   */
+  aiGroundedInCase: z.boolean().optional(),
 });
 export type ClassQuestion = z.infer<typeof classQuestionSchema>;
 

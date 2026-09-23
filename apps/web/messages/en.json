@@ -271,7 +271,10 @@
     "waiverNeedsReason": "Waiving the late penalty needs a reason of at least 10 characters.",
     "noGroupMembersToGrade": "This group has no members to grade.",
     "noAccountWithThatEmail": "No account on this platform uses that email address.",
-    "notALecturerAccount": "That account is not a lecturer account."
+    "notALecturerAccount": "That account is not a lecturer account.",
+    "aiNotConfigured": "No AI model is configured for this deployment.",
+    "aiResponseUnusable": "The model did not return an answer we could use. Please try again.",
+    "nothingToEvaluate": "There is no readable material for the model to work from."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -488,7 +491,8 @@
     "publish": "Publish to students",
     "unpublish": "Withdraw from students",
     "published": "Published",
-    "draft": "Draft"
+    "draft": "Draft",
+    "openBank": "Question bank"
   },
   "assignments": {
     "title": "Case assignments",
@@ -656,5 +660,43 @@
     "yourMarkBreakdown": "Group {group} ({team}%) + individual {individual} ({solo}%)",
     "policyVersion": "Framework version {version}",
     "clockStillRunning": "The clock is still running for this session, so the times below are what has been banked so far."
+  },
+  "ai": {
+    "title": "What the model read",
+    "advisory": "The model proposes; you decide. Nothing here is written to a grade, and the criterion judged in the room is not offered.",
+    "notConfigured": "No AI model is configured for this deployment. Everything else works as usual.",
+    "run": "Ask the model to read the documents",
+    "rerun": "Read them again",
+    "reading": "Reading…",
+    "suggestedTotal": "Suggested {total} of {max} assessable points",
+    "by": "by {model} in {seconds}s",
+    "uncitedWarning": "{count, plural, one {# suggestion has} other {# suggestions have}} nothing to point at. Treat those with care.",
+    "noCitation": "No citation. Nothing was quoted for this judgement.",
+    "gaps": "What the model could not find",
+    "source": {
+      "slides": "Slides",
+      "report": "Report",
+      "case": "Case"
+    },
+    "confidence": {
+      "low": "low confidence",
+      "medium": "medium confidence",
+      "high": "high confidence"
+    }
+  },
+  "caseBank": {
+    "title": "The class question bank",
+    "purpose": "Every question every class has asked about this case. The group answered two or three aloud; the rest are answered from the case material and kept here for the years that follow.",
+    "counts": "{total, plural, one {# question} other {# questions}} · {inRoom} answered in the room · {open} still open",
+    "empty": "No questions have been asked about this case yet.",
+    "answeredInRoom": "Answered in the room",
+    "answeredByAi": "Answered by AI",
+    "notInTheCase": "Not in the case material",
+    "notYetAnswered": "Not answered yet.",
+    "answerHint": "The model answers only questions the room left open. An answer a student gave aloud is never replaced.",
+    "answerAction": "Answer {count, plural, one {# open question} other {# open questions}}",
+    "answering": "Answering…",
+    "answeredNotice": "{answered} answered. {ungrounded} of them said the case material does not contain the answer.",
+    "aiNotConfigured": "No AI model is configured, so the open questions stay as they are."
   }
 }

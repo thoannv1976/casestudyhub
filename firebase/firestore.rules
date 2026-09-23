@@ -196,6 +196,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ----- AI suggestions ---------------------------------------------------
+    // The model proposes and the lecturer decides, so an AI reading is a
+    // working note like a draft mark. A student who could read it would see a
+    // score nobody has agreed to give them.
+    match /aiAssessments/{assessmentId} {
+      allow read, write: if false;
+    }
+
     // Rate limit counters are server bookkeeping. A client that could read
     // them would know how many attempts it has left; one that could write
     // them would simply reset the limit.
@@ -213,8 +221,8 @@ service cloud.firestore {
     }
 
     // ----- everything else -------------------------------------------------
-    // Collections arriving in later phases (AI assessments) stay closed until
-    // their module lands together with its rules and emulator tests.
+    // Anything not named above stays closed. A collection is opened only with
+    // the module that needs it, its server-side checks and its tests.
     match /{document=**} {
       allow read, write: if false;
     }

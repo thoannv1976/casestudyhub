@@ -3,7 +3,7 @@
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { LOCALES, type CaseStudy } from '@casestudyhub/shared';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
 
 export function CaseLibrary({
@@ -176,6 +176,14 @@ export function CaseLibrary({
                   {study.cloIds.length > 0 ? (
                     <p className="text-muted mt-1 text-xs">{study.cloIds.join(' · ')}</p>
                   ) : null}
+                  <p className="mt-2 text-sm">
+                    <Link
+                      href={`/cases/${study.id}`}
+                      className="text-brand-600 dark:text-brand-300 font-medium underline"
+                    >
+                      {t('openBank')}
+                    </Link>
+                  </p>
                 </div>
                 <span
                   className={

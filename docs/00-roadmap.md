@@ -46,10 +46,23 @@ lên trình bày đến lúc sinh viên nhìn thấy điểm đã công bố.
 
 ## Phase 3 — AI Assessment
 
-Cloud Run worker + Cloud Tasks, trích xuất PDF/DOCX/PPTX, pipeline chấm theo
-rubric có trích dẫn nguồn, **AI trả lời toàn bộ kho câu hỏi của lớp để làm tài
-liệu tham khảo cho các khóa sau**, AI Question Generator, AI Tutor 4 chế độ, AI
-trong màn hình chấm của giảng viên.
+| PR  | Milestone                  | Nội dung                                                                                                                                                                                                                                                             | Trạng thái |
+| --- | -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 13  | Lớp AI + chấm có dẫn nguồn | Một cổng duy nhất tới Gemini (Vertex AI bằng service account, hoặc API key); mọi câu trả lời phải khớp schema; mô hình đọc case + slide + báo cáo rồi đề xuất điểm kèm trích dẫn (tài liệu, slide/trang, nguyên văn); không bao giờ chấm tiêu chí đánh giá trực tiếp | ✅         |
+| 14  | Kho tri thức của case      | AI trả lời toàn bộ câu hỏi lớp để ngỏ, theo lô; không bao giờ ghi đè câu trả lời sinh viên đã nói trên lớp; trang kho câu hỏi để các khóa sau đọc, đã ẩn danh người hỏi                                                                                              | ✅         |
+| 15  | AI Tutor + sinh câu hỏi    | Bốn chế độ hỗ trợ sinh viên, gợi ý câu hỏi cho giảng viên                                                                                                                                                                                                            | ⏳         |
+
+**Ghi chú thiết kế Phase 3**
+
+- Nền tảng chạy hoàn chỉnh khi **không** cấu hình mô hình nào: AI ở đâu cũng chỉ
+  là tư vấn (`aiScoreIsAdvisoryOnly`), nên "chưa cấu hình" là một trạng thái
+  giao diện báo, không phải lỗi. Bật bằng `scripts/enable-ai.sh`.
+- PDF được gửi thẳng cho mô hình. Không tự bóc chữ từ PPTX/DOCX: một trích dẫn
+  chỉ vào slide 9 mà slide 9 không nói như vậy thì tệ hơn là không có trích dẫn.
+  Tài liệu không đọc được sẽ hiện ra như một khoảng trống, không im lặng.
+- Mọi đề xuất đều đi qua `reconcileWithRubric`: bỏ tiêu chí lạ, bỏ tiêu chí
+  giảng viên phải tự chấm, và cắt điểm về đúng thang của tiêu chí.
+- Test dùng provider giả và không chạm mạng.
 
 ## Phase 4 — Analytics & Integration
 

@@ -271,7 +271,10 @@
     "waiverNeedsReason": "Miễn trừ điểm phạt nộp muộn cần lý do ít nhất 10 ký tự.",
     "noGroupMembersToGrade": "Nhóm này chưa có thành viên để chấm.",
     "noAccountWithThatEmail": "Không có tài khoản nào trên hệ thống dùng email này.",
-    "notALecturerAccount": "Tài khoản đó không phải tài khoản giảng viên."
+    "notALecturerAccount": "Tài khoản đó không phải tài khoản giảng viên.",
+    "aiNotConfigured": "Bản triển khai này chưa cấu hình mô hình AI.",
+    "aiResponseUnusable": "Mô hình không trả về kết quả dùng được. Vui lòng thử lại.",
+    "nothingToEvaluate": "Không có tài liệu nào mô hình đọc được để làm việc."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -488,7 +491,8 @@
     "publish": "Công bố cho sinh viên",
     "unpublish": "Thu hồi khỏi sinh viên",
     "published": "Đã công bố",
-    "draft": "Bản nháp"
+    "draft": "Bản nháp",
+    "openBank": "Kho câu hỏi"
   },
   "assignments": {
     "title": "Giao Case Study",
@@ -656,5 +660,43 @@
     "yourMarkBreakdown": "Điểm nhóm {group} ({team}%) + điểm cá nhân {individual} ({solo}%)",
     "policyVersion": "Khung đánh giá phiên bản {version}",
     "clockStillRunning": "Đồng hồ của phiên này vẫn đang chạy, nên thời lượng bên dưới là phần đã được ghi nhận tới lúc này."
+  },
+  "ai": {
+    "title": "Mô hình đã đọc được gì",
+    "advisory": "Mô hình đề xuất, giảng viên quyết định. Không có gì ở đây được ghi vào điểm, và tiêu chí phải đánh giá trực tiếp trên lớp thì mô hình không được hỏi.",
+    "notConfigured": "Bản triển khai này chưa cấu hình mô hình AI. Mọi chức năng khác vẫn hoạt động bình thường.",
+    "run": "Yêu cầu mô hình đọc tài liệu",
+    "rerun": "Đọc lại",
+    "reading": "Đang đọc…",
+    "suggestedTotal": "Đề xuất {total} trên {max} điểm AI được phép chấm",
+    "by": "bởi {model} trong {seconds} giây",
+    "uncitedWarning": "{count, plural, other {# đề xuất}} không dẫn được nguồn nào. Hãy cân nhắc kỹ những mục đó.",
+    "noCitation": "Không có trích dẫn. Nhận định này không dẫn ra câu chữ nào.",
+    "gaps": "Những gì mô hình không tìm thấy",
+    "source": {
+      "slides": "Slide",
+      "report": "Báo cáo",
+      "case": "Case"
+    },
+    "confidence": {
+      "low": "độ tin cậy thấp",
+      "medium": "độ tin cậy trung bình",
+      "high": "độ tin cậy cao"
+    }
+  },
+  "caseBank": {
+    "title": "Kho câu hỏi của lớp",
+    "purpose": "Toàn bộ câu hỏi mà các lớp đã đặt cho case study này. Nhóm trả lời trực tiếp hai đến ba câu; phần còn lại được trả lời dựa trên tài liệu case và giữ lại cho các khóa sau.",
+    "counts": "{total, plural, other {# câu hỏi}} · {inRoom} câu đã trả lời trên lớp · {open} câu còn bỏ ngỏ",
+    "empty": "Chưa có câu hỏi nào cho case study này.",
+    "answeredInRoom": "Trả lời trên lớp",
+    "answeredByAi": "AI trả lời",
+    "notInTheCase": "Không có trong tài liệu case",
+    "notYetAnswered": "Chưa được trả lời.",
+    "answerHint": "Mô hình chỉ trả lời những câu lớp còn bỏ ngỏ. Câu trả lời do sinh viên nói trên lớp không bao giờ bị thay thế.",
+    "answerAction": "Trả lời {count, plural, other {# câu còn bỏ ngỏ}}",
+    "answering": "Đang trả lời…",
+    "answeredNotice": "Đã trả lời {answered} câu. Trong đó {ungrounded} câu cho biết tài liệu case không chứa câu trả lời.",
+    "aiNotConfigured": "Chưa cấu hình mô hình AI nên các câu còn bỏ ngỏ vẫn giữ nguyên."
   }
 }

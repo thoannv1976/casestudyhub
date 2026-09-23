@@ -735,3 +735,43 @@ describe('marking and grades', () => {
     await assertFails(updateDoc(doc(lecturer(), 'grades', 'A1__student_a'), { finalScore: 100 }));
   });
 });
+
+describe('AI suggestions', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'aiAssessments', 'A1'), {
+        id: 'A1',
+        assignmentId: 'A1',
+        classId: 'C1',
+        groupId: 'G1',
+        caseStudyId: 'CS1',
+        criteria: [],
+        suggestedTotal: 72,
+        assessableMaxPoints: 90,
+        gaps: [],
+        rubricId: 'rubric-standard-100',
+        rubricVersion: '2026.1',
+        model: 'fake-model-1',
+        createdAt: '2026-10-01T02:00:00.000Z',
+        requestedByUid: LECTURER_UID,
+      });
+    });
+  });
+
+  it('keeps a suggestion no one has agreed to away from the student it is about', async () => {
+    await assertFails(getDoc(doc(student(), 'aiAssessments', 'A1')));
+    await assertFails(getDocs(collection(student(), 'aiAssessments')));
+  });
+
+  it('stops anyone writing a suggestion into the database directly', async () => {
+    // Every suggestion is reconciled against the rubric on the way in, which a
+    // direct write would skip: it could score the criterion judged in the room.
+    await assertFails(
+      setDoc(doc(lecturer(), 'aiAssessments', 'forged'), {
+        assignmentId: 'A1',
+        suggestedTotal: 100,
+      }),
+    );
+    await assertFails(updateDoc(doc(lecturer(), 'aiAssessments', 'A1'), { suggestedTotal: 90 }));
+  });
+});

@@ -1069,6 +1069,76 @@ test('a classmate cannot read somebody else\u2019s mark', async ({ page }) => {
   await expect(page.getByText('Framework version')).toHaveCount(0);
 });
 
+/**
+ * The AI layer (SRS Module 12). Nothing is configured in this run, on purpose:
+ * a deployment without a model has to keep working, and say so.
+ */
+
+test('a deployment with no model says so instead of breaking', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+
+  await expect(page.getByText('What the model read')).toBeVisible();
+  await expect(page.getByText('No AI model is configured')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Ask the model' })).toHaveCount(0);
+
+  // And the endpoint agrees, rather than throwing something untranslatable.
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+  const response = await page.request.post(`/api/assignments/${assignmentId}/ai-assessment`);
+  expect(response.status()).toBe(422);
+  expect((await response.json()).error.messageKey).toBe('errors.aiNotConfigured');
+});
+
+test('the case keeps the class\u2019s questions as a bank for later years', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  await expect(page.getByRole('heading', { level: 1, name: 'Amazon' })).toBeVisible();
+  await expect(page.getByText('The class question bank')).toBeVisible();
+  // One question, answered in the room during the session earlier in this run.
+  await expect(page.getByText('1 question · 1 answered in the room · 0 still open')).toBeVisible();
+  await expect(page.getByText('outearns retail')).toBeVisible();
+  await expect(page.getByText('Third-party seller services revenue')).toBeVisible();
+});
+
+test('a student reads the bank, but not who asked', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  await expect(page.getByText('outearns retail')).toBeVisible();
+  // Their own question, anonymised the way a later cohort will read it.
+  await expect(page.getByText(AUDIENCE.fullName)).toHaveCount(0);
+  // And nothing here offers a student the model.
+  await expect(page.getByRole('button', { name: /Answer/ })).toHaveCount(0);
+});
+
+test('only staff can ask the model to answer a bank', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/cases');
+  const href = await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .getAttribute('href');
+  const caseId = (href ?? '').split('/cases/')[1] ?? '';
+  expect(caseId).not.toHaveLength(0);
+
+  const response = await page.request.post(`/api/cases/${caseId}/answers`, { data: {} });
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 
