@@ -4,15 +4,15 @@ Mỗi milestone là một PR riêng, có test xanh trước khi đẩy lên.
 
 ## Phase 1 — Core Platform (đang làm)
 
-| PR  | Milestone                | Nội dung                                                                                                                    | Trạng thái |
-| --- | ------------------------ | --------------------------------------------------------------------------------------------------------------------------- | ---------- |
-| 1   | Scaffold & policy engine | Monorepo, Next.js, Tailwind, i18n vi/en, policy engine + rubric + phân vai, Firebase rules nền, Dockerfile, CI/CD, tài liệu | ✅         |
-| 2   | Auth & phân quyền        | Đăng ký sinh viên, đăng nhập, custom claims 3 vai trò, hồ sơ cá nhân, bảo vệ route, Security Rules cho `users`, audit log   | ⏳         |
-| 3   | Cấu trúc đào tạo         | Academic year → semester → course → class, class code, ghi danh, Admin dashboard, import CSV/XLSX                           | ⏳         |
-| 4   | Nhóm & vai trò           | Ba chế độ tạo nhóm, join bằng transaction, khóa nhóm, Group Workspace, Auto Assign Roles                                    | ⏳         |
-| 5   | Case Study Library       | Upload qua signed URL, metadata đầy đủ, template vs assignment, guide/rubric có version                                     | ⏳         |
-| 6   | Giao bài & nộp bài       | Assignment + deadline theo giờ server, nộp nhiều deliverable, version, `isLate`, kiểm tra thiếu file, dashboard tiến độ     | ⏳         |
-| 7   | Hoàn thiện & deploy      | Accessibility, seed dữ liệu demo (lớp ECOM-A01 + case Amazon), bộ acceptance test, deploy Cloud Run                         | ⏳         |
+| PR  | Milestone                | Nội dung                                                                                                                                                                         | Trạng thái |
+| --- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| 1   | Scaffold & policy engine | Monorepo, Next.js, Tailwind, i18n vi/en, policy engine + rubric + phân vai, Firebase rules nền, Dockerfile, CI/CD, tài liệu                                                      | ✅         |
+| 2   | Auth & phân quyền        | Đăng ký sinh viên, đăng nhập bằng session cookie, custom claims 3 vai trò, hồ sơ cá nhân, khung giao diện theo vai trò, Security Rules cho `users` + 20 test emulator, audit log | ✅         |
+| 3   | Cấu trúc đào tạo         | Academic year → semester → course → class, class code, ghi danh, Admin dashboard, import CSV/XLSX                                                                                | ⏳         |
+| 4   | Nhóm & vai trò           | Ba chế độ tạo nhóm, join bằng transaction, khóa nhóm, Group Workspace, Auto Assign Roles                                                                                         | ⏳         |
+| 5   | Case Study Library       | Upload qua signed URL, metadata đầy đủ, template vs assignment, guide/rubric có version                                                                                          | ⏳         |
+| 6   | Giao bài & nộp bài       | Assignment + deadline theo giờ server, nộp nhiều deliverable, version, `isLate`, kiểm tra thiếu file, dashboard tiến độ                                                          | ⏳         |
+| 7   | Hoàn thiện & deploy      | Accessibility, seed dữ liệu demo (lớp ECOM-A01 + case Amazon), bộ acceptance test, deploy Cloud Run                                                                              | ⏳         |
 
 **Kết quả Phase 1:** giảng viên và sinh viên dùng được để tổ chức một học phần
 Case Study thực tế, từ đăng ký đến nộp bài.

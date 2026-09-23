@@ -11,7 +11,7 @@ export type UserStatus = z.infer<typeof userStatusSchema>;
 
 /** Supported interface languages. Document language is tracked separately. */
 export const LOCALES = ['vi', 'en'] as const;
-export const localeSchema = z.enum(LOCALES);
+export const localeSchema = z.enum(LOCALES, { error: 'errors.languageInvalid' });
 export type Locale = z.infer<typeof localeSchema>;
 export const DEFAULT_LOCALE: Locale = 'vi';
 
@@ -19,19 +19,29 @@ export const DEFAULT_LOCALE: Locale = 'vi';
  * Business identifier of a student, unique across the platform.
  * The Firebase UID stays the authentication identifier (SRS 19).
  */
+/**
+ * Every message below is an i18n key, not English prose: the same validation
+ * runs in the browser and on the server, and both must be able to show the
+ * message in the user's language.
+ */
 export const studentIdSchema = z
-  .string()
+  // The `error` here covers a missing or non-string value; the checks below
+  // cover a value that is present but wrong.
+  .string({ error: 'errors.studentIdInvalid' })
   .trim()
-  .min(3)
-  .max(32)
-  .regex(/^[A-Za-z0-9._-]+$/, 'Student ID may contain letters, digits, dot, underscore and hyphen');
+  .min(3, 'errors.studentIdInvalid')
+  .max(32, 'errors.studentIdInvalid')
+  .regex(/^[A-Za-z0-9._-]+$/, 'errors.studentIdInvalid')
+  // The student id is used as a Firestore document id in the uniqueness index,
+  // where "." and ".." are reserved.
+  .refine((value) => value !== '.' && value !== '..', 'errors.studentIdInvalid');
 
 export const classCodeSchema = z
-  .string()
+  .string({ error: 'errors.classCodeInvalid' })
   .trim()
-  .min(4)
-  .max(32)
-  .regex(/^[A-Z0-9-]+$/, 'Class code may contain upper-case letters, digits and hyphen');
+  .min(4, 'errors.classCodeInvalid')
+  .max(32, 'errors.classCodeInvalid')
+  .regex(/^[A-Z0-9-]+$/, 'errors.classCodeInvalid');
 
 export const userProfileSchema = z.object({
   uid: z.string().min(1),

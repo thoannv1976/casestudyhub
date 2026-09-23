@@ -7,12 +7,21 @@ import {
 import { Badge, Card, CardBody, CardTitle, Section } from '@/components/ui/card';
 import { LocaleSwitcher } from '@/components/locale-switcher';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { Link } from '@/i18n/navigation';
+import { getSessionUser } from '@casestudyhub/core/auth/session';
 
 const policy = DEFAULT_PRESENTATION_POLICY;
+
+// The header shows either "sign in" or "dashboard", so this page is rendered
+// per request rather than prebuilt.
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
+
+  // A signed-in visitor gets a way straight back into their own work.
+  const user = await getSessionUser();
 
   const t = await getTranslations('landing');
   const tApp = await getTranslations('app');
@@ -20,6 +29,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   const tPolicy = await getTranslations('policy');
   const tRoles = await getTranslations('roles');
   const tRubric = await getTranslations('rubric');
+  const tNav = await getTranslations('nav');
 
   const range = (min: number, max: number) => tPolicy('range', { min, max });
 
@@ -76,6 +86,29 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <div className="flex items-center gap-2">
             <LocaleSwitcher />
             <ThemeToggle />
+            {user ? (
+              <Link
+                href="/dashboard"
+                className="bg-brand-600 hover:bg-brand-700 inline-flex h-9 items-center rounded-full px-4 text-sm font-medium text-white transition-colors"
+              >
+                {tNav('dashboard')}
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="surface-card hover:border-brand-400 hidden h-9 items-center rounded-full px-4 text-sm font-medium transition-colors sm:inline-flex"
+                >
+                  {tCommon('signIn')}
+                </Link>
+                <Link
+                  href="/register"
+                  className="bg-brand-600 hover:bg-brand-700 inline-flex h-9 items-center rounded-full px-4 text-sm font-medium text-white transition-colors"
+                >
+                  {tCommon('register')}
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
