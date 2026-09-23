@@ -35,6 +35,7 @@ IDENTITY_API="https://identitytoolkit.googleapis.com/v1/projects/${PROJECT_ID}"
 
 LOOKUP="$(curl -sS -X POST "${IDENTITY_API}/accounts:lookup" \
   -H "Authorization: Bearer $TOKEN" \
+  -H "x-goog-user-project: $PROJECT_ID" \
   -H "Content-Type: application/json" \
   -d "{\"email\":[\"${EMAIL}\"]}")"
 
@@ -57,6 +58,7 @@ echo "  UID: $UID_VALUE"
 # 1) Custom claim -> quyết định quyền ở backend và Security Rules
 curl -sS -X POST "${IDENTITY_API}/accounts:update" \
   -H "Authorization: Bearer $TOKEN" \
+  -H "x-goog-user-project: $PROJECT_ID" \
   -H "Content-Type: application/json" \
   -d "{\"localId\":\"${UID_VALUE}\",\"customAttributes\":\"{\\\"role\\\":\\\"${ROLE}\\\"}\"}" \
   >/dev/null
@@ -67,6 +69,7 @@ FIRESTORE_API="https://firestore.googleapis.com/v1/projects/${PROJECT_ID}/databa
 curl -sS -X PATCH \
   "${FIRESTORE_API}/users/${UID_VALUE}?updateMask.fieldPaths=globalRole" \
   -H "Authorization: Bearer $TOKEN" \
+  -H "x-goog-user-project: $PROJECT_ID" \
   -H "Content-Type: application/json" \
   -d "{\"fields\":{\"globalRole\":{\"stringValue\":\"${ROLE}\"}}}" \
   >/dev/null
