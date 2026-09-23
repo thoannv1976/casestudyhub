@@ -209,7 +209,10 @@
     "importDuplicateEmail": "This email appears twice in the file",
     "importFileTooLarge": "The file is too large for a class list.",
     "importSkippedRemoved": "Skipped: removed from this class earlier",
-    "importSkippedAlreadyJoined": "Skipped: this student already signed up"
+    "importSkippedAlreadyJoined": "Skipped: this student already signed up",
+    "alreadyApproved": "This student is already in the class.",
+    "cannotApproveRemoved": "This student was removed from the class.",
+    "nothingToApprove": "This student has not signed up yet, so there is nothing to approve."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -321,7 +324,11 @@
     "remove": "Remove",
     "removeReasonPrompt": "Why is {studentId} being removed from this class?",
     "empty": "No students yet. Import a list or give out the class code.",
-    "joinedCount": "{joined} of {expected} signed up"
+    "joinedCount": "{joined} of {expected} signed up",
+    "waitingTitle": "{count} student(s) waiting for your approval",
+    "approve": "Approve",
+    "reject": "Reject",
+    "waiting": "Waiting for approval"
   },
   "userAdmin": {
     "title": "Users",

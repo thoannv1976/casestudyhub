@@ -91,6 +91,9 @@ export function Alert({ tone, children }: { tone: 'error' | 'success'; children:
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
+      // Next.js injects its own role="alert" route announcer, so a test needs a
+      // way to find this element and only this one.
+      data-testid={tone === 'error' ? 'alert-error' : 'alert-success'}
       className={`rounded-lg border px-4 py-3 text-sm ${tones[tone]}`}
     >
       {children}

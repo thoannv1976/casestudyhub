@@ -1,6 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { removeEnrollmentSchema } from '@casestudyhub/shared';
-import { assertCanManageClass, listRoster, removeFromClass } from '@casestudyhub/core';
+import { approveEnrollmentSchema, removeEnrollmentSchema } from '@casestudyhub/shared';
+import {
+  approveEnrollment,
+  assertCanManageClass,
+  listRoster,
+  removeFromClass,
+} from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { respondWithError } from '@/lib/api/respond';
 
@@ -17,6 +22,25 @@ export async function GET(
     await assertCanManageClass(actor, classId);
 
     return NextResponse.json({ roster: await listRoster(classId) });
+  } catch (error) {
+    return respondWithError(error);
+  }
+}
+
+/** Let a waiting student into a class that requires approval. */
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ classId: string }> },
+) {
+  try {
+    const actor = await requirePermission('class.manage');
+    const { classId } = await context.params;
+    await assertCanManageClass(actor, classId);
+
+    const { enrollmentId } = approveEnrollmentSchema.parse(await request.json());
+    await approveEnrollment(actor, classId, enrollmentId);
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return respondWithError(error);
   }

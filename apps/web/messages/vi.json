@@ -209,7 +209,10 @@
     "importDuplicateEmail": "Email này xuất hiện hai lần trong file",
     "importFileTooLarge": "File quá lớn so với một danh sách lớp.",
     "importSkippedRemoved": "Bỏ qua: đã bị loại khỏi lớp trước đó",
-    "importSkippedAlreadyJoined": "Bỏ qua: sinh viên này đã đăng ký"
+    "importSkippedAlreadyJoined": "Bỏ qua: sinh viên này đã đăng ký",
+    "alreadyApproved": "Sinh viên này đã ở trong lớp.",
+    "cannotApproveRemoved": "Sinh viên này đã bị loại khỏi lớp.",
+    "nothingToApprove": "Sinh viên này chưa đăng ký tài khoản nên chưa có gì để duyệt."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -321,7 +324,11 @@
     "remove": "Loại khỏi lớp",
     "removeReasonPrompt": "Vì sao loại {studentId} khỏi lớp này?",
     "empty": "Chưa có sinh viên nào. Hãy nhập danh sách hoặc phát mã lớp.",
-    "joinedCount": "{joined}/{expected} đã đăng ký"
+    "joinedCount": "{joined}/{expected} đã đăng ký",
+    "waitingTitle": "{count} sinh viên đang chờ bạn duyệt",
+    "approve": "Duyệt",
+    "reject": "Từ chối",
+    "waiting": "Chờ duyệt"
   },
   "userAdmin": {
     "title": "Người dùng",

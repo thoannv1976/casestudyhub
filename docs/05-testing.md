@@ -104,6 +104,40 @@ Excel thực sự xuất ra:
   lộ thông tin nội bộ.
 - Biến môi trường thiếu thì báo rõ tên biến thay vì lỗi mơ hồ.
 
+## Kiểm thử đầu-cuối (E2E)
+
+```bash
+npm run test:e2e
+```
+
+Lệnh này build ứng dụng với cấu hình trỏ vào emulator, bật Firebase Emulator,
+tạo sẵn một tài khoản quản trị, rồi cho Playwright điều khiển trình duyệt chạy
+trọn một câu chuyện. Toàn bộ mất khoảng 15 giây.
+
+**Vì sao phải chạy trên bản build production, không phải `next dev`:** lỗi 500
+khi tạo tài khoản giảng viên chỉ xuất hiện khi Next.js chia mã server thành
+nhiều chunk — điều `next dev` không làm. Toàn bộ 87 unit test và 30 rules test
+đều xanh trong khi production hỏng. E2E là lớp duy nhất bắt được loại lỗi đó.
+
+### 12 kịch bản
+
+1. Dịch vụ trả lời `/api/health` trước khi thử bất cứ điều gì khác.
+2. Sinh viên đăng ký và vào được trang làm việc của mình.
+3. **Không đăng ký được hai lần cùng một mã sinh viên** — và lần hỏng không để
+   lại tài khoản rác.
+4. Quản trị viên tạo năm học → học kỳ → học phần → lớp.
+5. **Quản trị viên tạo tài khoản giảng viên kèm mật khẩu tạm** — chính là thao
+   tác đã trả về 500 trên production.
+6. Mật khẩu tạm **không vào được trang nào khác**: gõ thẳng địa chỉ khác vẫn bị
+   đẩy về trang đổi mật khẩu; đổi xong mới vào được.
+7. Mật khẩu tạm cũ **hết tác dụng** ngay sau khi đổi.
+8. Sinh viên nhập mã lớp và vào được lớp.
+9. Sinh viên **không vào được cùng một lớp hai lần**.
+10. Giảng viên thấy đúng sinh viên đó trong danh sách lớp.
+11. Sinh viên gõ thẳng địa chỉ trang quản trị thì **bị từ chối** và không thấy
+    dữ liệu người dùng nào.
+12. Khách chưa đăng nhập bị đẩy về trang đăng nhập.
+
 ## Kiểm thử Security Rules
 
 ```bash

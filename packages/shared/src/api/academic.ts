@@ -47,6 +47,10 @@ export const removeEnrollmentSchema = z.object({
   reason: z.string().trim().min(3, 'errors.reasonRequired').max(500),
 });
 
+export const approveEnrollmentSchema = z.object({
+  enrollmentId: z.string().min(1),
+});
+
 /**
  * Admin creates a staff account. The temporary password is handed over out of
  * band and must be changed at first sign-in, so it never becomes a shared

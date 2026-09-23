@@ -65,6 +65,26 @@ export function RosterManager({ classId, roster }: { classId: string; roster: Cl
     await send(true, text);
   }
 
+  async function approve(enrollmentId: string) {
+    setBusy(true);
+    setErrorKey(null);
+    try {
+      const response = await fetch(`/api/classes/${classId}/roster`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enrollmentId }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        setErrorKey(body?.error?.messageKey ?? 'errors.unexpected');
+        return;
+      }
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function remove(enrollmentId: string, studentId: string) {
     const reason = window.prompt(t('removeReasonPrompt', { studentId }));
     if (!reason || reason.trim().length < 3) return;
@@ -88,6 +108,10 @@ export function RosterManager({ classId, roster }: { classId: string; roster: Cl
   }
 
   const active = roster.filter((row) => row.status !== 'removed');
+  // Students who signed up and are waiting for a decision. A pending row with
+  // no account is somebody from the imported list who has not signed up yet -
+  // there is nothing to approve there.
+  const waiting = active.filter((row) => row.status === 'pending' && row.studentUid);
 
   return (
     <div className="space-y-6">
@@ -148,6 +172,36 @@ export function RosterManager({ classId, roster }: { classId: string; roster: Cl
         </div>
       ) : null}
 
+      {waiting.length > 0 ? (
+        <div className="surface-card rounded-xl p-4">
+          <h3 className="text-sm font-semibold">{t('waitingTitle', { count: waiting.length })}</h3>
+          <ul className="mt-3 space-y-2">
+            {waiting.map((row) => (
+              <li
+                key={row.id}
+                className="flex flex-wrap items-center justify-between gap-2 text-sm"
+              >
+                <span>
+                  <span className="font-mono">{row.studentId}</span> — {row.fullName}
+                </span>
+                <span className="flex gap-2">
+                  <Button disabled={busy} onClick={() => void approve(row.id)}>
+                    {t('approve')}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    disabled={busy}
+                    onClick={() => void remove(row.id, row.studentId)}
+                  >
+                    {t('reject')}
+                  </Button>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       <div className="surface-card overflow-x-auto rounded-xl">
         <table className="w-full min-w-[34rem] text-left text-sm">
           <thead>
@@ -177,10 +231,12 @@ export function RosterManager({ classId, roster }: { classId: string; roster: Cl
                   <td className="px-4 py-3 font-mono">{row.studentId}</td>
                   <td className="px-4 py-3">{row.fullName}</td>
                   <td className="px-4 py-3">
-                    {row.studentUid ? (
-                      <span className="text-brand-600 dark:text-brand-300">{t('joined')}</span>
-                    ) : (
+                    {!row.studentUid ? (
                       <span className="text-muted">{t('notJoined')}</span>
+                    ) : row.status === 'pending' ? (
+                      <span className="text-amber-600 dark:text-amber-400">{t('waiting')}</span>
+                    ) : (
+                      <span className="text-brand-600 dark:text-brand-300">{t('joined')}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-right">

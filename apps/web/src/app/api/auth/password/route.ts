@@ -3,6 +3,7 @@ import { changePasswordSchema } from '@casestudyhub/shared';
 import { SESSION_COOKIE_NAME, changeOwnPassword } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { respondWithError } from '@/lib/api/respond';
+import { secureCookieFlag } from '@/lib/api/cookies';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       name: SESSION_COOKIE_NAME,
       value: '',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: secureCookieFlag(),
       sameSite: 'lax',
       path: '/',
       maxAge: 0,

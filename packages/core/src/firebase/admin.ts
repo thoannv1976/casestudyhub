@@ -1,12 +1,12 @@
 import { cert, getApp, getApps, initializeApp, applicationDefault } from 'firebase-admin/app';
-import type { App } from 'firebase-admin/app';
+import type { App, AppOptions } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
 import type { Auth } from 'firebase-admin/auth';
 import { getFirestore } from 'firebase-admin/firestore';
 import type { Firestore } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import type { Storage } from 'firebase-admin/storage';
-import { getServerEnv } from '../env';
+import { getServerEnv, isEmulated } from '../env';
 
 const APP_NAME = 'casestudyhub-admin';
 
@@ -24,16 +24,20 @@ export function getAdminApp(): App {
   const env = getServerEnv();
   const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
 
-  return initializeApp(
-    {
-      projectId: env.GOOGLE_CLOUD_PROJECT,
-      storageBucket: env.FIREBASE_STORAGE_BUCKET,
-      credential: serviceAccountJson
-        ? cert(JSON.parse(serviceAccountJson) as Record<string, string>)
-        : applicationDefault(),
-    },
-    APP_NAME,
-  );
+  const options: AppOptions = {
+    projectId: env.GOOGLE_CLOUD_PROJECT,
+    storageBucket: env.FIREBASE_STORAGE_BUCKET,
+  };
+
+  // Against the emulator there is nothing to authenticate to, and asking for
+  // application default credentials would fail on a machine that has none.
+  if (!isEmulated()) {
+    options.credential = serviceAccountJson
+      ? cert(JSON.parse(serviceAccountJson) as Record<string, string>)
+      : applicationDefault();
+  }
+
+  return initializeApp(options, APP_NAME);
 }
 
 // Cached on globalThis, not in a module variable: Next.js bundles this package

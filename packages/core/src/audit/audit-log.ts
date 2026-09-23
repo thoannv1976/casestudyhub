@@ -13,6 +13,7 @@ export const AUDIT_ACTIONS = [
   'class.created',
   'class.archived',
   'class.student_removed',
+  'class.student_approved',
   'staff.account_created',
   'user.password_changed',
   'group.locked',
