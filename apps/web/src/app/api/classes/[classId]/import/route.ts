@@ -1,14 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { parseStudentRoster } from '@casestudyhub/shared';
-import { assertCanManageClass, importRoster } from '@casestudyhub/core';
+import { assertCanManageClass, getSystemSettings, importRoster } from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { AppError } from '@casestudyhub/core';
 import { respondWithError } from '@/lib/api/respond';
 
 export const dynamic = 'force-dynamic';
-
-/** A faculty list is a few kilobytes; anything larger is not a class list. */
-const MAX_IMPORT_BYTES = 512 * 1024;
 
 /**
  * Imports a student list into a class.
@@ -26,7 +23,10 @@ export async function POST(
     await assertCanManageClass(actor, classId);
 
     const content = await request.text();
-    if (content.length > MAX_IMPORT_BYTES) {
+    // A faculty list is a few kilobytes; anything larger is not a class list.
+    // How much larger is the administrator's call, not this file's.
+    const maxImportBytes = (await getSystemSettings()).maxImportKb * 1024;
+    if (content.length > maxImportBytes) {
       throw new AppError('VALIDATION_FAILED', 'errors.importFileTooLarge');
     }
 

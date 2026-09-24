@@ -34,6 +34,23 @@ export const slideSkeletonEntrySchema = z.object({
 });
 export type SlideSkeletonEntry = z.infer<typeof slideSkeletonEntrySchema>;
 
+/**
+ * A course learning outcome, as the faculty writes it.
+ *
+ * The name is stored as text, not as a message key - unlike every other string
+ * in this system. A CLO is the faculty's own wording from their syllabus, the
+ * same kind of content as a class name or a case title, not interface text
+ * this project translates. Writing it as a key would mean no faculty could add
+ * one without a developer, which is exactly what this whole module exists to
+ * avoid.
+ */
+export const courseOutcomeSchema = z.object({
+  id: z.string().trim().min(1).max(16),
+  name: z.string().trim().min(1).max(200),
+  description: z.string().trim().max(1000).optional(),
+});
+export type CourseOutcome = z.infer<typeof courseOutcomeSchema>;
+
 export const presentationPolicySchema = z
   .object({
     id: z.string().min(1),
@@ -91,6 +108,27 @@ export const presentationPolicySchema = z
       aiScoreIsAdvisoryOnly: z.literal(true),
     }),
 
+    /**
+     * What the faculty calls each outcome the rubric claims to measure. The
+     * mapping itself lives on each rubric criterion, so it is frozen with the
+     * framework and a report from March stays reproducible in June.
+     */
+    clos: z.array(courseOutcomeSchema).default([]),
+
+    /**
+     * The share of an outcome's points a piece of work must reach to count as
+     * having met it. A faculty decision, which is why it is stored rather than
+     * defaulted somewhere in the reporting code.
+     */
+    cloThreshold: z.number().min(0).max(1).default(0.5),
+
+    /**
+     * True once the faculty has checked the criterion-to-outcome mapping
+     * against the syllabus. Until then every report says so on its face: a
+     * number nobody has confirmed should not be quoted as if it were.
+     */
+    cloMappingConfirmed: z.boolean().default(false),
+
     roles: z.array(presentationRoleSchema).min(1),
     rubric: rubricSchema,
     slideSkeleton: z.array(slideSkeletonEntrySchema),
@@ -124,6 +162,21 @@ export const DEFAULT_PRESENTATION_POLICY: PresentationPolicy = {
   locked: false,
   groupSize: { min: 4, max: 6 },
   presentation: { minMinutes: 18, maxMinutes: 20, hardStopMinutes: 22 },
+
+  /**
+   * The outcomes the shipped rubric claims to measure, named as the Guide
+   * names them. `cloMappingConfirmed` stays false until a faculty has checked
+   * this against their own syllabus - which is a different document from the
+   * Guide this default came from.
+   */
+  clos: [
+    { id: 'CLO1', name: 'Analyse a business case and identify the decision at stake' },
+    { id: 'CLO2', name: 'Support an argument with evidence and figures' },
+    { id: 'CLO4', name: 'Communicate a recommendation to a business audience' },
+    { id: 'CLO6', name: 'Evaluate alternatives and justify a choice' },
+  ],
+  cloThreshold: 0.5,
+  cloMappingConfirmed: false,
   qa: {
     minMinutes: 8,
     maxMinutes: 10,

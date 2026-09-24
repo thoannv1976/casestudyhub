@@ -1,6 +1,12 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { registerRequestSchema } from '@casestudyhub/shared';
-import { clientAddress, enforceRateLimit, registerStudent } from '@casestudyhub/core';
+import {
+  AppError,
+  clientAddress,
+  enforceRateLimit,
+  getSystemSettings,
+  registerStudent,
+} from '@casestudyhub/core';
 import { respondWithError } from '@/lib/api/respond';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +19,12 @@ export async function POST(request: NextRequest) {
   try {
     // The endpoint is reachable without signing in, so it is the one an abuser
     // would hammer to create accounts or to probe which emails exist.
+    // A faculty closes registration once a term has started and adds late
+    // arrivals by hand, so a stray class code cannot fill the platform.
+    if (!(await getSystemSettings()).registrationOpen) {
+      throw new AppError('FORBIDDEN', 'errors.registrationClosed');
+    }
+
     await enforceRateLimit({
       key: `register:${clientAddress(request.headers)}`,
       max: 5,

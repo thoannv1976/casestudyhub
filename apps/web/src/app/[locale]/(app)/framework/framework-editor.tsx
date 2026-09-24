@@ -85,10 +85,21 @@ export function FrameworkEditor({
         ),
         decimals: number('decimals', base.grading.decimals),
       },
+      clos: base.clos.map((clo) => ({
+        ...clo,
+        name: String(form.get(`cloName__${clo.id}`) ?? clo.name).trim() || clo.id,
+      })),
+      cloThreshold: number('cloThreshold', base.cloThreshold * 100) / 100,
+      cloMappingConfirmed: form.get('cloMappingConfirmed') === 'on',
       rubric: (() => {
         const criteria = base.rubric.criteria.map((criterion) => ({
           ...criterion,
           maxPoints: number(`criterion__${criterion.id}`, criterion.maxPoints),
+          // The mapping lives on the criterion, which is what freezes it with
+          // the framework: a report from March stays reproducible in June.
+          cloIds: base.clos
+            .map((clo) => clo.id)
+            .filter((cloId) => form.get(`map__${criterion.id}__${cloId}`) === 'on'),
         }));
         // The total is the sum of the parts, not a separate decision. The
         // schema refuses a rubric where the two disagree, so a form that asked
@@ -313,6 +324,88 @@ export function FrameworkEditor({
                 />
               </Field>
             ))}
+          </div>
+        </Card>
+
+        <Card>
+          <CardTitle>{t('cloTitle')}</CardTitle>
+          <p className="text-muted mt-2 text-sm">{t('cloBody')}</p>
+
+          <div className="mt-4 space-y-3">
+            {base.clos.map((clo) => (
+              <Field key={clo.id} label={clo.id} htmlFor={`cloName__${clo.id}`}>
+                <Input
+                  id={`cloName__${clo.id}`}
+                  name={`cloName__${clo.id}`}
+                  defaultValue={clo.name}
+                  maxLength={200}
+                />
+              </Field>
+            ))}
+          </div>
+
+          {base.clos.length > 0 ? (
+            <div className="mt-6 overflow-x-auto">
+              <table className="w-full min-w-[32rem] text-left text-sm">
+                <thead>
+                  <tr className="border-b border-[var(--border-subtle)]">
+                    <th scope="col" className="py-2 pr-4 font-semibold">
+                      {t('cloCriterion')}
+                    </th>
+                    {base.clos.map((clo) => (
+                      <th key={clo.id} scope="col" className="px-2 py-2 text-center font-semibold">
+                        {clo.id}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {base.rubric.criteria.map((criterion) => (
+                    <tr key={criterion.id} className="border-b border-[var(--border-subtle)]">
+                      <td className="py-2 pr-4">
+                        {tRubric(criterion.key.replace(/^rubric\./, ''))}
+                      </td>
+                      {base.clos.map((clo) => (
+                        <td key={clo.id} className="px-2 py-2 text-center">
+                          <Input
+                            type="checkbox"
+                            name={`map__${criterion.id}__${clo.id}`}
+                            defaultChecked={criterion.cloIds.includes(clo.id)}
+                            aria-label={`${criterion.id} ${clo.id}`}
+                          />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <Field label={t('cloThreshold')} htmlFor="cloThreshold" hint={t('cloThresholdHint')}>
+              <Input
+                id="cloThreshold"
+                name="cloThreshold"
+                type="number"
+                min={0}
+                max={100}
+                step={1}
+                defaultValue={Math.round(base.cloThreshold * 100)}
+              />
+            </Field>
+            <Field
+              label={t('cloConfirmed')}
+              htmlFor="cloMappingConfirmed"
+              hint={t('cloConfirmedHint')}
+            >
+              <Input
+                id="cloMappingConfirmed"
+                name="cloMappingConfirmed"
+                type="checkbox"
+                defaultChecked={base.cloMappingConfirmed}
+              />
+            </Field>
           </div>
         </Card>
 

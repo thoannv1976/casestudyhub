@@ -287,7 +287,9 @@
     "policyNotYoursToVersion": "Adding a version to a framework other classes already use is an administrator's decision. Clone it under a new name to change the rules for your own course.",
     "useOwnPasswordPage": "Use your own change-password page to set your own password.",
     "studentIdRequired": "A student account needs a student code: that code is what a class roster is matched against.",
-    "reasonTooShort": "Say in at least ten characters why. This is the note a later reader has to go on."
+    "reasonTooShort": "Say in at least ten characters why. This is the note a later reader has to go on.",
+    "registrationClosed": "Registration is closed. Ask your lecturer to add you to the class.",
+    "aiBudgetSpent": "The month's budget of model calls is spent. An administrator can raise it on the system settings page."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -317,9 +319,16 @@
     "roleAdmin": "Administrator",
     "roleLecturer": "Lecturer",
     "roleStudent": "Student",
-    "nextSteps": "What you can do now",
-    "phase1Note": "Phase 1 is being built. Classes, groups, the case library and submissions arrive in the next milestones.",
-    "yourAccount": "Your account"
+    "liveNow": "Happening in class now",
+    "waitingOnYou": "Waiting on you",
+    "yourWork": "What you owe",
+    "yourMarks": "Marks published to you",
+    "yourClasses": "Classes you teach",
+    "enrolledOn": "Your classes",
+    "nothingWaiting": "Nothing is waiting on you. Every group is either still within its deadline or already published.",
+    "nothingDue": "Nothing is due. Everything your group owes has been handed in.",
+    "noClassesStaff": "You are not teaching a class yet. Create one from the teaching page.",
+    "noClassesStudent": "You have not joined a class yet. Ask your lecturer for the class code."
   },
   "profile": {
     "title": "My profile",
@@ -340,7 +349,9 @@
     "usersTitle": "Users",
     "usersBody": "Create lecturer and admin accounts, change roles, suspend accounts.",
     "academicTitle": "Academic structure",
-    "academicBody": "Academic years, semesters and courses."
+    "academicBody": "Academic years, semesters and courses.",
+    "systemTitle": "System",
+    "systemBody": "Platform figures, and the settings that apply to everybody."
   },
   "password": {
     "title": "Change password",
@@ -521,7 +532,27 @@
     "unpublish": "Withdraw from students",
     "published": "Published",
     "draft": "Draft",
-    "openBank": "Question bank"
+    "openBank": "Question bank",
+    "revisionsTitle": "Revisions",
+    "revisionsBody": "An edit writes a new version and never overwrites the old one. A group set this case keeps reading the version they were given, whatever is rewritten later.",
+    "edit": "Revise this case",
+    "cancelEdit": "Cancel",
+    "saveRevision": "Publish revision",
+    "revised": "Saved as {version}. Work already set keeps the version it was set under.",
+    "industry": "Industry",
+    "chapter": "Chapter",
+    "description": "Description",
+    "mainQuestions": "Discussion questions",
+    "supportingQuestions": "Supporting questions",
+    "learningObjectives": "Learning objectives",
+    "cloIds": "Learning outcomes measured",
+    "references": "References",
+    "onePerLine": "One per line.",
+    "reason": "What changed, and why",
+    "reasonHint": "At least ten characters. Kept with the version, for whoever reads it later.",
+    "attachmentsNotVersioned": "Attached files are not versioned: they are always the current ones. Only the text of the case is kept per revision.",
+    "caseSubtitle": "Subtitle",
+    "firstVersion": "First version"
   },
   "assignments": {
     "title": "Case assignments",
@@ -863,6 +894,60 @@
     "reasonBody": "A framework change outlives whoever made it. This is written to the audit log with the new version.",
     "reason": "Reason (at least 10 characters)",
     "publish": "Publish this version",
-    "published": "The new version is published. Classes created from now on will use it; existing classes keep theirs."
+    "published": "The new version is published. Classes created from now on will use it; existing classes keep theirs.",
+    "cloTitle": "Course learning outcomes",
+    "cloBody": "What the faculty calls each outcome, and which criteria measure it. The mapping is carried with the framework, so a report keeps the mapping it was produced under.",
+    "cloCriterion": "Criterion",
+    "cloThreshold": "Counts as met at (%)",
+    "cloThresholdHint": "The share of an outcome's points a piece of work must reach. This is a faculty decision, not a default.",
+    "cloConfirmed": "Checked against the syllabus",
+    "cloConfirmedHint": "Until this is ticked, every report says on its face that the mapping is illustrative."
+  },
+  "progress": {
+    "filterLabel": "Show",
+    "columnLabel": "Progress",
+    "noneMatch": "Nothing in this state.",
+    "all": "All",
+    "needsLecturer": "Waiting on you",
+    "awaiting": "Not handed in",
+    "overdue": "Overdue",
+    "complete": "Ready to mark",
+    "marked": "Marked, not published",
+    "published": "Published",
+    "missing": "{count, plural, one {# deliverable missing} other {# deliverables missing}}"
+  },
+  "systemAdmin": {
+    "title": "System",
+    "subtitle": "What the platform holds, and the few switches that change how it behaves. Academic rules are not here — how long a group speaks or what a criterion is worth belongs to the assessment framework, which is versioned so a change cannot reach work already marked.",
+    "metricsTitle": "What the platform holds",
+    "counts": {
+      "students": "Students",
+      "lecturers": "Lecturers",
+      "admins": "Administrators",
+      "suspended": "Suspended accounts",
+      "activeClasses": "Classes running",
+      "liveSessions": "Presentations live now",
+      "completedSessions": "Presentations finished",
+      "submissions": "Files handed in",
+      "publishedGrades": "Marks published"
+    },
+    "aiTitle": "What the model has cost",
+    "aiBody": "Counted for {period}. The model is billed per call, so this is the number that decides what the faculty is charged.",
+    "aiCalls": "Calls this month",
+    "aiPromptTokens": "Tokens sent",
+    "aiOutputTokens": "Tokens returned",
+    "aiBudgetSpent": "This month's budget is spent. The AI features will refuse until the budget is raised or the month turns.",
+    "settingsTitle": "Settings",
+    "settingsBody": "These take effect at once and apply to everybody. Each is recorded with who changed it and why.",
+    "registrationOpen": "Students may create their own account",
+    "registrationOpenHint": "Close this once a term has started, and add late arrivals from the user page.",
+    "maxImportKb": "Largest class list upload (KB)",
+    "maxImportKbHint": "A faculty list is a few kilobytes. Anything much larger is not a class list.",
+    "aiMonthlyCallBudget": "Model calls per month",
+    "aiMonthlyCallBudgetHint": "Zero stops the AI features without unsetting the credentials.",
+    "reason": "Reason",
+    "reasonHint": "Recorded with the change, for whoever reads the log later.",
+    "save": "Save settings",
+    "saved": "Saved. These apply from now, to everybody."
   }
 }

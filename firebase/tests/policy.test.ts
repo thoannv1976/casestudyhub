@@ -290,6 +290,41 @@ describe('what a new version reaches', () => {
   });
 });
 
+describe('the outcome mapping travels with the framework', () => {
+  it('reports under the version the class was created with, not the newest', async () => {
+    // A faculty confirms their mapping and raises the bar, as a new version.
+    await savePolicyVersion(admin, {
+      policy: {
+        ...base,
+        version: '2026.2',
+        clos: [{ id: 'CLO1', name: 'Phan tich tinh huong kinh doanh' }],
+        cloThreshold: 0.7,
+        cloMappingConfirmed: true,
+      },
+      reason: 'The faculty checked the mapping against the syllabus for 2026.2.',
+    });
+
+    const older = await getPolicy(base.id, base.version);
+    const newer = await getPolicy(base.id, '2026.2');
+
+    // The version a March class runs under is untouched by a June decision.
+    expect(older.cloThreshold).toBe(0.5);
+    expect(older.cloMappingConfirmed).toBe(false);
+    expect(newer.cloThreshold).toBe(0.7);
+    expect(newer.cloMappingConfirmed).toBe(true);
+    expect(newer.clos[0]?.name).toBe('Phan tich tinh huong kinh doanh');
+  });
+
+  it('refuses a threshold that is not a share of the marks', async () => {
+    await expect(
+      savePolicyVersion(admin, {
+        policy: { ...base, version: '2026.3', cloThreshold: 1.4 },
+        reason: 'A threshold nobody could ever reach.',
+      }),
+    ).rejects.toThrow();
+  });
+});
+
 describe('the list of frameworks', () => {
   it('holds the built-in default even before anything has been written', async () => {
     const policies = await listPolicies();

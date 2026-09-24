@@ -43,6 +43,47 @@ export const caseStudySchema = z.object({
 });
 export type CaseStudy = z.infer<typeof caseStudySchema>;
 
+/**
+ * A revision of a case study (SRS Module 05).
+ *
+ * The text of a case is what an assignment freezes: a group set a case in
+ * March must be able to read what they were actually given, whatever their
+ * lecturer rewrote in June. So an edit never overwrites - it writes a new
+ * version and moves the case's pointer, exactly as a submission does.
+ *
+ * Attached files are deliberately not part of a version. They are bytes in a
+ * bucket, and keeping every revision of every upload would mean never being
+ * able to delete anything. The interface says so rather than implying a
+ * completeness that is not there.
+ */
+export const caseVersionSchema = z.object({
+  id: z.string().min(1),
+  caseId: z.string().min(1),
+  versionId: z.string().min(1),
+  title: z.string().trim().min(1).max(200),
+  subtitle: z.string().max(300).optional(),
+  company: z.string().max(160).optional(),
+  industry: z.string().max(160).optional(),
+  chapter: z.string().max(160).optional(),
+  description: z.string().max(4000).optional(),
+  learningObjectives: z.array(z.string().min(1)).default([]),
+  cloIds: z.array(z.string().min(1)).default([]),
+  mainQuestions: z.array(z.string().min(1)).default([]),
+  supportingQuestions: z.array(z.string().min(1)).default([]),
+  references: z.array(z.string().min(1)).default([]),
+  createdAt: z.string().min(1),
+  createdBy: z.string().min(1),
+  /** Why the case was revised. Empty for the version a case is created with. */
+  reason: z.string().max(500).default(''),
+});
+export type CaseVersion = z.infer<typeof caseVersionSchema>;
+
+/** `v1`, `v2`, ... A version id is only ever read back, never parsed for meaning. */
+export function nextCaseVersionId(current: string | undefined): string {
+  const match = /^v(\d+)$/.exec(current ?? '');
+  return match ? `v${Number(match[1]) + 1}` : 'v2';
+}
+
 export const ASSIGNMENT_STATUSES = [
   'assigned',
   'submission_open',

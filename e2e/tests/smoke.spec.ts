@@ -29,6 +29,9 @@ const CLASS_CODE = `E2E-${RUN}`;
 const RESET_PASSWORD = 'resetPass2026';
 const CORRECTED_NAME = 'Tran Thi Bich Lecturer';
 
+/** Set if a test reset the student's password; null while it is their own. */
+const LECTURER_SET_STUDENT_PASSWORD: string | null = null;
+
 /** A student an administrator adds, for one who could not register. */
 const ADDED_STUDENT = {
   studentId: `SVADM${RUN}`,
@@ -130,6 +133,12 @@ test('a student registers and reaches their dashboard', async ({ page }) => {
 
   await page.waitForURL('**/dashboard');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(STUDENT.fullName);
+
+  // The dashboard used to tell everybody "Phase 1 is being built". A new
+  // account has no class yet, and that is what it should say.
+  await expect(page.getByText('have not joined a class yet')).toBeVisible();
+  await expect(page.getByText('Phase 1')).toHaveCount(0);
+
   await signOut(page);
 });
 
@@ -1468,6 +1477,40 @@ test('a lecturer publishes a new framework version without moving a published ma
   await expect(page.getByText('Framework version 2026.1')).toBeVisible();
 });
 
+/**
+ * Course outcomes (SRS Phần VI). The report carries a warning that its CLO
+ * mapping is illustrative; this is the path by which a faculty removes it,
+ * honestly - by checking the mapping and saying so.
+ */
+test('confirming the outcome mapping removes the caveat from the report', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  const reportClassId = page.url().split('/teaching/')[1]?.split(/[?#]/)[0] ?? '';
+
+  await page.goto(`/en/teaching/${reportClassId}/report`);
+
+  // As shipped, the report says the mapping has not been checked.
+  await expect(page.getByTestId('alert-error')).toContainText('illustrative');
+
+  await page.goto('/en/framework');
+  await page.getByLabel('Framework name').fill(`ftu-clo-${RUN}`);
+  await page.getByLabel('New version number').fill('2026.1');
+  await page.getByLabel('Checked against the syllabus').check();
+  await page.getByLabel('Counts as met at (%)').fill('60');
+  await page
+    .getByLabel('Reason (at least 10 characters)')
+    .fill('Checked the mapping against the 2026 syllabus.');
+  await page.getByRole('button', { name: 'Publish this version' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('published');
+
+  // The class already running keeps the framework it was created under, so its
+  // report is unchanged - which is the point of freezing a version.
+  await page.goto(`/en/teaching/${reportClassId}/report`);
+  await expect(page.getByTestId('alert-error')).toContainText('illustrative');
+});
+
 test('a student cannot reach the assessment framework, let alone change it', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 
@@ -1577,6 +1620,178 @@ test('an administrator creates a student account for one who could not register'
   await signOut(page);
   await signIn(page, ADDED_STUDENT.email, ADDED_STUDENT.temporaryPassword);
   await page.waitForURL('**/change-password');
+});
+
+/**
+ * The dashboard (SRS Modules 03 and 04). By this point in the run the student
+ * has a class, a group, an assignment and a published mark, so it has real
+ * work to sort - which is the whole reason it was rewritten.
+ */
+test('the dashboard shows a student what they owe and what was marked', async ({ page }) => {
+  await signIn(page, STUDENT.email, LECTURER_SET_STUDENT_PASSWORD ?? STUDENT.password);
+  await page.goto('/en/dashboard');
+
+  // Their class, by name, with a way into it.
+  await expect(page.getByRole('link', { name: new RegExp(CLASS_CODE) })).toBeVisible();
+
+  // The mark published earlier in this run.
+  await expect(page.getByTestId('dashboard-marks')).toContainText('Amazon');
+});
+
+test('the dashboard shows a lecturer only what is waiting on them', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/dashboard');
+
+  await expect(page.getByRole('heading', { name: 'Waiting on you' })).toBeVisible();
+
+  // Every group in this run has been marked and published, so nothing is
+  // outstanding - and saying so is the point, not an empty list.
+  await expect(page.getByText('Nothing is waiting on you')).toBeVisible();
+});
+
+test('the class page filters groups by how far they have got', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  // The progress column, and the filter that answers "which ones are behind".
+  await expect(page.getByRole('button', { name: /^Published \(/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Published \(/ }).click();
+  await expect(page.getByRole('cell', { name: 'Published' })).toBeVisible();
+
+  await page.getByRole('button', { name: /^Overdue \(/ }).click();
+  await expect(page.getByText('Nothing in this state')).toBeVisible();
+});
+
+/**
+ * Platform settings (SRS Module 03). Each of these changes something; a switch
+ * that changed nothing would be worse than no switch.
+ */
+test('an administrator sees what the platform holds', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  const metrics = page.getByTestId('platform-metrics');
+  await expect(metrics).toContainText('Students');
+  await expect(metrics).toContainText('Marks published');
+
+  // The model has not been called in this run, against the shipped budget.
+  await expect(page.getByTestId('ai-usage')).toContainText('0 / 500');
+});
+
+test('closing registration closes the form, not just the request', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  await page.getByLabel('Students may create their own account').uncheck();
+  await page.getByLabel('Reason').fill('Term has started.');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+
+  await signOut(page);
+  await page.goto('/en/register');
+  await expect(page.getByTestId('alert-error')).toContainText('Registration is closed');
+  await expect(page.locator('#studentId')).toHaveCount(0);
+
+  // The API refuses too, which is where the rule actually lives.
+  const response = await page.request.post('/api/auth/register', {
+    data: {
+      studentId: `SVCLOSED${RUN}`,
+      fullName: 'Nguyen Van Closed',
+      email: `closed.${RUN}@e2e.test`,
+      password: 'closed2026',
+      confirmPassword: 'closed2026',
+      preferredLanguage: 'en',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+
+  // Put it back, so the rest of the run is unaffected.
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+  await page.getByLabel('Students may create their own account').check();
+  await page.getByLabel('Reason').fill('Reopening after the check.');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+});
+
+test('a lecturer cannot reach the system settings, let alone change them', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+
+  await page.goto('/en/admin/system');
+  await expect(page.getByTestId('alert-error')).toContainText('do not have permission');
+
+  const response = await page.request.put('/api/admin/system', {
+    data: {
+      settings: { registrationOpen: true, maxImportKb: 512, aiMonthlyCallBudget: 99999 },
+      reason: 'Raising a budget that is not mine to raise.',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
+/**
+ * Case revisions (SRS Module 05). A case could not be edited at all before
+ * this; now it can, and an edit writes a version rather than overwriting one.
+ */
+test('revising a case writes a version and leaves the old one alone', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  // Created with v1, so the pointer the case carries means something.
+  await expect(page.getByTestId('case-versions')).toContainText('v1');
+
+  await page.getByRole('button', { name: 'Revise this case' }).click();
+  await page.locator('#title').fill('Amazon (2025 figures)');
+  await page
+    .locator('#reason')
+    .fill('The 2025 figures replaced the 2024 ones after the annual report.');
+  await page.getByRole('button', { name: 'Publish revision' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('v2');
+
+  const history = page.getByTestId('case-versions');
+  await expect(history).toContainText('v2');
+  // The first version is still there, with its own title.
+  await expect(history).toContainText('v1');
+  await expect(history.getByText('Amazon', { exact: true })).toBeVisible();
+});
+
+test('a student cannot revise a case, however they ask', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  await expect(page.getByRole('button', { name: 'Revise this case' })).toHaveCount(0);
+
+  const caseId = page.url().split('/cases/')[1]?.split(/[?#]/)[0] ?? '';
+  const response = await page.request.put(`/api/cases/${caseId}`, {
+    data: {
+      title: 'Rewritten by a student',
+      learningObjectives: [],
+      cloIds: [],
+      mainQuestions: [],
+      supportingQuestions: [],
+      references: [],
+      reason: 'Rewriting the case I am being marked on.',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
 });
 
 test('a student is refused the administration pages', async ({ page }) => {

@@ -1,11 +1,13 @@
 import { GoogleAuth } from 'google-auth-library';
 import {
+  AiBudgetSpentError,
   AiNotConfiguredError,
   AiResponseError,
   type AiProvider,
   type AiRequest,
   type AiResult,
 } from './provider';
+import { currentAiUsage, getSystemSettings, recordAiCall } from '../settings/settings';
 
 /**
  * Google's Gemini models, reached two ways.
@@ -153,6 +155,37 @@ export function createGeminiProvider(config: GeminiConfig): AiProvider {
   };
 }
 
+/**
+ * Every model call in the platform goes through `getAiProvider`, so the
+ * monthly budget is enforced here rather than at each of the five call sites -
+ * one of which would eventually be added without it.
+ *
+ * The count is written after the call returns: a call that failed cost
+ * nothing. A burst of parallel calls can therefore cross the budget by
+ * however many were already in flight, which is the right trade. A budget is
+ * there to stop a runaway, not to be exact to the single call.
+ */
+function metered(provider: AiProvider): AiProvider {
+  return {
+    name: provider.name,
+    model: provider.model,
+    async generate(request) {
+      const [settings, usage] = await Promise.all([getSystemSettings(), currentAiUsage()]);
+      if (usage.calls >= settings.aiMonthlyCallBudget) {
+        throw new AiBudgetSpentError(settings.aiMonthlyCallBudget);
+      }
+
+      const result = await provider.generate(request);
+      await recordAiCall(result).catch((error: unknown) => {
+        // A call that happened and was not counted is better than a call that
+        // worked and is reported as failed, so this never throws.
+        console.error('Failed to record AI usage', error);
+      });
+      return result;
+    },
+  };
+}
+
 let override: AiProvider | null = null;
 
 /** Tests and the emulator inject a provider here and never reach a network. */
@@ -161,10 +194,10 @@ export function setAiProvider(provider: AiProvider | null): void {
 }
 
 export function getAiProvider(): AiProvider {
-  if (override) return override;
+  if (override) return metered(override);
   const config = readGeminiConfig();
   if (!config) throw new AiNotConfiguredError();
-  return createGeminiProvider(config);
+  return metered(createGeminiProvider(config));
 }
 
 export function aiIsAvailable(): boolean {

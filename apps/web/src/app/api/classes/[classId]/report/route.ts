@@ -30,7 +30,12 @@ export async function GET(
       ['Class', report.className, report.classCode],
       ['Generated', new Date().toISOString()],
       ['Grades counted', 'published only'],
-      ['CLO mapping', 'illustrative; confirm against the syllabus before reporting'],
+      [
+        'CLO mapping',
+        report.cloMappingConfirmed
+          ? 'confirmed against the syllabus by the faculty'
+          : 'illustrative; confirm against the syllabus before reporting',
+      ],
       [],
       ['Grade distribution'],
       ['Band', 'Students', 'Share'],
@@ -52,9 +57,10 @@ export async function GET(
       ]),
       [],
       ['CLO attainment', `threshold ${report.cloThreshold}`],
-      ['CLO', 'Criteria', 'Attainment', 'At or above threshold', 'Marked'],
+      ['CLO', 'Name', 'Criteria', 'Attainment', 'At or above threshold', 'Marked'],
       ...report.clos.map((clo) => [
         clo.cloId,
+        report.cloNames[clo.cloId] ?? '',
         clo.criterionIds.join(' '),
         clo.attainment,
         clo.atOrAboveThreshold,

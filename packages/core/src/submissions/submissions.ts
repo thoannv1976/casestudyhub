@@ -1,6 +1,7 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
+  currentVersionsOf,
   safeFileName,
   submissionSchema,
   validateUpload,
@@ -142,14 +143,7 @@ export async function listSubmissions(assignmentId: string): Promise<Submission[
 
 /** The version that counts for each deliverable: the most recent one. */
 export function currentVersions(submissions: readonly Submission[]): Submission[] {
-  const byDeliverable = new Map<string, Submission>();
-  for (const submission of submissions) {
-    const held = byDeliverable.get(submission.deliverableId);
-    if (!held || submission.versionNumber > held.versionNumber) {
-      byDeliverable.set(submission.deliverableId, submission);
-    }
-  }
-  return [...byDeliverable.values()];
+  return currentVersionsOf(submissions);
 }
 
 export async function readSubmissionFile(
