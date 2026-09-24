@@ -81,14 +81,30 @@ emulator thay vì Firestore thật.
 Chuẩn bị một lần theo [`docs/01-gcp-setup.md`](./docs/01-gcp-setup.md); chi tiết
 quy trình trong [`docs/04-deployment.md`](./docs/04-deployment.md).
 
-Deploy ngay từ Google Cloud Shell, không cần cấu hình GitHub Actions trước:
+Deploy từ Google Cloud Shell, không cần cấu hình GitHub Actions trước:
 
 ```bash
-git clone --branch claude/zealous-franklin-e428p0 \
-  https://github.com/thoannv1976/casestudyhub.git
+git clone https://github.com/thoannv1976/casestudyhub.git
 cd casestudyhub
-bash scripts/deploy-cloudshell.sh
+bash scripts/setup-firebase.sh      # một lần: Auth, Firestore, Web App
+bash scripts/deploy-cloudshell.sh   # mỗi lần có bản mới
 ```
+
+Cấp quyền quản trị cho tài khoản đầu tiên (sau khi đã đăng ký trên ứng dụng):
+
+```bash
+bash scripts/grant-role.sh <email> admin
+```
+
+Tạo sẵn một lớp demo từ chính case Amazon trong `docs/source/`:
+
+```bash
+node scripts/seed-demo.mjs <email-giảng-viên>
+```
+
+Lệnh này tạo năm học 2026–2027, học kỳ Fall 2026, học phần E-Commerce 2026,
+lớp **ECOM-2026-A01**, case **CASE01 — Amazon** (đã công bố, kèm hai file gốc)
+và 10 nhóm. Chạy lại nhiều lần không tạo bản sao.
 
 ## Nguyên tắc bắt buộc khi viết code
 

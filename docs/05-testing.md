@@ -33,7 +33,7 @@ npm test -- grading   # lọc theo tên file
 | 11  | Hai sinh viên cùng join nhóm gần đầy              | Integration (transaction) | 4            | ⏳         |
 | 12  | Đổi rubric không làm sai lệch điểm đã công bố     | Unit                      | 1            | ✅         |
 
-## Đã có (PR 1) — 49 test
+## Unit test — 113 test
 
 **Policy engine & tính điểm** (`packages/shared/src/__tests__/grading.test.ts`)
 
@@ -69,19 +69,148 @@ npm test -- grading   # lọc theo tên file
 - Chỉ admin xem được điểm toàn trường.
 - Mã sinh viên và class code được validate đúng định dạng.
 
+**Đọc file danh sách sinh viên** (`roster-import.test.ts`, PR 3)
+
+Đây là chỗ dữ liệu thật của khoa đi vào hệ thống, nên bộ test bám sát những gì
+Excel thực sự xuất ra:
+
+- Dấu phẩy nằm trong tên được đặt trong ngoặc kép; ngoặc kép lồng nhau.
+- **BOM của Excel, dòng kết thúc CRLF, và dấu chấm phẩy** của Excel bản tiếng Việt.
+- Tiêu đề cột tiếng Việt (`Mã sinh viên`, `Họ và tên`, `MSSV`) hay tiếng Anh, thứ tự bất kỳ.
+- Dòng trống bị bỏ qua, không bị báo lỗi.
+- Dòng sai **được báo kèm số dòng**, các dòng đúng vẫn nhập được.
+- Trùng mã sinh viên hoặc trùng email **ngay trong file**, có chỉ ra dòng đầu tiên.
+- Thiếu cột bắt buộc thì từ chối và nói rõ thiếu cột nào.
+- Mọi thông báo lỗi là khóa i18n.
+- Mã sinh viên dạng `../admin` bị từ chối — không để chuỗi lạ chui vào document id.
+
+**Hợp đồng đăng ký** (`auth-contracts.test.ts`, PR 2)
+
+- Hai mật khẩu không khớp báo lỗi đúng ở ô xác nhận.
+- Mật khẩu phải đủ 8 ký tự và có cả chữ lẫn số; thông báo lỗi là **khóa i18n**
+  chứ không phải câu tiếng Anh cứng.
+- Email sai định dạng, tên quá ngắn, ngôn ngữ ngoài danh sách đều bị từ chối.
+- **Client không tự chọn được vai trò**: gửi kèm `globalRole: admin` thì trường
+  đó bị loại bỏ khỏi dữ liệu đã kiểm duyệt.
+- Mã sinh viên từ chối `.`, `..` và ký tự `/` — những giá trị có thể phá cấu
+  trúc document id của Firestore.
+- Hồ sơ cá nhân chỉ nhận tên và ngôn ngữ; `globalRole`, `status`, `studentId`
+  gửi lên bị loại bỏ.
+- Mã sinh viên khác nhau về hoa thường được coi là **cùng một mã**.
+
 **Hạ tầng** (`packages/core/src/__tests__/`)
 
 - `AppError` ánh xạ đúng mã lỗi sang HTTP status, trả payload có khóa i18n, không
   lộ thông tin nội bộ.
 - Biến môi trường thiếu thì báo rõ tên biến thay vì lỗi mơ hồ.
 
-## Kiểm thử Security Rules (từ PR 2)
+## Kiểm thử đầu-cuối (E2E)
 
 ```bash
-npm run emulators                        # terminal 1
-npm test -- rules                        # terminal 2
+npm run test:e2e
 ```
 
-Rules test chạy trên Firebase Emulator, không chạm vào dữ liệu thật. Mỗi
-collection được mở trong rules phải có test chứng minh: người đúng quyền ghi
-được, người sai quyền bị chặn.
+Lệnh này build ứng dụng với cấu hình trỏ vào emulator, bật Firebase Emulator,
+tạo sẵn một tài khoản quản trị, rồi cho Playwright điều khiển trình duyệt chạy
+trọn một câu chuyện. Toàn bộ mất khoảng 15 giây.
+
+**Vì sao phải chạy trên bản build production, không phải `next dev`:** lỗi 500
+khi tạo tài khoản giảng viên chỉ xuất hiện khi Next.js chia mã server thành
+nhiều chunk — điều `next dev` không làm. Toàn bộ 87 unit test và 30 rules test
+đều xanh trong khi production hỏng. E2E là lớp duy nhất bắt được loại lỗi đó.
+
+### 33 kịch bản
+
+1. Dịch vụ trả lời `/api/health` trước khi thử bất cứ điều gì khác.
+2. Sinh viên đăng ký và vào được trang làm việc của mình.
+3. **Không đăng ký được hai lần cùng một mã sinh viên** — và lần hỏng không để
+   lại tài khoản rác.
+4. Quản trị viên tạo năm học → học kỳ → học phần → lớp.
+5. **Quản trị viên tạo tài khoản giảng viên kèm mật khẩu tạm** — chính là thao
+   tác đã trả về 500 trên production.
+6. Mật khẩu tạm **không vào được trang nào khác**: gõ thẳng địa chỉ khác vẫn bị
+   đẩy về trang đổi mật khẩu; đổi xong mới vào được.
+7. Mật khẩu tạm cũ **hết tác dụng** ngay sau khi đổi.
+8. Sinh viên nhập mã lớp và vào được lớp.
+9. Sinh viên **không vào được cùng một lớp hai lần**.
+10. Giảng viên thấy đúng sinh viên đó trong danh sách lớp.
+11. Sinh viên gõ thẳng địa chỉ trang quản trị thì **bị từ chối** và không thấy
+    dữ liệu người dùng nào.
+12. Khách chưa đăng nhập bị đẩy về trang đăng nhập.
+
+**Nhóm và phân vai (PR 5):** giảng viên tạo nhóm; sinh viên vào nhóm; không giữ
+hai nhóm trong một lớp; ba sinh viên nữa vào cho đủ bốn; nhóm 4/4 không nhận
+thêm; **phân vai tự động cho nhóm 4 người ra đúng R1+R5, R2, R3, R4+R6**; nhóm
+chưa đủ người thì không phân vai được; sinh viên thấy vai của mình.
+
+**Thư viện case (PR 6):** thêm case và tải PDF thật lên; file giả mạo định dạng
+bị từ chối; bản nháp sinh viên không thấy; công bố xong sinh viên đọc được và
+tải được đúng content-type.
+
+**Giao bài và nộp bài (PR 7):** giao case cho nhóm; nhóm thấy phải nộp gì và nộp
+slide; **nộp lại tạo phiên bản 2 mà phiên bản 1 vẫn còn**; sai định dạng bị từ
+chối; không có phiên đăng nhập thì không tải được file; giảng viên thấy tiến độ.
+
+**Bảo mật và tiếp cận (PR 8):** sinh viên **không đọc được lớp mình không thuộc**
+(403 với phiên hợp lệ, không phải chỉ 401 với khách); bàn phím nhảy được tới nội
+dung chính; mỗi trang khai báo đúng ngôn ngữ.
+
+## Kiểm thử đồng thời (PR 5)
+
+`firebase/tests/group-concurrency.test.ts` chạy code nghiệp vụ thật qua Admin
+SDK trên emulator, vì Security Rules **không diễn đạt được** quy tắc "chỉ một
+người lấy được chỗ cuối" — đó là việc của transaction, và cách kiểm chứng trung
+thực duy nhất là cho nhiều sinh viên cùng với tay vào một chỗ.
+
+- Hai sinh viên cùng lúc giành chỗ cuối → **đúng một người được**, `memberCount`
+  bằng 1 (acceptance test 11).
+- Sáu sinh viên cùng lúc vào nhóm 4 chỗ → **đúng 4 người được**.
+- Một sinh viên bấm vào hai nhóm cùng lúc → chỉ một nhóm nhận (acceptance test 2).
+- Vào nhóm thứ hai tuần tự cũng bị từ chối.
+- Nhóm đã khóa không nhận thêm ai; nhóm do giảng viên xếp thì sinh viên không tự vào được.
+
+## Kiểm thử Security Rules
+
+```bash
+npm run test:rules
+```
+
+Lệnh này tự khởi động Firestore Emulator, chạy test rồi tắt emulator — không
+chạm vào dữ liệu thật. Cần Java 21 (`sudo apt install openjdk-21-jre` nếu máy
+chưa có); CI đã cài sẵn.
+
+Nguyên tắc: mỗi collection được mở trong rules phải có test chứng minh cả hai
+chiều — người đúng quyền ghi được, người sai quyền bị chặn.
+
+### Đã có — 54 test rules và test đồng thời
+
+**`users`** — sinh viên đọc được hồ sơ của chính mình nhưng **không** đọc được
+hồ sơ người khác và không liệt kê được toàn bộ tài khoản; giảng viên đọc và liệt
+kê được; khách vãng lai không đọc được gì. Sinh viên sửa được tên và ngôn ngữ
+của mình, nhưng **không tự nâng mình lên lecturer hay admin**, không sửa được mã
+sinh viên hay email, và **tài khoản đang bị khóa không tự mở khóa được**. Không
+ai — kể cả admin — tạo hoặc xóa được hồ sơ từ phía client; việc đó chỉ đi qua
+server để giữ tính duy nhất của mã sinh viên.
+
+**`studentIdIndex`** — không ai đọc hay ghi được từ client, kể cả admin. Đây là
+chỉ mục bảo đảm mã sinh viên duy nhất; nếu client ghi được thì có thể chiếm chỗ
+mã của người khác.
+
+**`auditLogs` và `systemSettings`** — đóng hoàn toàn với mọi client, kể cả
+admin. Nhật ký mà người bị ghi nhật ký sửa được thì không còn là nhật ký.
+
+**Các collection của phase sau** — `grades`, `submissions`, `peerReviews` đều bị
+từ chối cho tới khi module của chúng ra đời cùng rules và test riêng.
+
+**`classes`** — sinh viên đã đăng nhập đọc được, khách không đọc được, và không
+ai ghi được từ client.
+
+**`classEnrollments`** (PR 3) — sinh viên đọc được dòng ghi danh của chính mình
+nhưng **không** đọc được của bạn cùng lớp và không liệt kê được cả danh sách;
+giảng viên đọc được toàn bộ roster. Sinh viên **không tự ghi danh bằng cách tạo
+document**, **không tự chuyển trạng thái chờ duyệt thành đã vào lớp**, và
+**không tự gỡ lệnh loại khỏi lớp**. Ngay cả giảng viên cũng không ghi trực tiếp
+được — mọi thay đổi đi qua transaction trên server để giữ đúng sĩ số lớp.
+
+**`rateLimits`** (PR 3) — không client nào đọc hay ghi được. Đọc được thì biết
+còn bao nhiêu lượt thử; ghi được thì tự xoá giới hạn.

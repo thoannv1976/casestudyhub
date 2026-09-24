@@ -17,8 +17,11 @@ COPY packages/core/package.json ./packages/core/
 RUN npm ci
 
 # --- build -----------------------------------------------------------------
-FROM base AS builder
-COPY --from=deps /app/node_modules ./node_modules
+# Build on top of the deps stage rather than copying /app/node_modules across:
+# npm can place a workspace's dependencies in apps/web/node_modules (e.g.
+# @hookform/resolvers), and those would be lost. .dockerignore keeps the host's
+# node_modules out of COPY . . so nothing installed here is overwritten.
+FROM deps AS builder
 COPY . .
 
 # Firebase client configuration is inlined into the browser bundle at build

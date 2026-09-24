@@ -218,3 +218,26 @@ export const DEFAULT_PRESENTATION_POLICY: PresentationPolicy = {
 export function parsePresentationPolicy(input: unknown): PresentationPolicy {
   return presentationPolicySchema.parse(input);
 }
+
+/**
+ * What a request to publish a new version carries.
+ *
+ * The whole framework, not a patch: the schema's own refinements - weights
+ * summing to one, a hard stop no earlier than the maximum - only hold when
+ * they are checked against the complete object.
+ */
+export const savePolicySchema = z.object({
+  policy: presentationPolicySchema,
+  reason: z.string().trim().min(10, 'errors.policyReasonTooShort').max(500),
+});
+export type SavePolicyRequest = z.infer<typeof savePolicySchema>;
+
+/**
+ * The next version number after `current`, when it ends in a number. A faculty
+ * numbering versions 2026.1, 2026.2 should not have to count.
+ */
+export function nextVersionAfter(current: string): string {
+  const match = /^(.*?)(\d+)$/.exec(current);
+  if (!match) return `${current}.1`;
+  return `${match[1]}${Number(match[2]) + 1}`;
+}

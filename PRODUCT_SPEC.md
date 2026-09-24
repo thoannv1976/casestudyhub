@@ -3,7 +3,7 @@
 > **Tên đầy đủ:** AI-Powered Case Study Presentation & Assessment Platform
 > **Nguồn:** SRS v1.0 (`docs/source/NEW_AI9-AI23_Case_study_HUB.pdf`, 45 trang),
 > Case Study Presentation Guide và case mẫu Amazon trong `docs/source/`.
-> **Trạng thái:** Phase 1 đang triển khai.
+> **Trạng thái:** Phase 1 đã hoàn thành (PR 1–8). Phase 2 chưa bắt đầu.
 
 Tài liệu này là nguồn tham chiếu duy nhất cho mọi module. Trước khi viết một
 module, phải xác định: mô hình dữ liệu, quy tắc nghiệp vụ, hợp đồng API, phân

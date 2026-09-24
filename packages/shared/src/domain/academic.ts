@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { classCodeSchema, localeSchema } from './identity';
+import { presentationRoleIdSchema } from './roles';
 
 /** University -> Academic year -> Semester -> Course -> Class (SRS 3.2). */
 
@@ -49,6 +50,35 @@ export const classSchema = z.object({
 });
 export type Class = z.infer<typeof classSchema>;
 
+export const ENROLLMENT_STATUSES = ['active', 'pending', 'removed'] as const;
+export const enrollmentStatusSchema = z.enum(ENROLLMENT_STATUSES);
+export type EnrollmentStatus = z.infer<typeof enrollmentStatusSchema>;
+
+/**
+ * One student in one class. Kept as its own document rather than an array on
+ * the class: a class holds sixty students, and a student belongs to several
+ * classes with separate results in each (SRS 1.2).
+ */
+export const classEnrollmentSchema = z.object({
+  id: z.string().min(1),
+  classId: z.string().min(1),
+  /** The student code is the key: one row per student per class. */
+  studentId: z.string().min(1),
+  /**
+   * Empty while the row comes from an imported list and the student has not
+   * signed up yet. An imported row and the student's own join therefore meet
+   * in one document instead of becoming two competing records.
+   */
+  studentUid: z.string().min(1).optional(),
+  fullName: z.string().min(1),
+  email: z.email(),
+  /** `pending` = on the faculty list, not signed in yet. */
+  status: enrollmentStatusSchema,
+  joinedVia: z.enum(['class_code', 'lecturer_added', 'import']),
+  removedReason: z.string().max(500).optional(),
+});
+export type ClassEnrollment = z.infer<typeof classEnrollmentSchema>;
+
 export const GROUP_FORMATION_MODES = [
   'lecturer_assignment',
   'student_self_join',
@@ -56,6 +86,24 @@ export const GROUP_FORMATION_MODES = [
 ] as const;
 export const groupFormationModeSchema = z.enum(GROUP_FORMATION_MODES);
 export type GroupFormationMode = z.infer<typeof groupFormationModeSchema>;
+
+/**
+ * One student in one group. The document id is `classId__studentUid`, which is
+ * what enforces the rule that a student belongs to at most one group per class
+ * (SRS 7.2): two simultaneous joins cannot both create it.
+ */
+export const groupMemberSchema = z.object({
+  id: z.string().min(1),
+  groupId: z.string().min(1),
+  classId: z.string().min(1),
+  studentUid: z.string().min(1),
+  studentId: z.string().min(1),
+  fullName: z.string().min(1),
+  /** Presentation roles this member owns; a small group may own two. */
+  roleIds: z.array(presentationRoleIdSchema).default([]),
+  isLeader: z.boolean().default(false),
+});
+export type GroupMember = z.infer<typeof groupMemberSchema>;
 
 export const groupSchema = z.object({
   id: z.string().min(1),

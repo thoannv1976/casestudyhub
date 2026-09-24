@@ -82,7 +82,156 @@ service cloud.firestore {
 
     match /classes/{classId} {
       allow read: if isSignedIn();
+      // Created and changed only through the server, which checks that the
+      // caller owns the class and freezes the policy version.
       allow write: if false;
+    }
+
+    // ----- enrolment -------------------------------------------------------
+    function enrollment() {
+      return resource.data;
+    }
+
+    match /classEnrollments/{enrollmentId} {
+      // A student sees their own row. Staff see any row, because a lecturer
+      // needs the roster and an admin supports every class.
+      allow get: if isAdmin()
+        || isLecturer()
+        || (isSignedIn() && enrollment().studentUid == request.auth.uid);
+      allow list: if isAdmin() || isLecturer();
+
+      // Joining, importing and removing all run in transactions on the server
+      // that check the class policy and keep the student count right; a direct
+      // client write would bypass every one of those checks.
+      allow write: if false;
+    }
+
+    // ----- groups ----------------------------------------------------------
+    match /groups/{groupId} {
+      // Everyone in the class needs to see the groups to pick one.
+      allow read: if isSignedIn();
+      // Creating, filling, locking and role allocation all run in server
+      // transactions that keep the member count and the one-group-per-class
+      // rule true. A direct write would break both.
+      allow write: if false;
+    }
+
+    match /groupMembers/{memberId} {
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    // ----- case study library ----------------------------------------------
+    match /caseStudies/{caseId} {
+      // A student reads a case only once the lecturer published it; a draft is
+      // working material. Staff see everything.
+      allow get, list: if isAdmin() || isLecturer()
+        || (isSignedIn() && resource.data.status == 'published');
+      // Uploads and publishing go through the server, which validates the file
+      // and records who did it.
+      allow write: if false;
+    }
+
+    // ----- assignments and submissions -------------------------------------
+    match /assignments/{assignmentId} {
+      // Everyone in the class can see what has been set and when it is due.
+      allow read: if isSignedIn();
+      allow write: if false;
+    }
+
+    match /submissions/{submissionId} {
+      // A group's work is private to that group and the staff marking it.
+      // Reading is done server-side, where membership can be checked; the
+      // client never queries this collection directly.
+      allow read, write: if false;
+    }
+
+    // ----- presentation sessions -------------------------------------------
+    match /presentationSessions/{sessionId} {
+      // The room is public to the class: the clock, whose turn it is and which
+      // group is on. Nothing here identifies anyone.
+      allow read: if isSignedIn();
+      // The clock is settled in server updates that fold the running stretch
+      // into the totals. A client write would let a group award itself time.
+      allow write: if false;
+    }
+
+    // ----- the question wall -----------------------------------------------
+    // Questions carry the asker's name and student id, and a student may ask
+    // anonymously. Direct client reads would defeat that: anonymity is applied
+    // on the server, per viewer, before the question is sent. Writes are
+    // server-side too, because the one-question-per-student rule and the cap of
+    // three chosen questions are enforced in transactions.
+    match /questions/{questionId} {
+      allow read, write: if false;
+    }
+
+    match /questionVotes/{voteId} {
+      allow read, write: if false;
+    }
+
+    match /questionResponses/{responseId} {
+      allow read, write: if false;
+    }
+
+    // ----- peer assessment --------------------------------------------------
+    // A peer score carries who gave it. A class that could read each other's
+    // scores would start scoring each other's scores, and a group could see
+    // which classmates marked it down. The lecturer reads the distribution
+    // through the server; a student reads only their own row, the same way.
+    match /peerReviews/{reviewId} {
+      allow read, write: if false;
+    }
+
+    // ----- marking and grades ----------------------------------------------
+    // A lecturer's draft mark is a working note; a published grade is a
+    // statement to a student. Both are served from the server, which is the
+    // only place that can tell the two apart and compute the second from the
+    // policy version frozen into the assignment.
+    match /lecturerAssessments/{assessmentId} {
+      allow read, write: if false;
+    }
+
+    match /grades/{gradeId} {
+      allow read, write: if false;
+    }
+
+    // ----- AI suggestions ---------------------------------------------------
+    // The model proposes and the lecturer decides, so an AI reading is a
+    // working note like a draft mark. A student who could read it would see a
+    // score nobody has agreed to give them.
+    match /aiAssessments/{assessmentId} {
+      allow read, write: if false;
+    }
+
+    // A tutor conversation is one student's, and it is served to them by the
+    // route handler that can check whose it is. A rule cannot express "your
+    // own conversation about a case on your course", so it expresses nothing.
+    match /aiTutorSessions/{tutorSessionId} {
+      allow read, write: if false;
+    }
+
+    // Rate limit counters are server bookkeeping. A client that could read
+    // them would know how many attempts it has left; one that could write
+    // them would simply reset the limit.
+    match /rateLimits/{limitId} {
+      allow read, write: if false;
+    }
+
+    // The assessment framework. Every rule a mark is computed from lives here,
+    // so a client that could write one could change how it is marked; one that
+    // could read it directly would bypass the stamp that decides which version
+    // applies to them. Both go through the server.
+    match /policies/{policyId} {
+      allow read, write: if false;
+    }
+
+    // A notification is addressed to one person, but it is still written and
+    // read through the server. A rule could allow a client to read its own
+    // row; it could not stop that client marking somebody else's as read, nor
+    // write the ones this app derives at read time. So the server does both.
+    match /notifications/{notificationId} {
+      allow read, write: if false;
     }
 
     // ----- never readable by a client --------------------------------------
@@ -95,9 +244,8 @@ service cloud.firestore {
     }
 
     // ----- everything else -------------------------------------------------
-    // Collections arriving in later phases (groups, submissions, questions,
-    // peer reviews, AI assessments, grades) stay closed until their module
-    // lands together with its rules and emulator tests.
+    // Anything not named above stays closed. A collection is opened only with
+    // the module that needs it, its server-side checks and its tests.
     match /{document=**} {
       allow read, write: if false;
     }

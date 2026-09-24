@@ -2,10 +2,16 @@ rules_version = '2';
 
 // CaseStudy Hub - Cloud Storage security rules.
 //
-// No learning material, submission or assessment report is ever public.
-// Clients read files through short-lived signed URLs issued by the server,
-// which checks class membership first (SRS 20). Uploads go the same way, so
-// direct client writes stay closed.
+// No learning material, submission or assessment report is ever public. The
+// server streams every byte itself, through a route handler that checks class
+// membership first (SRS 20) - deliberately not through signed URLs, because a
+// signed URL that leaves the page is itself an access grant to anyone holding
+// it. Uploads go the same way, so direct client writes stay closed.
+//
+// These rules therefore govern nothing in the current deployment: the files
+// live in a plain Cloud Storage bucket that is not linked to Firebase Storage,
+// and the Admin SDK bypasses rules in any case. They are kept deny-all for the
+// emulator, and for the day the bucket is ever exposed to a Firebase client.
 
 service firebase.storage {
   match /b/{bucket}/o {

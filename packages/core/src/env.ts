@@ -17,8 +17,17 @@ const serverEnvSchema = z.object({
    * service account supplies credentials and this stays unset.
    */
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
-  /** Gemini key, injected from Secret Manager. Absent until Phase 3. */
+  /**
+   * The model, turned on one of two ways. On Cloud Run, VERTEX_AI_ENABLED
+   * uses the runtime service account and there is no secret to manage;
+   * GEMINI_API_KEY is the quicker route before the Vertex AI API is enabled.
+   * With neither set, every AI feature reports itself as not configured and
+   * the rest of the platform is unaffected.
+   */
   GEMINI_API_KEY: z.string().optional(),
+  VERTEX_AI_ENABLED: z.enum(['true', 'false']).optional(),
+  VERTEX_AI_LOCATION: z.string().optional(),
+  AI_MODEL: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

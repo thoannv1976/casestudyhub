@@ -31,7 +31,7 @@ caseStudies/{id}                Case Study Template + metadata
 caseVersions/{id}               phiên bản nội dung case
 presentationGuides/{id}         khung thuyết trình có version
 rubrics/{id}                    rubric có version
-policies/{id}                   policy học thuật có version
+policies/{id}                   khung đánh giá, id = `{policyId}__{version}`
 assignments/{id}                một lần giao case cho nhóm, khóa version policy
 submissions/{id}                mỗi version một document, không ghi đè
 presentationSessions/{id}       buổi thuyết trình, trạng thái, timer  (Phase 2)
@@ -114,6 +114,26 @@ bài, nên thay đổi về sau không ảnh hưởng bài đã giao.
   "status": "published"
 }
 ```
+
+## Khung đánh giá và tính bất biến của phiên bản
+
+`policies/{policyId}__{version}` — id document _chính là_ quy tắc: một phiên bản
+không thể có hai nội dung. Ghi bằng `create`, không bao giờ `set` hay `update`,
+nên **không có đường code nào ghi đè tài liệu mà một điểm số đã được tính ra từ đó**.
+
+Mỗi lớp lưu `presentationPolicyId` + `presentationPolicyVersion` lúc tạo; mỗi
+assignment đóng băng `policyId` + `policyVersion` lúc giao bài. Mọi lần đọc —
+chấm điểm, chấm chéo, AI đọc rubric, hạn nộp, báo cáo — đều đi qua con dấu đó.
+Vì vậy đổi khung tháng 6 không chạm tới điểm đã công bố tháng 3: không phải vì
+quy định, mà vì tài liệu tháng 3 vẫn còn nguyên đó.
+
+`DEFAULT_PRESENTATION_POLICY` trong mã nguồn là **hạt giống**: phiên bản nền tảng
+xuất xưởng, trả lời cho chính version của nó mà không cần đọc database, nên dự án
+mới chạy được trước khi có gì được ghi.
+
+Thêm phiên bản cho một khung các lớp khác đang dùng cần `system.configure`
+(quản trị viên). Giảng viên có `policy.author` để **sao chép sang một khung id
+mới** cho học phần của mình — thay đổi đó không chạm tới ai khác.
 
 ## Chỉ mục
 

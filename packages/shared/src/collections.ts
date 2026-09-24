@@ -25,6 +25,7 @@ export const COLLECTIONS = {
   questionResponses: 'questionResponses',
   peerReviews: 'peerReviews',
   aiAssessments: 'aiAssessments',
+  aiTutorSessions: 'aiTutorSessions',
   lecturerAssessments: 'lecturerAssessments',
   grades: 'grades',
   cloMappings: 'cloMappings',
