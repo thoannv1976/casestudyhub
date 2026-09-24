@@ -8,7 +8,6 @@ import {
   roleKeyOf,
   type PresentationSession,
 } from '@casestudyhub/shared';
-import { useRouter } from '@/i18n/navigation';
 import { Button } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
 
@@ -27,13 +26,15 @@ function format(ms: number): string {
 export function SessionTimer({
   session,
   canControl,
+  onChanged,
 }: {
   session: PresentationSession;
   canControl: boolean;
+  /** Asks the room to poll again, so every panel sees the same state. */
+  onChanged: () => Promise<void>;
 }) {
   const t = useTranslations('session');
   const tRoles = useTranslations('roles');
-  const router = useRouter();
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
 
@@ -66,7 +67,7 @@ export function SessionTimer({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
-      router.refresh();
+      await onChanged();
     } finally {
       setBusy(false);
     }

@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { DEFAULT_PRESENTATION_POLICY, type PeerReview } from '@casestudyhub/shared';
-import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input } from '@/components/ui/form';
 
 /**
@@ -19,15 +18,17 @@ export function PeerReviewForm({
   sessionId,
   own,
   open,
+  onChanged,
 }: {
   sessionId: string;
   own: PeerReview | null;
   open: boolean;
+  /** Asks the room to poll again, so every panel sees the same state. */
+  onChanged: () => Promise<void>;
 }) {
   const t = useTranslations('peerReview');
   const tRubric = useTranslations('rubric');
   const tError = useTranslations();
-  const router = useRouter();
 
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -62,7 +63,7 @@ export function PeerReviewForm({
       }
       const payload = await response.json();
       setNotice(t('saved', { total: payload.review.total }));
-      router.refresh();
+      await onChanged();
     } finally {
       setBusy(false);
     }
@@ -75,7 +76,7 @@ export function PeerReviewForm({
 
       <p className="text-muted text-sm">{own ? t('editHint') : t('hint')}</p>
 
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2">
         {rubric.criteria.map((criterion) => (
           <Field
             key={criterion.id}

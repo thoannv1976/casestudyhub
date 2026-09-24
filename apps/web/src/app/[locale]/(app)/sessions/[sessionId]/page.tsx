@@ -29,9 +29,7 @@ import {
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
-import { PeerReviewForm } from './peer-review';
-import { SessionTimer } from './session-timer';
-import { QuestionWall } from './question-wall';
+import { SessionRoom } from './session-room';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,7 +64,6 @@ export default async function SessionPage({
 
   const user = await requireSessionUser();
   const t = await getTranslations('session');
-  const tQuestions = await getTranslations('questions');
   const tPeer = await getTranslations('peerReview');
   const tRubric = await getTranslations('rubric');
   const tRoles = await getTranslations('roles');
@@ -127,28 +124,6 @@ export default async function SessionPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {caseStudy?.title ?? session.caseStudyId}
-          </h1>
-          <p className="text-muted mt-2 text-sm">
-            {group?.groupName ?? session.groupId}
-            {details ? ` · ${details.className}` : ''}
-          </p>
-        </div>
-        <Badge tone={session.status === 'completed' ? 'neutral' : 'brand'}>
-          {t(`status.${session.status}`)}
-        </Badge>
-      </div>
-
-      <Card>
-        <CardTitle>{t('timerTitle')}</CardTitle>
-        <div className="mt-4">
-          <SessionTimer session={session} canControl={isStaff} />
-        </div>
-      </Card>
-
       <Card>
         <CardTitle>{t('presenters')}</CardTitle>
         <ul className="mt-4 space-y-2">
@@ -263,33 +238,23 @@ export default async function SessionPage({
         </Card>
       ) : null}
 
-      {user.role === 'student' && !isPresenter ? (
-        <Card>
-          <CardTitle>{tPeer('title')}</CardTitle>
-          <div className="mt-4">
-            <PeerReviewForm sessionId={sessionId} own={ownReview} open={session.peerReviewOpen} />
-          </div>
-        </Card>
-      ) : null}
-
-      <Card>
-        <CardTitle>{tQuestions('title')}</CardTitle>
-        <p className="text-muted mt-2 text-sm">{tQuestions('purpose')}</p>
-        <div className="mt-4">
-          <QuestionWall
-            sessionId={sessionId}
-            initialQuestions={questions.map((question) =>
-              redactForViewer(question, { uid: user.uid, isStaff }),
-            )}
-            initialVotes={myVotes}
-            ownUid={user.uid}
-            isStaff={isStaff}
-            isPresenter={isPresenter}
-            canAsk={user.role === 'student' && !isPresenter}
-            questionsOpen={session.questionsOpen}
-          />
-        </div>
-      </Card>
+      <SessionRoom
+        sessionId={sessionId}
+        ownUid={user.uid}
+        isStaff={isStaff}
+        isStudent={user.role === 'student'}
+        title={caseStudy?.title ?? session.caseStudyId}
+        subtitle={`${group?.groupName ?? session.groupId}${details ? ` · ${details.className}` : ''}`}
+        initial={{
+          session,
+          questions: questions.map((question) =>
+            redactForViewer(question, { uid: user.uid, isStaff }),
+          ),
+          myVotes,
+          ownReview,
+          isPresenter,
+        }}
+      />
     </div>
   );
 }

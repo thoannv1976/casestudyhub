@@ -157,6 +157,10 @@ export async function toggleUpvote(voter: SessionUser, questionIdValue: string):
 
     tx.create(voteRef, {
       questionId: questionIdValue,
+      // The session is stored, not derived from the id, so a viewer's votes
+      // can be fetched with one bounded query instead of reading every vote
+      // they have ever cast.
+      sessionId: question.get('sessionId') as string,
       voterUid: voter.uid,
       createdAt: FieldValue.serverTimestamp(),
     });
@@ -165,15 +169,22 @@ export async function toggleUpvote(voter: SessionUser, questionIdValue: string):
   });
 }
 
+/**
+ * Which questions this viewer has upvoted in this session.
+ *
+ * Filtered by session in the query, not afterwards in JavaScript. The wall
+ * calls this every ten seconds for every student in the room, and a student
+ * accumulates votes all term: reading them all and discarding most was a scan
+ * that grew for the rest of the semester.
+ */
 export async function votesOf(voterUid: string, sessionId: string): Promise<string[]> {
   const snapshot = await getDb()
     .collection(COLLECTIONS.questionVotes)
+    .where('sessionId', '==', sessionId)
     .where('voterUid', '==', voterUid)
     .get();
 
-  return snapshot.docs
-    .map((doc) => doc.get('questionId') as string)
-    .filter((id) => id.startsWith(`${sessionId}__`));
+  return snapshot.docs.map((doc) => doc.get('questionId') as string);
 }
 
 /**

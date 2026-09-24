@@ -311,6 +311,14 @@ describe('upvotes', () => {
     await toggleUpvote(voter, asked.id);
     expect((await listSessionQuestions(SESSION_ID))[0]?.upvotes).toBe(1);
 
+    // The vote is found by a query filtered on the session, so this also pins
+    // the sessionId written onto the vote. Without that field the wall would
+    // quietly stop showing anyone their own votes.
+    expect(await votesOf(voter.uid, SESSION_ID)).toEqual([asked.id]);
+    // And a vote belongs to its own session, not to every session the student
+    // has ever sat in.
+    expect(await votesOf(voter.uid, 'some-other-session')).toEqual([]);
+
     await toggleUpvote(voter, asked.id);
     expect((await listSessionQuestions(SESSION_ID))[0]?.upvotes).toBe(0);
     expect(await votesOf(voter.uid, SESSION_ID)).toEqual([]);

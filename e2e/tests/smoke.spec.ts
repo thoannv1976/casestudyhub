@@ -69,6 +69,29 @@ async function signIn(
   }
 }
 
+/**
+ * A phone, because that is what the class uses. Students follow a presentation
+ * on their own screen and ask from it, so the room pages have to work at this
+ * width - and nothing else in this suite runs anywhere near it.
+ */
+const PHONE = { width: 390, height: 844 };
+
+/**
+ * Nothing may spill sideways. A page wider than the screen is how a form
+ * becomes unusable on a phone: the submit button sits off the edge, and the
+ * reader has no way to know it is there.
+ */
+async function expectFitsThePhone(page: Page) {
+  const overflow = await page.evaluate(() => {
+    const root = document.documentElement;
+    return { scrollWidth: root.scrollWidth, clientWidth: root.clientWidth };
+  });
+  expect(
+    overflow.scrollWidth,
+    `page scrolls sideways at phone width (${overflow.scrollWidth}px in ${overflow.clientWidth}px)`,
+  ).toBeLessThanOrEqual(overflow.clientWidth + 1);
+}
+
 async function signOut(page: Page) {
   await page.getByRole('button', { name: 'Sign out' }).click();
   await page.waitForURL('**/login');
@@ -617,6 +640,29 @@ test('a student in the audience asks their one question', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('the room works on the phone the class actually uses', async ({ page }) => {
+  await page.setViewportSize(PHONE);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  await expectFitsThePhone(page);
+
+  // The three things a student does from their seat, all reachable.
+  await expect(page.locator('#text')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Update question' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /group1-slides/ })).toBeVisible();
+
+  // The anonymity checkbox is a checkbox, not a full-width bordered box. The
+  // shared Input overwrote the caller's className instead of merging it, so
+  // every checkbox in the app rendered as a tall empty field.
+  const anonymous = page.locator('#anonymousToClass');
+  const box = await anonymous.boundingBox();
+  expect(box, 'the anonymity checkbox has no box').not.toBeNull();
+  expect(box!.width, 'the checkbox is stretched to the full width').toBeLessThan(40);
+
+  await page.setViewportSize({ width: 1280, height: 720 });
+});
+
 test('sending again edits the same question rather than adding a second', async ({ page }) => {
   await signIn(page, AUDIENCE.email, AUDIENCE.password);
   await page.goto(`/en${sessionUrl}`);
@@ -748,13 +794,34 @@ test('scoring is shut until the lecturer opens it', async ({ page }) => {
   expect(response.status()).toBe(422);
 });
 
-test('the class scores the group against the lecturer\u2019s own rubric', async ({ page }) => {
-  await signIn(page, ADMIN.email, ADMIN.password);
+test('opening scoring reaches a student already in the room, with no reload', async ({
+  page,
+  browser,
+}) => {
+  // The room used to be rendered once and never updated, so a lecturer opening
+  // scoring reached nobody: sixty students would each have to press reload
+  // while the lecturer said so out loud. This is that case, end to end.
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
   await page.goto(`/en${sessionUrl}`);
-  await page.getByRole('button', { name: 'Open scoring' }).click();
-  await expect(page.getByRole('button', { name: 'Close scoring' })).toBeVisible();
-  await signOut(page);
+  await expect(page.getByText('Scoring is not open.')).toBeVisible();
 
+  // A second browser session, because the lecturer is on their own machine.
+  const staff = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  const staffPage = await staff.newPage();
+  await signIn(staffPage, ADMIN.email, ADMIN.password);
+  await staffPage.goto(`/en${sessionUrl}`);
+  await staffPage.getByRole('button', { name: 'Open scoring' }).click();
+  await expect(staffPage.getByRole('button', { name: 'Close scoring' })).toBeVisible();
+  await staff.close();
+
+  // The student's page has not been touched: no reload, no navigation. The
+  // ten-second poll carries the change, so allow for one full interval.
+  await expect(page.locator('#understanding')).toBeVisible({ timeout: 25_000 });
+  await expect(page.getByText('Scoring is not open.')).toHaveCount(0);
+});
+
+test('the class scores the group against the lecturer\u2019s own rubric', async ({ page }) => {
+  // Scoring was opened by the test above and is still open.
   await signIn(page, AUDIENCE.email, AUDIENCE.password);
   await page.goto(`/en${sessionUrl}`);
 

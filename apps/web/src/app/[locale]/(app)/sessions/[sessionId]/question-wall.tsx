@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   DEFAULT_PRESENTATION_ROLES,
@@ -16,55 +16,45 @@ import { Badge } from '@/components/ui/card';
  * The question wall.
  *
  * Every student asks one question; the group answers two or three aloud and
- * the rest become the case's question bank. The list refreshes every ten
- * seconds rather than through a live subscription: the room does not need
- * sub-second updates, and polling keeps every read behind the server's
- * authorisation checks.
+ * the rest become the case's question bank.
+ *
+ * The list is handed in by the room, which polls once for every panel rather
+ * than through a live subscription: the room does not need sub-second updates,
+ * and polling keeps every read behind the server's authorisation checks.
  */
 export function QuestionWall({
   sessionId,
-  initialQuestions,
-  initialVotes,
+  questions,
+  votes,
   ownUid,
   isStaff,
   isPresenter,
   canAsk,
   questionsOpen,
+  onChanged,
 }: {
   sessionId: string;
-  initialQuestions: ClassQuestion[];
-  initialVotes: string[];
+  questions: ClassQuestion[];
+  votes: string[];
   ownUid: string;
   isStaff: boolean;
   isPresenter: boolean;
   canAsk: boolean;
   questionsOpen: boolean;
+  /** Asks the room to poll again, so every panel sees the same state. */
+  onChanged: () => Promise<void>;
 }) {
   const t = useTranslations('questions');
   const tRoles = useTranslations('roles');
   const tError = useTranslations();
 
-  const [questions, setQuestions] = useState(initialQuestions);
-  const [votes, setVotes] = useState(new Set(initialVotes));
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [answering, setAnswering] = useState<string | null>(null);
 
   const own = questions.find((question) => question.askedByUid === ownUid);
   const selectedCount = questions.filter((question) => question.status === 'selected').length;
-
-  const refresh = useCallback(async () => {
-    const response = await fetch(`/api/sessions/${sessionId}/questions`);
-    if (!response.ok) return;
-    const body = await response.json();
-    setQuestions(body.questions ?? []);
-    setVotes(new Set(body.myVotes ?? []));
-  }, [sessionId]);
-
-  useEffect(() => {
-    const id = setInterval(() => void refresh(), 10_000);
-    return () => clearInterval(id);
-  }, [refresh]);
+  const voted = new Set(votes);
 
   async function send(body: Record<string, unknown>) {
     setBusy(true);
@@ -80,7 +70,7 @@ export function QuestionWall({
         setErrorKey(payload?.error?.messageKey ?? 'errors.unexpected');
         return false;
       }
-      await refresh();
+      await onChanged();
       return true;
     } finally {
       setBusy(false);
@@ -180,7 +170,7 @@ export function QuestionWall({
                 : question.anonymousToClass
                   ? null
                   : question.askedByName;
-              const voted = votes.has(question.id);
+              const hasVoted = voted.has(question.id);
 
               return (
                 <li key={question.id} className="surface-card rounded-xl p-4">
@@ -204,7 +194,7 @@ export function QuestionWall({
                       onClick={() => void send({ action: 'upvote', questionId: question.id })}
                       aria-label={t('upvote')}
                       className={`surface-card rounded-full px-3 py-1 text-sm font-medium tabular-nums disabled:opacity-50 ${
-                        voted ? 'border-brand-500 text-brand-600 dark:text-brand-300' : ''
+                        hasVoted ? 'border-brand-500 text-brand-600 dark:text-brand-300' : ''
                       }`}
                     >
                       ▲ {question.upvotes}
