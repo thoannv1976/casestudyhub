@@ -62,9 +62,7 @@ export async function notify(input: NotifyInput): Promise<number> {
 /** Everyone in a group, which is who most of these are addressed to. */
 export async function groupMemberUids(classId: string, groupId: string): Promise<string[]> {
   const members = await listMembers(classId);
-  return members
-    .filter((member) => member.groupId === groupId)
-    .map((member) => member.studentUid);
+  return members.filter((member) => member.groupId === groupId).map((member) => member.studentUid);
 }
 
 async function storedFor(uid: string): Promise<AppNotification[]> {

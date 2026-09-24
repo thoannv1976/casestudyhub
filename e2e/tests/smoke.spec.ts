@@ -1123,7 +1123,9 @@ test('the student is told their mark is out, in their own language', async ({ pa
   // Nothing stored is a sentence: the same notification reads in Vietnamese
   // for a reader who switches, which is why only a key is written down.
   await page.goto('/vi/notifications');
-  await expect(page.getByTestId('notification-list')).toContainText('\u0111\u00e3 \u0111\u01b0\u1ee3c c\u00f4ng b\u1ed1');
+  await expect(page.getByTestId('notification-list')).toContainText(
+    '\u0111\u00e3 \u0111\u01b0\u1ee3c c\u00f4ng b\u1ed1',
+  );
 });
 
 test('marking everything read empties the bell and keeps it empty', async ({ page }) => {

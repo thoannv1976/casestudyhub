@@ -41,7 +41,7 @@ export function NotificationBell() {
       href="/notifications"
       data-testid="notification-bell"
       aria-label={unread > 0 ? t('unreadLabel', { count: unread }) : t('title')}
-      className="text-muted hover:bg-[var(--surface-muted)] relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors"
+      className="text-muted relative inline-flex h-9 w-9 items-center justify-center rounded-lg transition-colors hover:bg-[var(--surface-muted)]"
     >
       <span aria-hidden="true" className="text-lg leading-none">
         🔔

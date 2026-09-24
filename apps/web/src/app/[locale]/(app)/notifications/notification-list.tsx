@@ -70,7 +70,11 @@ export function NotificationList({ initial }: { initial: AppNotification[] }) {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-muted text-sm">{t('unreadLabel', { count: unread })}</p>
-        <Button variant="ghost" disabled={marking || unread === 0} onClick={() => void markAllRead()}>
+        <Button
+          variant="ghost"
+          disabled={marking || unread === 0}
+          onClick={() => void markAllRead()}
+        >
           {t('markAllRead')}
         </Button>
       </div>

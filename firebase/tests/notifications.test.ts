@@ -191,7 +191,7 @@ describe('who a notification reaches', () => {
     expect(await notify({ recipientUids: [], kind: 'grade.published', href: '/x' })).toBe(0);
   });
 
-  it('marks only the reader\'s own as read', async () => {
+  it("marks only the reader's own as read", async () => {
     await notify({
       recipientUids: MEMBERS,
       kind: 'question.selected',

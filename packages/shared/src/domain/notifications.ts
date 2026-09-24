@@ -100,9 +100,7 @@ export function dueSoonNotification(
 }
 
 /** Newest first, with anything unread ahead of anything already seen. */
-export function sortForReading(
-  notifications: readonly AppNotification[],
-): AppNotification[] {
+export function sortForReading(notifications: readonly AppNotification[]): AppNotification[] {
   return [...notifications].sort((a, b) => {
     const unread = Number(Boolean(a.readAt)) - Number(Boolean(b.readAt));
     return unread !== 0 ? unread : b.createdAt.localeCompare(a.createdAt);
