@@ -1829,6 +1829,61 @@ test('a lecturer cannot test the model or read how it is configured', async ({ p
   expect(probe.status()).toBe(403);
 });
 
+test('an administrator finds somebody by a name typed without diacritics', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/users');
+
+  // The lecturer was renamed earlier in this run to "Tran Thi Bich Lecturer".
+  await page.getByLabel('Find somebody').fill('tran thi bich');
+  await expect(page.getByRole('cell', { name: CORRECTED_NAME })).toBeVisible();
+  await expect(page.getByRole('cell', { name: ADMIN.email })).toHaveCount(0);
+
+  // Clearing the box brings everybody back, rather than leaving a filter on.
+  await page.getByLabel('Find somebody').fill('');
+  await expect(page.getByRole('cell', { name: ADMIN.email })).toBeVisible();
+});
+
+test('creating accounts from a list previews first and shows each password once', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/users');
+
+  const csv = [
+    'studentId,fullName,email',
+    `BULK1${RUN},Le Van Bulk,bulk1.${RUN}@e2e.test`,
+    `BULK2${RUN},Pham Thi Bulk,bulk2.${RUN}@e2e.test`,
+  ].join('\n');
+
+  await page
+    .locator('input[type="file"]')
+    .first()
+    .setInputFiles({
+      name: 'accounts.csv',
+      mimeType: 'text/csv',
+      buffer: Buffer.from(csv, 'utf8'),
+    });
+
+  await page.getByRole('button', { name: 'Preview' }).click();
+  await expect(page.getByTestId('import-outcome')).toContainText('2 accounts would be created');
+
+  // Nothing exists yet: a preview that created accounts would not be a preview.
+  await expect(page.getByTestId('import-passwords')).toHaveCount(0);
+
+  await page.getByRole('button', { name: 'Create these accounts' }).click();
+  await expect(page.getByTestId('import-outcome')).toContainText('2 accounts created');
+  await expect(page.getByText('shown once and cannot be retrieved')).toBeVisible();
+
+  const passwords = page.getByTestId('import-passwords');
+  await expect(passwords).toContainText(`BULK1${RUN}`);
+
+  // The account works, and gets them no further than choosing their own.
+  const shown = await passwords.locator('tr').first().locator('td').last().textContent();
+  await signOut(page);
+  await signIn(page, `bulk1.${RUN}@e2e.test`, (shown ?? '').trim());
+  await page.waitForURL('**/change-password');
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

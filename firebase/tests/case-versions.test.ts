@@ -11,9 +11,18 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 process.env.GOOGLE_CLOUD_PROJECT ??= 'demo-casestudyhub';
 process.env.FIREBASE_STORAGE_BUCKET ??= 'demo-casestudyhub.appspot.com';
 
-const { getDb, createCase, updateCase, getCase, getCaseVersion, listCaseVersions } =
-  await import('@casestudyhub/core');
-const { COLLECTIONS, nextCaseVersionId } = await import('@casestudyhub/shared');
+const {
+  getDb,
+  createCase,
+  updateCase,
+  getCase,
+  getCaseVersion,
+  listCaseVersions,
+  addAttachment,
+  readAttachment,
+  removeAttachment,
+} = await import('@casestudyhub/core');
+const { COLLECTIONS, currentAttachments, nextCaseVersionId } = await import('@casestudyhub/shared');
 
 const lecturer = { uid: 'cv_lecturer', email: 'gv@x.edu.vn', role: 'lecturer' as const };
 const CODE = `CV${Date.now().toString().slice(-7)}`;
@@ -23,6 +32,7 @@ let caseId = '';
 
 async function wipe() {
   const db = getDb();
+  await db.collection(COLLECTIONS.assignments).doc('CV-A1').delete();
   const cases = await db.collection(COLLECTIONS.caseStudies).where('caseCode', '==', CODE).get();
   for (const doc of cases.docs) {
     const versions = await db
@@ -169,6 +179,89 @@ describe('revising it', () => {
 
     expect((await getCase(caseId))?.currentVersionId).toBe('v3');
     expect(await listCaseVersions(caseId)).toHaveLength(3);
+  });
+});
+
+describe('material a class has already been given', () => {
+  const TINY_PDF = Buffer.from('%PDF-1.4\n%%EOF\n', 'utf8');
+
+  async function attach() {
+    await addAttachment(lecturer, caseId, {
+      kind: 'case',
+      fileName: 'amazon.pdf',
+      contentType: 'application/pdf',
+      body: TINY_PDF,
+    });
+    const study = await getCase(caseId);
+    return study!.attachments[0]!.id;
+  }
+
+  async function setAnAssignment() {
+    await getDb()
+      .collection(COLLECTIONS.assignments)
+      .doc('CV-A1')
+      .set({
+        id: 'CV-A1',
+        classId: 'CV-CL1',
+        groupId: 'CV-G1',
+        caseStudyId: caseId,
+        caseVersionId: 'v1',
+        policyId: 'ecom-2026-standard',
+        policyVersion: '2026.1',
+        rubricVersion: '2026.1',
+        presentationDate: new Date(Date.now() + 86_400_000).toISOString(),
+        submissionDeadline: new Date(Date.now() + 43_200_000).toISOString(),
+        status: 'submission_open',
+      });
+  }
+
+  it('is destroyed outright when no class was ever set this case', async () => {
+    const attachmentId = await attach();
+    await removeAttachment(lecturer, caseId, attachmentId);
+
+    // Nothing depended on it, so it is a mistake nobody saw and it goes.
+    expect((await getCase(caseId))?.attachments).toHaveLength(0);
+  });
+
+  it('is kept, not destroyed, once a group has been set this case', async () => {
+    const attachmentId = await attach();
+    await setAnAssignment();
+
+    await removeAttachment(lecturer, caseId, attachmentId);
+
+    const study = await getCase(caseId);
+    // The record and the bytes survive: a group worked from this file, and a
+    // question about their mark has to be answerable.
+    expect(study?.attachments).toHaveLength(1);
+    expect(study?.attachments[0]?.retiredAt).toBeTruthy();
+
+    const { body } = await readAttachment(caseId, attachmentId);
+    expect(body.length).toBeGreaterThan(0);
+  });
+
+  it('stops being offered to anybody starting now', async () => {
+    const attachmentId = await attach();
+    await setAnAssignment();
+    await removeAttachment(lecturer, caseId, attachmentId);
+
+    const study = await getCase(caseId);
+    expect(currentAttachments(study!.attachments)).toHaveLength(0);
+  });
+
+  it('records which of the two happened, because they are different acts', async () => {
+    const attachmentId = await attach();
+    await setAnAssignment();
+    await removeAttachment(lecturer, caseId, attachmentId);
+
+    const logs = await getDb()
+      .collection(COLLECTIONS.auditLogs)
+      .where('actorUid', '==', lecturer.uid)
+      .get();
+    const entry = logs.docs
+      .map((doc) => doc.data())
+      .find((row) => row.action === 'case.attachment_removed');
+
+    expect(entry?.after).toMatchObject({ destroyed: false, retained: true });
   });
 });
 

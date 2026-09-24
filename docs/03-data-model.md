@@ -29,9 +29,9 @@ groups/{id}                     G01, maxMembers, memberCount, locked
 groupMembers/{id}               (groupId, studentUid, roleIds[R1..R6])
 caseStudies/{id}                Case Study Template + metadata
 caseVersions/{id}               phiên bản nội dung case
-presentationGuides/{id}         khung thuyết trình có version
-rubrics/{id}                    rubric có version
 policies/{id}                   khung đánh giá, id = `{policyId}__{version}`
+                                (gồm cả rubric và ánh xạ criterion ↔ CLO)
+aiUsage/{period}                lượt gọi và token mô hình theo tháng
 assignments/{id}                một lần giao case cho nhóm, khóa version policy
 submissions/{id}                mỗi version một document, không ghi đè
 presentationSessions/{id}       buổi thuyết trình, trạng thái, timer  (Phase 2)
@@ -42,7 +42,6 @@ peerReviews/{id}                (sessionId, reviewerUid) — một phiếu  (Pha
 aiAssessments/{id}              kết quả AI, luôn ở trạng thái nháp    (Phase 3)
 lecturerAssessments/{id}        điểm rubric do giảng viên nhập        (Phase 3)
 grades/{id}                     điểm nhóm, cá nhân, cuối cùng + version policy
-cloMappings/{id}                criterion ↔ CLO
 notifications/{id}              thông báo cho người dùng
 auditLogs/{id}                  không client nào đọc được
 systemSettings/{id}             cấu hình nền tảng

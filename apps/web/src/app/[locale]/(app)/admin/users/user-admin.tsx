@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import {
   LOCALES,
+  matchesSearch,
   createAccountSchema,
   type CreateAccountRequest,
   type UserProfile,
@@ -25,6 +26,14 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
   /** Shown once, because this is the only moment the password is readable. */
   const [handedOver, setHandedOver] = useState<{ email: string; password: string } | null>(null);
   const [suggestion, setSuggestion] = useState('');
+
+  /**
+   * Filtered here rather than by asking the server again on every keystroke.
+   * The page already holds the accounts, and a faculty has hundreds of them,
+   * so the answer is instant and costs nothing.
+   */
+  const [search, setSearch] = useState('');
+  const visible = users.filter((user) => matchesSearch(user, search));
   const [busy, setBusy] = useState(false);
 
   const {
@@ -235,6 +244,20 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
         </Button>
       </form>
 
+      <div className="flex flex-wrap items-center gap-3">
+        <Field label={t('search')} htmlFor="userSearch" hint={t('searchHint')}>
+          <Input
+            id="userSearch"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            placeholder={t('searchPlaceholder')}
+          />
+        </Field>
+        <span className="text-muted mt-6 text-sm">
+          {t('showing', { shown: visible.length, total: users.length })}
+        </span>
+      </div>
+
       <div className="surface-card overflow-x-auto rounded-xl">
         <table className="w-full min-w-[42rem] text-left text-sm">
           <thead>
@@ -255,7 +278,7 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => {
+            {visible.map((user) => {
               const isSelf = user.uid === callerUid;
               return (
                 <tr key={user.uid} className="border-b border-[var(--border-subtle)]">

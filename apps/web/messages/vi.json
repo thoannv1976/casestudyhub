@@ -457,7 +457,20 @@
     "handedOver": "Mật khẩu của {email} giờ là {password}. Hãy đưa tận tay — đây là lần duy nhất mật khẩu được hiển thị.",
     "editProfileFor": "Sửa thông tin của {name}",
     "editProfileBody": "Địa chỉ đăng nhập ({email}) và mã sinh viên không sửa ở đây: đổi một trong hai là khoá người ta ra khỏi chính bài làm của mình.",
-    "owesPassword": "Đang dùng mật khẩu tạm"
+    "owesPassword": "Đang dùng mật khẩu tạm",
+    "search": "Tìm người",
+    "searchHint": "Khớp theo họ tên, mã sinh viên hoặc email. Không phân biệt dấu, nên gõ \"nguyen van a\" vẫn ra \"Nguyễn Văn A\".",
+    "searchPlaceholder": "nguyen van a",
+    "showing": "Hiện {shown} trong {total}",
+    "importTitle": "Tạo tài khoản từ danh sách",
+    "importBody": "Dành cho sinh viên không tự đăng ký được. File cần mã sinh viên, họ tên và email — đúng các cột của danh sách lớp. Không tạo gì cho tới khi bạn đã xem trước.",
+    "importPreview": "Xem trước",
+    "importCreate": "Tạo những tài khoản này",
+    "importWouldCreate": "{count, plural, =0 {Không có tài khoản mới} other {Sẽ tạo # tài khoản}}.",
+    "importCreated": "{count, plural, =0 {Không tạo tài khoản nào} other {Đã tạo # tài khoản}}.",
+    "importLine": "Dòng {line}",
+    "importPasswordsOnce": "Các mật khẩu này chỉ hiện một lần và không lấy lại được. Hãy lưu file, đưa tận tay, và mỗi người phải tự đổi ở lần đăng nhập đầu.",
+    "importDownload": "Tải về dạng bảng tính"
   },
   "academicAdmin": {
     "title": "Cấu trúc đào tạo",

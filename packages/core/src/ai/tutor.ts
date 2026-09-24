@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
+  currentAttachments,
   QUESTION_CATEGORIES,
   SUGGESTED_QUESTIONS_JSON_SCHEMA,
   TUTOR_GUARDRAILS,
@@ -47,7 +48,7 @@ async function caseMaterial(caseStudyId: string): Promise<AiFilePart[]> {
   if (!caseStudy) throw new AppError('NOT_FOUND', 'errors.caseNotFound');
 
   const files: AiFilePart[] = [];
-  for (const attachment of caseStudy.attachments) {
+  for (const attachment of currentAttachments(caseStudy.attachments)) {
     if (!INLINE_MIME_TYPES.has(attachment.contentType)) continue;
     if (attachment.sizeBytes > MAX_INLINE_BYTES) continue;
     const { body } = await readAttachment(caseStudyId, attachment.id);

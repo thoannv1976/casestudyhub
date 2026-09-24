@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
-import { COLLECTIONS, type ClassQuestion } from '@casestudyhub/shared';
+import { COLLECTIONS, currentAttachments, type ClassQuestion } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { AppError } from '../errors';
@@ -76,7 +76,7 @@ async function caseMaterial(caseStudyId: string): Promise<AiFilePart[]> {
   if (!caseStudy) throw new AppError('NOT_FOUND', 'errors.caseNotFound');
 
   const files: AiFilePart[] = [];
-  for (const attachment of caseStudy.attachments) {
+  for (const attachment of currentAttachments(caseStudy.attachments)) {
     if (!INLINE_MIME_TYPES.has(attachment.contentType)) continue;
     const { body } = await readAttachment(caseStudyId, attachment.id);
     if (body.byteLength > MAX_INLINE_BYTES) continue;
