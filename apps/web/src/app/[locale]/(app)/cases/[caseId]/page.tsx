@@ -7,11 +7,13 @@ import {
   getCase,
   getTutorSession,
   listCaseQuestions,
+  listCaseVersions,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
 import { AnswerBank } from './answer-bank';
+import { CaseEditor } from './case-editor';
 import { SuggestedQuestions } from './suggested-questions';
 import { Tutor } from './tutor';
 
@@ -64,6 +66,7 @@ export default async function CaseKnowledgePage({
   // A later cohort reads the bank anonymised; the lecturer of the class that
   // asked still sees who asked, because it counts toward the individual mark.
   const questions = await listCaseQuestions(caseId, { forOtherCohort: !isStaff });
+  const versions = isStaff ? await listCaseVersions(caseId) : [];
 
   const aiAvailable = aiIsAvailable();
   // A tutor conversation belongs to one student, and is loaded for them only.
@@ -97,6 +100,8 @@ export default async function CaseKnowledgePage({
           </div>
         ) : null}
       </Card>
+
+      {isStaff ? <CaseEditor caseStudy={caseStudy} versions={versions} /> : null}
 
       {isStaff ? (
         <Card>

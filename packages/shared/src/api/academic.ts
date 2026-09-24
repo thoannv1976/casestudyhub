@@ -186,6 +186,27 @@ export const createCaseSchema = z.object({
 });
 export type CreateCaseInput2 = z.input<typeof createCaseSchema>;
 
+/**
+ * Revising a case. The code, the course and the language are not here: a case
+ * code identifies the case to a lecturer looking for it, and moving a case
+ * between courses would move work already set under it.
+ */
+export const updateCaseSchema = z.object({
+  title: z.string({ error: 'errors.nameInvalid' }).trim().min(2, 'errors.nameInvalid').max(200),
+  subtitle: z.string().trim().max(300).optional(),
+  company: z.string().trim().max(160).optional(),
+  industry: z.string().trim().max(160).optional(),
+  chapter: z.string().trim().max(160).optional(),
+  description: z.string().trim().max(4000).optional(),
+  learningObjectives: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
+  cloIds: z.array(z.string().trim().min(1).max(16)).max(20).default([]),
+  mainQuestions: z.array(z.string().trim().min(1).max(1000)).max(20).default([]),
+  supportingQuestions: z.array(z.string().trim().min(1).max(1000)).max(20).default([]),
+  references: z.array(z.string().trim().min(1).max(500)).max(50).default([]),
+  reason: z.string().trim().min(10, 'errors.reasonTooShort').max(500),
+});
+export type UpdateCaseRequest = z.infer<typeof updateCaseSchema>;
+
 export const setCaseStatusSchema = z.object({
   status: z.enum(['draft', 'published', 'archived'], { error: 'errors.statusInvalid' }),
 });

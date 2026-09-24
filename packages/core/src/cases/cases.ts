@@ -1,6 +1,10 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
+  caseVersionSchema,
+  nextCaseVersionId,
+  type CaseVersion,
+  type UpdateCaseRequest,
   caseStudySchema,
   safeFileName,
   validateUpload,
@@ -61,13 +65,147 @@ export async function createCase(actor: SessionUser, input: CreateCaseInput): Pr
     caseCode,
     supportingQuestions: [],
     attachments: [],
+    currentVersionId: 'v1',
     status: 'draft',
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     createdBy: actor.uid,
   });
 
+  // Written at creation, not at the first edit: an assignment set before a
+  // case was ever revised must still resolve to something readable, and
+  // `currentVersionId` has pointed at a document that did not exist since the
+  // field was first written.
+  await writeCaseVersion(ref.id, 'v1', { ...input, supportingQuestions: [] }, actor.uid, '');
+
   return ref.id;
+}
+
+interface CaseText {
+  title: string;
+  subtitle?: string;
+  company?: string;
+  industry?: string;
+  chapter?: string;
+  description?: string;
+  learningObjectives: string[];
+  cloIds: string[];
+  mainQuestions: string[];
+  supportingQuestions: string[];
+  references: string[];
+}
+
+function versionDocId(caseId: string, versionId: string): string {
+  return `${caseId}__${versionId}`;
+}
+
+async function writeCaseVersion(
+  caseId: string,
+  versionId: string,
+  text: CaseText,
+  createdBy: string,
+  reason: string,
+): Promise<void> {
+  const id = versionDocId(caseId, versionId);
+  // `create`, never `set`: a version a group was given must not be rewritten,
+  // for the same reason a published grade must not be recomputed.
+  await getDb()
+    .collection(COLLECTIONS.caseVersions)
+    .doc(id)
+    .create({
+      id,
+      caseId,
+      versionId,
+      ...text,
+      createdAt: new Date().toISOString(),
+      createdBy,
+      reason,
+    });
+}
+
+/**
+ * Revises a case.
+ *
+ * The edit writes a new version and moves the case's pointer; it never
+ * rewrites the version an assignment froze. A group set this case in March
+ * still reads what they were given, whatever is rewritten in June.
+ */
+export async function updateCase(
+  actor: SessionUser,
+  caseId: string,
+  input: UpdateCaseRequest,
+): Promise<string> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.caseStudies).doc(caseId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists) throw new AppError('NOT_FOUND', 'errors.caseNotFound');
+
+  const { reason, ...text } = input;
+  // Checked here as well as in the request schema: a revision of a case a
+  // class is working from outlives whoever made it, and the next caller of
+  // this function may not be a route handler.
+  if (reason.trim().length < 10) {
+    throw new AppError('VALIDATION_FAILED', 'errors.reasonTooShort');
+  }
+
+  const versionId = nextCaseVersionId(snapshot.get('currentVersionId') as string | undefined);
+
+  await writeCaseVersion(caseId, versionId, text, actor.uid, reason);
+
+  await ref.update({
+    ...text,
+    currentVersionId: versionId,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  await writeAuditLog({
+    action: 'case.revised',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.caseStudies}/${caseId}`,
+    before: {
+      currentVersionId: snapshot.get('currentVersionId') ?? 'v1',
+      title: snapshot.get('title'),
+    },
+    after: { currentVersionId: versionId, title: text.title },
+    reason,
+  });
+
+  return versionId;
+}
+
+/**
+ * The case as it stood at one version.
+ *
+ * Returns nothing rather than falling back to the current text: a group told
+ * they are reading version 2 must not silently be shown version 5.
+ */
+export async function getCaseVersion(
+  caseId: string,
+  versionId: string,
+): Promise<CaseVersion | null> {
+  const snapshot = await getDb()
+    .collection(COLLECTIONS.caseVersions)
+    .doc(versionDocId(caseId, versionId))
+    .get();
+  if (!snapshot.exists) return null;
+
+  const parsed = caseVersionSchema.safeParse(snapshot.data());
+  return parsed.success ? parsed.data : null;
+}
+
+/** Every revision of a case, newest first. */
+export async function listCaseVersions(caseId: string): Promise<CaseVersion[]> {
+  const snapshot = await getDb()
+    .collection(COLLECTIONS.caseVersions)
+    .where('caseId', '==', caseId)
+    .get();
+
+  return snapshot.docs
+    .map((doc) => caseVersionSchema.safeParse(doc.data()))
+    .filter((parsed) => parsed.success)
+    .map((parsed) => parsed.data)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }
 
 export async function getCase(caseId: string): Promise<CaseStudy | null> {

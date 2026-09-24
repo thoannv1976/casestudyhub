@@ -23,6 +23,7 @@ export const AUDIT_ACTIONS = [
   'group.random_distribution',
   'group.roles_assigned',
   'case.published',
+  'case.revised',
   'case.attachment_added',
   'case.attachment_removed',
   'assignment.created',

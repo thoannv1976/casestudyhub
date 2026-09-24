@@ -218,6 +218,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // A revision of a case, frozen by every assignment set under it. Served
+    // by the route handler that knows whether this reader is in a class the
+    // case was set for - the same check that guards the case itself.
+    match /caseVersions/{versionId} {
+      allow read, write: if false;
+    }
+
     // The assessment framework. Every rule a mark is computed from lives here,
     // so a client that could write one could change how it is marked; one that
     // could read it directly would bypass the stamp that decides which version

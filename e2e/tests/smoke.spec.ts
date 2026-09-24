@@ -1733,6 +1733,67 @@ test('a lecturer cannot reach the system settings, let alone change them', async
   expect(response.status()).toBe(403);
 });
 
+/**
+ * Case revisions (SRS Module 05). A case could not be edited at all before
+ * this; now it can, and an edit writes a version rather than overwriting one.
+ */
+test('revising a case writes a version and leaves the old one alone', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  // Created with v1, so the pointer the case carries means something.
+  await expect(page.getByTestId('case-versions')).toContainText('v1');
+
+  await page.getByRole('button', { name: 'Revise this case' }).click();
+  await page.locator('#title').fill('Amazon (2025 figures)');
+  await page
+    .locator('#reason')
+    .fill('The 2025 figures replaced the 2024 ones after the annual report.');
+  await page.getByRole('button', { name: 'Publish revision' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('v2');
+
+  const history = page.getByTestId('case-versions');
+  await expect(history).toContainText('v2');
+  // The first version is still there, with its own title.
+  await expect(history).toContainText('v1');
+  await expect(history.getByText('Amazon', { exact: true })).toBeVisible();
+});
+
+test('a student cannot revise a case, however they ask', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/cases');
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` })
+    .getByRole('link', { name: 'Question bank' })
+    .click();
+  await page.waitForURL(/\/cases\/.+/);
+
+  await expect(page.getByRole('button', { name: 'Revise this case' })).toHaveCount(0);
+
+  const caseId = page.url().split('/cases/')[1]?.split(/[?#]/)[0] ?? '';
+  const response = await page.request.put(`/api/cases/${caseId}`, {
+    data: {
+      title: 'Rewritten by a student',
+      learningObjectives: [],
+      cloIds: [],
+      mainQuestions: [],
+      supportingQuestions: [],
+      references: [],
+      reason: 'Rewriting the case I am being marked on.',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

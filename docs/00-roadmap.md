@@ -75,6 +75,9 @@ lên trình bày đến lúc sinh viên nhìn thấy điểm đã công bố.
 | 20  | Khung đánh giá sửa được     | Mọi quy tắc học thuật thành dữ liệu có phiên bản trong `policies/{id}__{version}`; ghi bằng `create`, không bao giờ ghi đè. Lớp và bài giao đóng băng phiên bản, nên điểm đã công bố không thể đổi                 | ✅         |
 | 21  | Quản lý người dùng          | Quản trị viên đặt lại mật khẩu cho người đã mất (mật khẩu tạm, ép đổi, cắt mọi phiên, ghi nhật ký người thực hiện khác người bị tác động), sửa hồ sơ, tạo tài khoản sinh viên                                      | ✅         |
 | 22  | Dashboard và tiến độ        | Dashboard hiện việc thật theo vai trò thay cho dòng "Phase 1 đang được xây dựng"; trang lớp lọc nhóm theo chưa nộp / quá hạn / sẵn sàng chấm / đã công bố                                                          | ✅         |
+| 23  | Chuẩn đầu ra của khoa       | Khoa tự đặt tên chuẩn đầu ra, chọn tiêu chí nào đo nó, đặt ngưỡng đạt, và xác nhận đã đối chiếu đề cương; báo cáo bỏ cảnh báo "bảng minh hoạ" khi đã xác nhận. Tất cả đi theo phiên bản khung                      | ✅         |
+| 24  | Hệ thống và hạn mức AI      | Số liệu nền tảng đếm bằng aggregate query; đóng/mở đăng ký, giới hạn file danh sách lớp, và hạn mức lượt gọi mô hình mỗi tháng — chặn ngay tại cổng AI, đếm theo tháng                                             | ✅         |
+| 25  | Phiên bản case study        | Case sửa được lần đầu tiên, và sửa là ghi phiên bản mới chứ không đè bản cũ; `caseVersionId` mà assignment đóng băng từ nay đọc lại được                                                                           | ✅         |
 | —   | Tích hợp Moodle/LTI         | Cần thông tin kết nối LTI của trường (client id, khóa, endpoint). Chưa làm — xuất CSV ở PR 16 đã phục vụ được việc nộp điểm lên hệ thống của trường trong lúc chờ                                                  | ⏸️         |
 
 **Ghi chú thiết kế Phase 4**
