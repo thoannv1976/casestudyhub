@@ -1,7 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   computeStudentScore,
   gradeSchema,
   lecturerAssessmentSchema,
@@ -16,6 +15,7 @@ import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
 import { getCase } from '../cases/cases';
+import { policyOfAssignmentId } from '../policy/policy-store';
 import { currentVersions, listSubmissions } from '../submissions/submissions';
 import { listMembers } from '../groups/groups';
 import type { SessionUser } from '../auth/types';
@@ -75,7 +75,9 @@ export async function saveLecturerAssessment(
     throw new AppError('CONFLICT', 'errors.gradeAlreadyPublished');
   }
 
-  const policy = DEFAULT_PRESENTATION_POLICY;
+  // The version this assignment froze, never today's: a framework changed
+  // after the case was set must not change how the work is marked.
+  const policy = await policyOfAssignmentId(assignmentId);
   let groupScoreRaw: number;
   try {
     groupScoreRaw = sumRubricScores(
@@ -168,7 +170,7 @@ export async function previewGrades(assignmentId: string): Promise<GradePreviewR
   const assessment = await getLecturerAssessment(assignmentId);
   if (!assessment) throw new AppError('NOT_FOUND', 'errors.assessmentNotFound');
 
-  const policy = DEFAULT_PRESENTATION_POLICY;
+  const policy = await policyOfAssignmentId(assignmentId);
   const isLate = await groupSubmittedLate(assignmentId);
   const members = (await listMembers(assessment.classId)).filter(
     (member) => member.groupId === assessment.groupId,

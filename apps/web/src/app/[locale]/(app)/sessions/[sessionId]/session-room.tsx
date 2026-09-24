@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { ClassQuestion, PeerReview, PresentationSession } from '@casestudyhub/shared';
+import type {
+  ClassQuestion,
+  PeerReview,
+  PresentationPolicy,
+  PresentationSession,
+} from '@casestudyhub/shared';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { PeerReviewForm } from './peer-review';
 import { QuestionWall } from './question-wall';
@@ -32,6 +37,7 @@ export interface RoomState {
 
 export function SessionRoom({
   sessionId,
+  policy,
   initial,
   ownUid,
   isStaff,
@@ -40,6 +46,8 @@ export function SessionRoom({
   subtitle,
 }: {
   sessionId: string;
+  /** The framework this session runs under, frozen when the case was set. */
+  policy: PresentationPolicy;
   initial: RoomState;
   ownUid: string;
   isStaff: boolean;
@@ -90,7 +98,12 @@ export function SessionRoom({
       <Card>
         <CardTitle>{t('timerTitle')}</CardTitle>
         <div className="mt-4">
-          <SessionTimer session={session} canControl={isStaff} onChanged={refresh} />
+          <SessionTimer
+            session={session}
+            policy={policy}
+            canControl={isStaff}
+            onChanged={refresh}
+          />
         </div>
       </Card>
 
@@ -100,6 +113,7 @@ export function SessionRoom({
           <div className="mt-4">
             <PeerReviewForm
               sessionId={sessionId}
+              rubric={policy.rubric}
               own={room.ownReview}
               open={session.peerReviewOpen}
               onChanged={refresh}

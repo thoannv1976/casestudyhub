@@ -1,9 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import {
-  DEFAULT_PRESENTATION_POLICY,
-  submitPeerReviewSchema,
-  summarisePeerReviews,
-} from '@casestudyhub/shared';
+import { submitPeerReviewSchema, summarisePeerReviews } from '@casestudyhub/shared';
 import {
   AppError,
   assertCanViewClass,
@@ -11,6 +7,7 @@ import {
   getSession,
   getUserProfile,
   listPeerReviews,
+  policyOfAssignmentId,
   submitPeerReview,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -44,7 +41,10 @@ export async function GET(
     return NextResponse.json({
       own,
       reviews,
-      summary: summarisePeerReviews(reviews, DEFAULT_PRESENTATION_POLICY.rubric),
+      summary: summarisePeerReviews(
+        reviews,
+        (await policyOfAssignmentId(session.assignmentId)).rubric,
+      ),
     });
   } catch (error) {
     return respondWithError(error);

@@ -2,7 +2,6 @@ import { FieldValue } from 'firebase-admin/firestore';
 import {
   AI_EVALUATION_RESPONSE_JSON_SCHEMA,
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   aiAssessmentSchema,
   aiEvaluationResponseSchema,
   reconcileWithRubric,
@@ -10,6 +9,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { policyOfAssignment } from '../policy/policy-store';
 import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
 import { getCase, readAttachment } from '../cases/cases';
@@ -127,7 +127,9 @@ export async function evaluateSubmission(
     throw new AppError('POLICY_VIOLATION', 'errors.nothingToEvaluate');
   }
 
-  const policy = DEFAULT_PRESENTATION_POLICY;
+  // The same framework the lecturer will mark against: a model scoring
+  // criteria that no longer match the marking screen is worse than none.
+  const policy = await policyOfAssignment(assignment);
   const assessable = policy.rubric.criteria.filter((criterion) => criterion.aiAssessable);
 
   const prompt = [

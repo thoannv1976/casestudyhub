@@ -33,7 +33,8 @@
     "profile": "Hồ sơ",
     "signOut": "Đăng xuất",
     "teaching": "Lớp giảng dạy",
-    "portfolio": "Hồ sơ của tôi"
+    "portfolio": "Hồ sơ của tôi",
+    "framework": "Khung đánh giá"
   },
   "landing": {
     "heroTitle": "Dạy học bằng Case Study, từ lúc giao bài đến khi công bố điểm",
@@ -278,7 +279,12 @@
     "nothingToEvaluate": "Không có tài liệu nào mô hình đọc được để làm việc.",
     "tutorModeInvalid": "Vui lòng chọn cách bạn muốn được hỗ trợ.",
     "tutorMessageTooShort": "Hãy nói rõ hơn một chút để trợ giảng giúp được bạn.",
-    "tutorMessageTooLong": "Nội dung quá dài. Vui lòng rút gọn."
+    "tutorMessageTooLong": "Nội dung quá dài. Vui lòng rút gọn.",
+    "policyNotFound": "Phiên bản khung đánh giá này không còn tồn tại.",
+    "policyInvalid": "Một khung đánh giá đã lưu không thỏa mãn chính quy tắc của nó, nên bị từ chối thay vì dùng để chấm bài.",
+    "policyVersionExists": "Số phiên bản này đã được dùng. Một phiên bản khung không bao giờ được sửa: hãy đặt số phiên bản mới cho thay đổi này.",
+    "policyReasonTooShort": "Hãy ghi ít nhất mười ký tự lý do thay đổi khung. Ghi chú này tồn tại lâu hơn người thực hiện.",
+    "policyNotYoursToVersion": "Thêm phiên bản cho một khung mà các lớp khác đang dùng là quyết định của quản trị viên. Hãy sao chép khung sang tên mới để đổi quy tắc cho riêng học phần của bạn."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -806,5 +812,38 @@
       "gradePublished": "Điểm của bạn cho {case} đã được công bố.",
       "submissionDueSoon": "Còn thiếu {missing} sản phẩm cho {case}, và hạn nộp chỉ còn {hours} giờ."
     }
+  },
+  "framework": {
+    "title": "Khung đánh giá",
+    "subtitle": "Các quy tắc mà mọi điểm số được tính ra: nhóm được nói bao lâu, lớp phải đặt bao nhiêu câu hỏi, mỗi tiêu chí đáng bao nhiêu điểm. Thay đổi một quy tắc sẽ tạo ra phiên bản mới. Lớp giữ nguyên phiên bản lúc được tạo, nên không điểm nào đã chấm bị thay đổi.",
+    "versionsTitle": "Các phiên bản nền tảng đang giữ",
+    "versionsBody": "Một phiên bản không bao giờ được sửa. Danh sách này chỉ dài thêm — đó là điều khiến một điểm số cũ vẫn tính lại được.",
+    "summary": "{minutes} phút · {questions} câu hỏi từ lớp · {team}% trọng số nhóm",
+    "basedOn": "Bắt đầu từ",
+    "baseVersion": "Phiên bản để sao chép",
+    "frameworkId": "Tên khung",
+    "frameworkIdHint": "Giữ nguyên tên để thêm phiên bản mà các lớp khác sẽ kế thừa; đổi tên để tạo một khung riêng.",
+    "frameworkIdHintLecturer": "Hãy đổi sang tên mới: thêm phiên bản cho một khung mà các lớp khác đang dùng là quyết định của quản trị viên.",
+    "newVersion": "Số phiên bản mới",
+    "newVersionHint": "Ghi tùy ý, miễn là chưa từng dùng cho khung này.",
+    "timingTitle": "Thời lượng",
+    "minMinutes": "Trình bày ngắn nhất (phút)",
+    "maxMinutes": "Trình bày dài nhất (phút)",
+    "hardStopMinutes": "Mốc dừng bắt buộc (phút)",
+    "hardStopHint": "Đồng hồ chuyển đỏ tại mốc này. Không được sớm hơn thời lượng dài nhất.",
+    "rulesTitle": "Quy tắc",
+    "minClassQuestions": "Số câu hỏi lớp phải đặt",
+    "deadlineHours": "Đóng nộp bài (giờ trước buổi)",
+    "latePenalty": "Điểm trừ nộp muộn",
+    "decimals": "Số chữ số thập phân của điểm",
+    "teamWeight": "Trọng số nhóm (%)",
+    "teamWeightHint": "Phần cá nhân là phần còn lại, nên hai phần luôn cộng thành một.",
+    "rubricTitle": "Mỗi tiêu chí đáng bao nhiêu điểm",
+    "rubricBody": "Cách diễn đạt từng tiêu chí được giữ nguyên. Phiên bản đang xem có tổng {total} điểm; tổng của phiên bản mới sẽ theo đúng các con số bạn nhập.",
+    "reasonTitle": "Vì sao thay đổi",
+    "reasonBody": "Một thay đổi khung tồn tại lâu hơn người thực hiện. Lý do được ghi vào nhật ký kiểm toán cùng phiên bản mới.",
+    "reason": "Lý do (ít nhất 10 ký tự)",
+    "publish": "Công bố phiên bản này",
+    "published": "Phiên bản mới đã được công bố. Các lớp tạo từ giờ sẽ dùng nó; lớp đang có giữ nguyên phiên bản của mình."
   }
 }

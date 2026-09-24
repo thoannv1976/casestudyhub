@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
   findMembership,
   getCase,
+  getPolicy,
   getClassById,
   lateAtServerTime,
   listAssignmentsOfGroup,
@@ -13,8 +14,8 @@ import {
   listPublishedGradesOfStudent,
   listSessions,
   listSubmissions,
+  policyOfAssignment,
 } from '@casestudyhub/core';
-import { DEFAULT_PRESENTATION_POLICY } from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
@@ -88,6 +89,13 @@ export default async function StudentClassPage({
       ) ?? null)
     : null;
 
+  // Two different frameworks can be in play on one page, and conflating them
+  // would be a quiet lie: the deliverables a group still owes come from the
+  // version their assignment froze, while the weighting behind a published
+  // mark is whatever that mark was computed under.
+  const assignmentPolicy = assignment ? await policyOfAssignment(assignment) : null;
+  const gradePolicy = grade ? await getPolicy(grade.policyId, grade.policyVersion) : null;
+
   // The server decides whether the window has closed, so every viewer of this
   // page sees the same answer whatever their device clock says.
   const overdue = assignment ? lateAtServerTime(assignment) : false;
@@ -105,7 +113,7 @@ export default async function StudentClassPage({
           <div className="mt-4">
             <GroupWorkspace
               assignment={assignment}
-              deliverables={[...DEFAULT_PRESENTATION_POLICY.deliverables]}
+              deliverables={assignmentPolicy ? [...assignmentPolicy.deliverables] : []}
               submissions={submissions}
               caseTitle={caseStudy?.title ?? assignment.caseStudyId}
               canSubmit={user.role === 'student'}
@@ -123,8 +131,8 @@ export default async function StudentClassPage({
             {tGrading('yourMarkBreakdown', {
               group: grade.groupScore,
               individual: grade.individualScore,
-              team: Math.round(DEFAULT_PRESENTATION_POLICY.grading.teamWeight * 100),
-              solo: Math.round(DEFAULT_PRESENTATION_POLICY.grading.individualWeight * 100),
+              team: Math.round((gradePolicy?.grading.teamWeight ?? 0) * 100),
+              solo: Math.round((gradePolicy?.grading.individualWeight ?? 0) * 100),
             })}
           </p>
           <p className="text-muted mt-1 text-xs">

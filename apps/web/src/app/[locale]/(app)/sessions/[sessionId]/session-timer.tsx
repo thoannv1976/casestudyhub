@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
-  DEFAULT_PRESENTATION_POLICY,
   PRESENTATION_ROLE_IDS,
   roleKeyOf,
+  type PresentationPolicy,
   type PresentationSession,
 } from '@casestudyhub/shared';
 import { Button } from '@/components/ui/form';
@@ -25,10 +25,13 @@ function format(ms: number): string {
  */
 export function SessionTimer({
   session,
+  policy,
   canControl,
   onChanged,
 }: {
   session: PresentationSession;
+  /** Handed down by the room: the framework this session runs under. */
+  policy: PresentationPolicy;
   canControl: boolean;
   /** Asks the room to poll again, so every panel sees the same state. */
   onChanged: () => Promise<void>;
@@ -50,12 +53,12 @@ export function SessionTimer({
     session.accumulatedMs +
     (session.runningSinceMs === null ? 0 : Math.max(0, now - session.runningSinceMs));
 
-  const policy = DEFAULT_PRESENTATION_POLICY.presentation;
+  const limits = policy.presentation;
   const minutes = elapsed / 60000;
   const tone =
-    minutes >= policy.hardStopMinutes
+    minutes >= limits.hardStopMinutes
       ? 'text-red-600 dark:text-red-400'
-      : minutes >= policy.maxMinutes
+      : minutes >= limits.maxMinutes
         ? 'text-amber-600 dark:text-amber-400'
         : '';
 
@@ -81,8 +84,8 @@ export function SessionTimer({
             {format(elapsed)}
           </p>
           <p className="text-muted mt-1 text-xs">
-            {t('target', { min: policy.minMinutes, max: policy.maxMinutes })}
-            {minutes >= policy.hardStopMinutes ? ` · ${t('hardStop')}` : ''}
+            {t('target', { min: limits.minMinutes, max: limits.maxMinutes })}
+            {minutes >= limits.hardStopMinutes ? ` · ${t('hardStop')}` : ''}
           </p>
         </div>
         {session.currentRoleId ? (

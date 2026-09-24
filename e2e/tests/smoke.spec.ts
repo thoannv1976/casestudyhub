@@ -1415,6 +1415,60 @@ test('a student cannot ask for the lecturer\u2019s question suggestions', async 
   expect(response.status()).toBe(403);
 });
 
+/**
+ * The assessment framework (SRS 13.2). The rules every mark is computed from
+ * are stored data now, not a constant in the source - so this checks the one
+ * thing that makes editing them safe: a mark already published does not move.
+ */
+test('a lecturer publishes a new framework version without moving a published mark', async ({
+  page,
+}) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/framework');
+
+  await expect(page.getByTestId('framework-versions')).toContainText('2026.1');
+
+  // A lecturer may start a framework of their own, not add a version to the
+  // one every other class already runs under.
+  await page.getByLabel('New version number').fill('2026.2');
+  await page.getByLabel('Reason (at least 10 characters)').fill('Shorter slots for this term.');
+  await page.getByRole('button', { name: 'Publish this version' }).click();
+  await expect(page.getByTestId('alert-error')).toContainText("administrator's decision");
+
+  await page.getByLabel('Framework name').fill(`ftu-marketing-${RUN}`);
+  await page.getByLabel('Longest presentation (minutes)').fill('12');
+  await page.getByLabel('Hard stop (minutes)').fill('14');
+  // Changing what a criterion is worth: the rubric's total follows the parts,
+  // and a form that made the two disagree could only ever be refused.
+  await page.getByLabel('Understanding the case').fill('30');
+  await page.getByRole('button', { name: 'Publish this version' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('published');
+
+  // The mark published earlier in this run was computed under 2026.1 and is
+  // still exactly that, traced to the version it was computed with.
+  await signOut(page);
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  await expect(page.getByText('69', { exact: true })).toBeVisible();
+  await expect(page.getByText('Framework version 2026.1')).toBeVisible();
+});
+
+test('a student cannot reach the assessment framework, let alone change it', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+
+  await page.goto('/en/framework');
+  await expect(page.getByTestId('alert-error')).toContainText('do not have permission');
+
+  const response = await page.request.post('/api/policies', {
+    data: { policy: { id: 'forged', version: '1' }, reason: 'Rewriting my own marking rules.' },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

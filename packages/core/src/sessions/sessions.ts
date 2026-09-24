@@ -1,13 +1,13 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   presentationSessionSchema,
   type PresentationSession,
   type PresentationRoleId,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { policyOfAssignment } from '../policy/policy-store';
 import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
 import type { SessionUser } from '../auth/types';
@@ -77,7 +77,7 @@ export async function startSession(
 
   const db = getDb();
   const ref = db.collection(COLLECTIONS.presentationSessions).doc();
-  const firstRole = DEFAULT_PRESENTATION_POLICY.roles[0]?.id ?? 'R1';
+  const firstRole = (await policyOfAssignment(assignment)).roles[0]?.id ?? 'R1';
 
   const session = {
     id: ref.id,

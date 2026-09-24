@@ -1,12 +1,12 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   peerReviewSchema,
   validatePeerScores,
   type PeerReview,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
+import { policyOfAssignmentId } from '../policy/policy-store';
 import { AppError } from '../errors';
 import { getSession } from '../sessions/sessions';
 import { findMembership } from '../groups/groups';
@@ -53,7 +53,7 @@ export async function submitPeerReview(
     throw new AppError('POLICY_VIOLATION', 'errors.cannotReviewOwnGroup');
   }
 
-  const rubric = DEFAULT_PRESENTATION_POLICY.rubric;
+  const rubric = (await policyOfAssignmentId(session.assignmentId)).rubric;
   const checked = validatePeerScores(input.scores, rubric);
   if (!checked.ok) {
     throw new AppError('VALIDATION_FAILED', checked.messageKey, {

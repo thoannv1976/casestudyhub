@@ -2,11 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import {
-  DEFAULT_PRESENTATION_POLICY,
-  roleKeyOf,
-  type LecturerAssessment,
-} from '@casestudyhub/shared';
+import { roleKeyOf, type LecturerAssessment, type PresentationPolicy } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
@@ -44,12 +40,15 @@ export function GradeForm({
   assignmentId,
   members,
   assessment,
+  policy,
   isLate,
   canPublish,
 }: {
   assignmentId: string;
   members: Member[];
   assessment: LecturerAssessment | null;
+  /** Handed down by the page: the version this assignment froze. */
+  policy: PresentationPolicy;
   isLate: boolean;
   canPublish: boolean;
 }) {
@@ -64,7 +63,6 @@ export function GradeForm({
   const [busy, setBusy] = useState(false);
   const [waiving, setWaiving] = useState(assessment?.latePenaltyWaived ?? false);
 
-  const policy = DEFAULT_PRESENTATION_POLICY;
   const published = assessment?.status === 'published';
 
   async function save(event: React.FormEvent<HTMLFormElement>) {

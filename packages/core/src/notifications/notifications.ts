@@ -1,6 +1,5 @@
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   NOTIFICATION_PAGE_SIZE,
   dueSoonNotification,
   notificationSchema,
@@ -9,6 +8,7 @@ import {
   type NotificationKind,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
+import { policyOfAssignment } from '../policy/policy-store';
 import { listClassesOfStudent } from '../academic/enrollment';
 import { listAssignments, missingDeliverables } from '../assignments/assignments';
 import { listMembers } from '../groups/groups';
@@ -109,7 +109,7 @@ async function dueSoonFor(uid: string, nowMs: number): Promise<AppNotification[]
     for (const assignment of assignments) {
       const submissions = currentVersions(await listSubmissions(assignment.id));
       const missing = missingDeliverables(
-        DEFAULT_PRESENTATION_POLICY.deliverables,
+        (await policyOfAssignment(assignment)).deliverables,
         submissions.map((submission) => submission.deliverableId),
       );
       if (missing.length === 0) continue;

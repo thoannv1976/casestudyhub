@@ -33,7 +33,8 @@
     "profile": "Profile",
     "signOut": "Sign out",
     "teaching": "Teaching",
-    "portfolio": "My portfolio"
+    "portfolio": "My portfolio",
+    "framework": "Assessment framework"
   },
   "landing": {
     "heroTitle": "Case study teaching, from assignment to assessment",
@@ -278,7 +279,12 @@
     "nothingToEvaluate": "There is no readable material for the model to work from.",
     "tutorModeInvalid": "Please choose how you would like the tutor to help.",
     "tutorMessageTooShort": "Say a little more so the tutor can help.",
-    "tutorMessageTooLong": "That message is too long. Please shorten it."
+    "tutorMessageTooLong": "That message is too long. Please shorten it.",
+    "policyNotFound": "That version of the assessment framework no longer exists.",
+    "policyInvalid": "A stored assessment framework does not satisfy its own rules and was refused rather than used to mark work.",
+    "policyVersionExists": "That version number is already in use. A framework version is never edited: give the change a new version number.",
+    "policyReasonTooShort": "Say in at least ten characters why the framework is changing. This outlives whoever made the change.",
+    "policyNotYoursToVersion": "Adding a version to a framework other classes already use is an administrator's decision. Clone it under a new name to change the rules for your own course."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -806,5 +812,38 @@
       "gradePublished": "Your mark for {case} has been published.",
       "submissionDueSoon": "{missing, plural, one {# deliverable is} other {# deliverables are}} still missing for {case}, and the deadline is in {hours, plural, one {# hour} other {# hours}}."
     }
+  },
+  "framework": {
+    "title": "Assessment framework",
+    "subtitle": "The rules every mark is computed from: how long a group speaks, how many questions the class owes, what each criterion is worth. Changing a rule publishes a new version. Classes keep the version they were created under, so nothing already marked can move.",
+    "versionsTitle": "Versions the platform holds",
+    "versionsBody": "A version is never edited. This list only grows, which is what makes an old mark reproducible.",
+    "summary": "{minutes} minutes · {questions} questions from the class · {team}% group weighting",
+    "basedOn": "Start from",
+    "baseVersion": "Version to copy",
+    "frameworkId": "Framework name",
+    "frameworkIdHint": "Keep the name to add a version other classes will inherit; change it to start a separate framework.",
+    "frameworkIdHintLecturer": "Change this to a new name: adding a version to a framework other classes already use is an administrator's decision.",
+    "newVersion": "New version number",
+    "newVersionHint": "Any text, as long as it has not been used for this framework before.",
+    "timingTitle": "Timing",
+    "minMinutes": "Shortest presentation (minutes)",
+    "maxMinutes": "Longest presentation (minutes)",
+    "hardStopMinutes": "Hard stop (minutes)",
+    "hardStopHint": "The clock turns red here. It cannot be earlier than the longest presentation.",
+    "rulesTitle": "Rules",
+    "minClassQuestions": "Questions the class owes",
+    "deadlineHours": "Submission closes (hours before)",
+    "latePenalty": "Late penalty (points)",
+    "decimals": "Decimal places in a mark",
+    "teamWeight": "Group share (%)",
+    "teamWeightHint": "The individual share is the rest, so the two always add to a whole.",
+    "rubricTitle": "What each criterion is worth",
+    "rubricBody": "The wording of each criterion is carried over unchanged. The version on screen totals {total} points; the total of the new version follows whatever you put here.",
+    "reasonTitle": "Why this is changing",
+    "reasonBody": "A framework change outlives whoever made it. This is written to the audit log with the new version.",
+    "reason": "Reason (at least 10 characters)",
+    "publish": "Publish this version",
+    "published": "The new version is published. Classes created from now on will use it; existing classes keep theirs."
   }
 }

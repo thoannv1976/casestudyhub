@@ -18,14 +18,11 @@ import {
   listSessionQuestions,
   listSubmissions,
   qaCompletion,
+  policyOfAssignment,
+  policyOfClass,
   votesOf,
 } from '@casestudyhub/core';
-import {
-  DEFAULT_PRESENTATION_POLICY,
-  redactForViewer,
-  roleKeyOf,
-  summarisePeerReviews,
-} from '@casestudyhub/shared';
+import { redactForViewer, roleKeyOf, summarisePeerReviews } from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
@@ -92,6 +89,13 @@ export default async function SessionPage({
       votesOf(user.uid, sessionId),
     ]);
 
+  // Everything in the room reads from one framework: the clock's limits, the
+  // rubric the class scores against, the Q&A checklist. It is the version the
+  // assignment froze, so opening an old session still shows its own rules.
+  const policy = assignment
+    ? await policyOfAssignment(assignment)
+    : await policyOfClass(session.classId);
+
   const group = groups.find((candidate) => candidate.id === session.groupId);
   const presenters = members.filter((member) => member.groupId === session.groupId);
   const isPresenter = membership?.groupId === session.groupId;
@@ -107,9 +111,7 @@ export default async function SessionPage({
   // lecturer's to read. Peers scoring each other's scores would be a spiral.
   const ownReview = await getOwnPeerReview(sessionId, user.uid);
   const peerReviews = isStaff ? await listPeerReviews(sessionId) : [];
-  const peerSummary = isStaff
-    ? summarisePeerReviews(peerReviews, DEFAULT_PRESENTATION_POLICY.rubric)
-    : null;
+  const peerSummary = isStaff ? summarisePeerReviews(peerReviews, policy.rubric) : null;
 
   // The Q&A checklist of the Guide is the lecturer's, not the class's: it
   // names members who have not yet answered anything.
@@ -118,7 +120,7 @@ export default async function SessionPage({
         questions,
         presenters.map((member) => member.studentUid),
         await listResponders(sessionId),
-        DEFAULT_PRESENTATION_POLICY.qa.minClassQuestions,
+        policy.qa.minClassQuestions,
       )
     : null;
 
@@ -174,7 +176,7 @@ export default async function SessionPage({
               {completion.enoughClassQuestions ? '✓' : '·'}{' '}
               {t('qaQuestions', {
                 count: completion.classQuestions,
-                min: DEFAULT_PRESENTATION_POLICY.qa.minClassQuestions,
+                min: policy.qa.minClassQuestions,
               })}
             </li>
             <li>
@@ -218,7 +220,7 @@ export default async function SessionPage({
                 })}
               </p>
               <ul className="mt-3 space-y-1 text-sm">
-                {DEFAULT_PRESENTATION_POLICY.rubric.criteria.map((criterion) => {
+                {policy.rubric.criteria.map((criterion) => {
                   const row = peerSummary.byCriterion[criterion.id];
                   return (
                     <li key={criterion.id} className="flex flex-wrap justify-between gap-2">
@@ -240,6 +242,7 @@ export default async function SessionPage({
 
       <SessionRoom
         sessionId={sessionId}
+        policy={policy}
         ownUid={user.uid}
         isStaff={isStaff}
         isStudent={user.role === 'student'}

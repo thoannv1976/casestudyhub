@@ -1,7 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   autoAssignRoles,
   groupMemberSchema,
   groupSchema,
@@ -13,6 +12,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { policyOfClass } from '../policy/policy-store';
 import { AppError } from '../errors';
 import type { SessionUser } from '../auth/types';
 
@@ -391,7 +391,7 @@ export async function autoAssignGroupRoles(
 
   const assignments = autoAssignRoles(
     members.map((member) => member.studentUid),
-    DEFAULT_PRESENTATION_POLICY,
+    await policyOfClass(classId),
   );
 
   const rolesByStudent = new Map<string, PresentationRoleId[]>();

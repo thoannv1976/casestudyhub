@@ -74,6 +74,7 @@ export const PERMISSIONS = [
   'grade.publish',
   'grade.viewClass',
   'grade.viewPlatform',
+  'policy.author',
   'ai.configure',
   'system.configure',
   'audit.read',
@@ -99,6 +100,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<UserRole, readonly Permission[]>>
     'presentation.control',
     'grade.viewClass',
     'grade.viewPlatform',
+    'policy.author',
     'ai.configure',
     'system.configure',
     'audit.read',
@@ -115,6 +117,10 @@ export const ROLE_PERMISSIONS: Readonly<Record<UserRole, readonly Permission[]>>
     'grade.draft',
     'grade.publish',
     'grade.viewClass',
+    // A lecturer may author a framework for their own course. Adding a
+    // version to a framework other classes already run under is a
+    // platform-wide change, so that stays with `system.configure`.
+    'policy.author',
   ],
   student: ['group.join', 'submission.create', 'question.ask', 'peerReview.submit'],
 };

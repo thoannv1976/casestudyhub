@@ -1,6 +1,5 @@
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   cloAttainment,
   criterionAverages,
   distributionOf,
@@ -14,6 +13,7 @@ import {
   type Participation,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
+import { policyOfClass } from '../policy/policy-store';
 import { listRoster, listClassesOfStudent } from '../academic/enrollment';
 import { listAssignments } from '../assignments/assignments';
 import { listGroups, listMembers } from '../groups/groups';
@@ -60,7 +60,8 @@ export async function classReport(
   const db = getDb();
   const threshold = options.cloThreshold ?? DEFAULT_CLO_THRESHOLD;
 
-  const [details, roster, assignments, sessions] = await Promise.all([
+  const [policy, details, roster, assignments, sessions] = await Promise.all([
+    policyOfClass(classId),
     getClassById(classId),
     listRoster(classId),
     listAssignments(classId),
@@ -108,8 +109,8 @@ export async function classReport(
     totalAssignments: assignments.length,
     publishedGrades: grades.length,
     distribution: distributionOf(grades.map((grade) => grade.finalScore)),
-    criteria: criterionAverages(marked, DEFAULT_PRESENTATION_POLICY.rubric),
-    clos: cloAttainment(marked, DEFAULT_PRESENTATION_POLICY.rubric, threshold),
+    criteria: criterionAverages(marked, policy.rubric),
+    clos: cloAttainment(marked, policy.rubric, threshold),
     cloThreshold: threshold,
     participation: participationOf({
       enrolledUids: activeUids,

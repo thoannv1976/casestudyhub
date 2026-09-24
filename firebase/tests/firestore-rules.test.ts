@@ -304,6 +304,33 @@ describe('rate limit counters', () => {
   });
 });
 
+describe('the assessment framework', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'policies', 'ecommerce-2026__2026.1'), {
+        id: 'ecommerce-2026',
+        version: '2026.1',
+      });
+    });
+  });
+
+  it('is served by the server, because which version applies depends on a stamp', async () => {
+    await assertFails(getDoc(doc(student(), 'policies', 'ecommerce-2026__2026.1')));
+    await assertFails(getDoc(doc(lecturer(), 'policies', 'ecommerce-2026__2026.1')));
+    await assertFails(getDoc(doc(admin(), 'policies', 'ecommerce-2026__2026.1')));
+  });
+
+  it('cannot be rewritten by a client - a mark was computed from this', async () => {
+    await assertFails(
+      updateDoc(doc(admin(), 'policies', 'ecommerce-2026__2026.1'), { version: '2026.2' }),
+    );
+    await assertFails(deleteDoc(doc(admin(), 'policies', 'ecommerce-2026__2026.1')));
+    await assertFails(
+      setDoc(doc(lecturer(), 'policies', 'forged__1'), { id: 'forged', version: '1' }),
+    );
+  });
+});
+
 describe('notifications', () => {
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {

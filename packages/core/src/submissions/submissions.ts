@@ -1,7 +1,6 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   safeFileName,
   submissionSchema,
   validateUpload,
@@ -10,6 +9,7 @@ import {
 import { getAdminStorage, getDb } from '../firebase/admin';
 import { getServerEnv } from '../env';
 import { writeAuditLog } from '../audit/audit-log';
+import { policyOfAssignment } from '../policy/policy-store';
 import { AppError } from '../errors';
 import { getAssignment, lateAtServerTime } from '../assignments/assignments';
 import type { SessionUser } from '../auth/types';
@@ -39,7 +39,7 @@ export async function submitDeliverable(
   if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
   if (assignment.groupId !== groupId) throw new AppError('FORBIDDEN', 'errors.notYourAssignment');
 
-  const policy = DEFAULT_PRESENTATION_POLICY;
+  const policy = await policyOfAssignment(assignment);
   const deliverable = policy.deliverables.find((candidate) => candidate.id === input.deliverableId);
   if (!deliverable) throw new AppError('NOT_FOUND', 'errors.deliverableNotFound');
 

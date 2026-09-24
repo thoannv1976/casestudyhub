@@ -10,6 +10,12 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { Link } from '@/i18n/navigation';
 import { getSessionUser } from '@casestudyhub/core/auth/session';
 
+/**
+ * The landing page describes the framework the platform ships with, to a
+ * visitor who has no class and therefore no framework of their own. It stays
+ * the built-in default deliberately: a public page should not read a faculty's
+ * edited rules, and a signed-out visitor has no right to them.
+ */
 const policy = DEFAULT_PRESENTATION_POLICY;
 
 // The header shows either "sign in" or "dashboard", so this page is rendered

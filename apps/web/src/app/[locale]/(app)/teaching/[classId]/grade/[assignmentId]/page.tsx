@@ -10,6 +10,7 @@ import {
   getCase,
   getLecturerAssessment,
   groupSubmittedLate,
+  policyOfAssignment,
   listGroups,
   listMembers,
   listPeerReviews,
@@ -17,7 +18,7 @@ import {
   listSessionQuestions,
   qaCompletion,
 } from '@casestudyhub/core';
-import { DEFAULT_PRESENTATION_POLICY, summarisePeerReviews } from '@casestudyhub/shared';
+import { summarisePeerReviews } from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
@@ -63,7 +64,9 @@ export default async function GradePage({
   const assignment = await getAssignment(assignmentId);
   if (!assignment || assignment.classId !== classId) notFound();
 
-  const policy = DEFAULT_PRESENTATION_POLICY;
+  // The version frozen when the case was set, so a framework published
+  // since cannot change what this group is marked against.
+  const policy = await policyOfAssignment(assignment);
 
   const [caseStudy, groups, members, assessment, isLate, session] = await Promise.all([
     getCase(assignment.caseStudyId),
@@ -199,6 +202,7 @@ export default async function GradePage({
               roleIds: member.roleIds,
             }))}
             assessment={assessment}
+            policy={policy}
             isLate={isLate}
             canPublish={user.role === 'lecturer'}
           />

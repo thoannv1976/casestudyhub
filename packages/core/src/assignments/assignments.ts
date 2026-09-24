@@ -1,7 +1,6 @@
 import { FieldValue, Timestamp } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   assignmentSchema,
   isSubmissionLate,
   submissionDeadlineFor,
@@ -11,6 +10,7 @@ import {
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { groupMemberUids, notify } from '../notifications/notifications';
+import { policyOfClass } from '../policy/policy-store';
 import { AppError } from '../errors';
 import type { SessionUser } from '../auth/types';
 
@@ -36,7 +36,7 @@ export async function createAssignment(
   input: CreateAssignmentInput,
 ): Promise<string> {
   const db = getDb();
-  const policy = DEFAULT_PRESENTATION_POLICY;
+  const policy = await policyOfClass(input.classId);
 
   const presentationMs = Date.parse(input.presentationDate);
   if (Number.isNaN(presentationMs)) {

@@ -20,6 +20,7 @@
     "test:watch": "vitest",
     "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
     "emulators": "cd firebase && firebase emulators:start --project demo-casestudyhub",
     "test:rules": "npx firebase emulators:exec --only firestore,storage --project demo-casestudyhub --config firebase/firebase.json \"STORAGE_EMULATOR_HOST=http://127.0.0.1:9199 vitest run --config vitest.rules.config.mts\"",
     "build:e2e": "NEXT_PUBLIC_FIREBASE_API_KEY=demo-key NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=demo-casestudyhub.firebaseapp.com NEXT_PUBLIC_FIREBASE_PROJECT_ID=demo-casestudyhub NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=demo-casestudyhub.appspot.com NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=1 NEXT_PUBLIC_FIREBASE_APP_ID=1:1:web:e2e NEXT_PUBLIC_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099 npm run build && node scripts/prepare-standalone.mjs",

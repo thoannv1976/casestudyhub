@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { DEFAULT_PRESENTATION_POLICY, type PeerReview } from '@casestudyhub/shared';
+import type { PeerReview, Rubric } from '@casestudyhub/shared';
 import { Alert, Button, Field, Input } from '@/components/ui/form';
 
 /**
@@ -17,10 +17,13 @@ import { Alert, Button, Field, Input } from '@/components/ui/form';
 export function PeerReviewForm({
   sessionId,
   own,
+  rubric,
   open,
   onChanged,
 }: {
   sessionId: string;
+  /** Handed down by the room, so the class scores the session's own rubric. */
+  rubric: Rubric;
   own: PeerReview | null;
   open: boolean;
   /** Asks the room to poll again, so every panel sees the same state. */
@@ -33,8 +36,6 @@ export function PeerReviewForm({
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  const rubric = DEFAULT_PRESENTATION_POLICY.rubric;
 
   if (!open) {
     return <p className="text-muted text-sm">{own ? t('closedWithScore') : t('closed')}</p>;

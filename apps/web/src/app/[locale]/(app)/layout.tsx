@@ -42,6 +42,9 @@ export default async function AppLayout({
   }
   if (user.role === 'lecturer' || user.role === 'admin') {
     items.push({ href: '/teaching', labelKey: 'teaching' });
+    // The academic rules themselves, for whoever may author them. The page
+    // checks the permission again; this only decides whether to offer it.
+    items.push({ href: '/framework', labelKey: 'framework' });
   }
   items.push({ href: '/cases', labelKey: 'caseLibrary' });
   items.push({ href: '/profile', labelKey: 'profile' });

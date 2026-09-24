@@ -1,7 +1,6 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
-  DEFAULT_PRESENTATION_POLICY,
   type CreateAcademicYearRequest,
   type CreateClassRequest,
   type CreateCourseRequest,
@@ -9,6 +8,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { latestPolicy } from '../policy/policy-store';
 import { AppError } from '../errors';
 import type { SessionUser } from '../auth/types';
 
@@ -104,14 +104,19 @@ export async function createClass(actor: SessionUser, input: CreateClassRequest)
 
   const lecturerIds = Array.from(new Set([actor.uid, ...input.lecturerIds]));
 
+  // Stamped with the newest version of the framework. From here the class
+  // keeps that version whatever is published later, so a rule changed in
+  // June does not reach a class that started in March.
+  const policy = await latestPolicy();
+
   const ref = db.collection(COLLECTIONS.classes).doc();
   await ref.set({
     id: ref.id,
     ...input,
     classCode,
     lecturerIds,
-    presentationPolicyId: DEFAULT_PRESENTATION_POLICY.id,
-    presentationPolicyVersion: DEFAULT_PRESENTATION_POLICY.version,
+    presentationPolicyId: policy.id,
+    presentationPolicyVersion: policy.version,
     studentCount: 0,
     status: 'active',
     createdAt: FieldValue.serverTimestamp(),

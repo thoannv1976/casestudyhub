@@ -1,6 +1,6 @@
 import { type NextRequest } from 'next/server';
-import { DEFAULT_PRESENTATION_POLICY, toCsv } from '@casestudyhub/shared';
-import { assertCanManageClass, classReport } from '@casestudyhub/core';
+import { toCsv } from '@casestudyhub/shared';
+import { assertCanManageClass, classReport, policyOfClass } from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { respondWithError } from '@/lib/api/respond';
 
@@ -23,7 +23,7 @@ export async function GET(
     await assertCanManageClass(actor, classId);
 
     const report = await classReport(classId);
-    const rubric = DEFAULT_PRESENTATION_POLICY.rubric;
+    const rubric = (await policyOfClass(classId)).rubric;
 
     const rows: unknown[][] = [
       ['CaseStudy Hub — class report'],

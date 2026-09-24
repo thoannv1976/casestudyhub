@@ -34,7 +34,32 @@ function student(index: number) {
   };
 }
 
+/**
+ * The assignment the session belongs to. A session always has one, and the
+ * rubric the class scores against is the version that assignment froze.
+ */
+async function seedAssignment() {
+  const presentation = Date.now() + 24 * 3600_000;
+  await getDb()
+    .collection(COLLECTIONS.assignments)
+    .doc('PEER-A1')
+    .set({
+      id: 'PEER-A1',
+      classId: CLASS_ID,
+      groupId: PRESENTING_GROUP,
+      caseStudyId: 'PEER-CS1',
+      caseVersionId: 'v1',
+      policyId: DEFAULT_PRESENTATION_POLICY.id,
+      policyVersion: DEFAULT_PRESENTATION_POLICY.version,
+      rubricVersion: DEFAULT_PRESENTATION_POLICY.rubric.version,
+      presentationDate: new Date(presentation).toISOString(),
+      submissionDeadline: new Date(presentation - 24 * 3600_000).toISOString(),
+      status: 'under_review',
+    });
+}
+
 async function seedSession(overrides: Record<string, unknown> = {}) {
+  await seedAssignment();
   await getDb()
     .collection(COLLECTIONS.presentationSessions)
     .doc(SESSION_ID)
@@ -75,6 +100,7 @@ async function wipe() {
   const db = getDb();
   for (const [collection, field] of [
     [COLLECTIONS.presentationSessions, 'classId'],
+    [COLLECTIONS.assignments, 'classId'],
     [COLLECTIONS.peerReviews, 'classId'],
     [COLLECTIONS.groupMembers, 'classId'],
   ] as const) {
