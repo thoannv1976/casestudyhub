@@ -791,5 +791,20 @@
     "again": "Suggest some more",
     "thinking": "Thinking…",
     "notConfigured": "No AI model is configured for this deployment."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "subtitle": "What has happened on your courses since you were last here. Deadline reminders appear while something is still missing and disappear once it is handed in.",
+    "empty": "Nothing to report. Anything set for your group, or any mark published, will appear here.",
+    "new": "New",
+    "markAllRead": "Mark all as read",
+    "unreadLabel": "{count, plural, =0 {Nothing unread} one {# unread notification} other {# unread notifications}}",
+    "kind": {
+      "assignmentCreated": "A case study has been set for your group. The deadline for submitting is {deadline, date, medium} at {deadline, time, short}.",
+      "enrollmentApproved": "You have been admitted to {className}.",
+      "questionSelected": "The presenting group chose your question to answer aloud.",
+      "gradePublished": "Your mark for {case} has been published.",
+      "submissionDueSoon": "{missing, plural, one {# deliverable is} other {# deliverables are}} still missing for {case}, and the deadline is in {hours, plural, one {# hour} other {# hours}}."
+    }
   }
 }

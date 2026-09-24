@@ -8,6 +8,8 @@ import {
   createClassSchema,
   createCourseSchema,
   createStaffAccountSchema,
+  NOTIFICATION_KINDS,
+  notificationKeyOf,
   joinClassSchema,
   parseStudentRoster,
   profileUpdateSchema,
@@ -71,6 +73,20 @@ describe('message catalogues', () => {
       walk(messages);
       expect(empty, `${locale} has empty messages`).toEqual([]);
     }
+  });
+});
+
+describe('every notification kind has a sentence', () => {
+  /**
+   * A kind without a message reaches a student as its own key. That happened
+   * once, because a kind carries a dot and a message key reads a dot as a
+   * namespace - so the bridge between the two is checked here rather than
+   * trusted.
+   */
+  it.each(NOTIFICATION_KINDS)('reads as a sentence in both languages: %s', (kind) => {
+    const key = `notifications.kind.${notificationKeyOf(kind)}`;
+    expect(enKeys.has(key), `${key} missing from en.json`).toBe(true);
+    expect(viKeys.has(key), `${key} missing from vi.json`).toBe(true);
   });
 });
 

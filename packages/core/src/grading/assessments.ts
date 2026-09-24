@@ -12,8 +12,10 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
+import { getCase } from '../cases/cases';
 import { currentVersions, listSubmissions } from '../submissions/submissions';
 import { listMembers } from '../groups/groups';
 import type { SessionUser } from '../auth/types';
@@ -248,6 +250,19 @@ export async function publishGrades(actor: SessionUser, assignmentId: string): P
       });
     }
     tx.update(assessmentRef, { status: 'published', publishedAt });
+  });
+
+  // The reason this module exists, from the student's side: a mark is out and
+  // nobody had to be told in person.
+  const assignment = await getAssignment(assignmentId);
+  const caseStudy = assignment ? await getCase(assignment.caseStudyId) : null;
+  await notify({
+    recipientUids: grades.map((grade) => grade.studentUid),
+    kind: 'grade.published',
+    // Named, because a class marks several cases in a term and "your mark is
+    // out" does not say which one.
+    params: { case: caseStudy?.title ?? assignment?.caseStudyId ?? '' },
+    href: `/classes/${assessment.classId}`,
   });
 
   await writeAuditLog({

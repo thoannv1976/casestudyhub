@@ -791,5 +791,20 @@
     "again": "Gợi ý thêm",
     "thinking": "Đang suy nghĩ…",
     "notConfigured": "Bản triển khai này chưa cấu hình mô hình AI."
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "subtitle": "Những việc đã diễn ra trên các lớp của bạn. Nhắc hạn nộp chỉ hiện khi còn thiếu sản phẩm và tự biến mất khi đã nộp đủ.",
+    "empty": "Chưa có gì. Khi nhóm bạn được giao tình huống hoặc điểm được công bố, thông báo sẽ hiện ở đây.",
+    "new": "Mới",
+    "markAllRead": "Đánh dấu đã đọc tất cả",
+    "unreadLabel": "{count, plural, =0 {Không có thông báo chưa đọc} other {# thông báo chưa đọc}}",
+    "kind": {
+      "assignmentCreated": "Nhóm bạn đã được giao một tình huống. Hạn nộp là {deadline, time, short} ngày {deadline, date, medium}.",
+      "enrollmentApproved": "Bạn đã được duyệt vào lớp {className}.",
+      "questionSelected": "Nhóm thuyết trình đã chọn câu hỏi của bạn để trả lời trực tiếp.",
+      "gradePublished": "Điểm của bạn cho {case} đã được công bố.",
+      "submissionDueSoon": "Còn thiếu {missing} sản phẩm cho {case}, và hạn nộp chỉ còn {hours} giờ."
+    }
   }
 }

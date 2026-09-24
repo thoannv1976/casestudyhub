@@ -10,6 +10,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { groupMemberUids, notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import type { SessionUser } from '../auth/types';
 
@@ -86,6 +87,15 @@ export async function createAssignment(
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
     createdBy: actor.uid,
+  });
+
+  // The group is told in the same breath as the assignment is made. This is
+  // the moment work starts existing for them, and the deadline with it.
+  await notify({
+    recipientUids: await groupMemberUids(input.classId, input.groupId),
+    kind: 'assignment.created',
+    params: { deadline: new Date(deadlineMs).toISOString() },
+    href: `/classes/${input.classId}`,
   });
 
   await writeAuditLog({

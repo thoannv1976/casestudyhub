@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getSessionUser } from '@casestudyhub/core/auth/session';
 import { AppNav, type NavItem } from '@/components/app-nav';
 import { LocaleSwitcher } from '@/components/locale-switcher';
+import { NotificationBell } from '@/components/notification-bell';
 import { SignOutButton } from '@/components/sign-out-button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Link } from '@/i18n/navigation';
@@ -59,9 +60,13 @@ export default async function AppLayout({
             >
               CH
             </span>
-            <span className="font-semibold">{tApp('name')}</span>
+            {/* The wordmark stands down on a phone: four controls and a name
+                do not fit in 390px, and the mark alone still says where you
+                are. */}
+            <span className="hidden font-semibold sm:inline">{tApp('name')}</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <NotificationBell />
             <LocaleSwitcher />
             <ThemeToggle />
             <SignOutButton />

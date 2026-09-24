@@ -9,6 +9,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { getSession } from '../sessions/sessions';
 import { findMembership } from '../groups/groups';
@@ -226,6 +227,19 @@ export async function selectQuestion(
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
+
+  if (selected) {
+    // Out of fifty or more questions the group answers two or three. Being one
+    // of them is worth knowing, and the asker is rarely watching the wall at
+    // that moment.
+    const chosen = await ref.get();
+    await notify({
+      recipientUids: [chosen.get('askedByUid') as string],
+      kind: 'question.selected',
+      params: {},
+      href: `/sessions/${chosen.get('sessionId') as string}`,
+    });
+  }
 
   await writeAuditLog({
     action: 'question.selected',

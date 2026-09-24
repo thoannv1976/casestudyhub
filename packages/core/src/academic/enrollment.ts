@@ -7,6 +7,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { studentIdKey } from '../users/registration';
 import type { SessionUser } from '../auth/types';
@@ -343,6 +344,23 @@ export async function approveEnrollment(
     tx.update(db.collection(COLLECTIONS.classes).doc(classId), {
       studentCount: FieldValue.increment(1),
     });
+  });
+
+  // Until now a student who asked to join a class by approval had no way of
+  // learning they had been let in, short of opening the class list again and
+  // again.
+  // The name comes from the class, not the enrolment row: an enrolment stores
+  // who joined what, not what the class is called, and a class renamed since
+  // would otherwise be announced under its old name.
+  const [approved, classSnapshot] = await Promise.all([
+    ref.get(),
+    db.collection(COLLECTIONS.classes).doc(classId).get(),
+  ]);
+  await notify({
+    recipientUids: [approved.get('studentUid') as string],
+    kind: 'enrollment.approved',
+    params: { className: (classSnapshot.get('className') as string | undefined) ?? classId },
+    href: `/classes/${classId}`,
   });
 
   await writeAuditLog({

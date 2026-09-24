@@ -304,6 +304,44 @@ describe('rate limit counters', () => {
   });
 });
 
+describe('notifications', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), 'notifications', 'n1'), {
+        id: 'n1',
+        recipientUid: STUDENT_UID,
+        kind: 'grade.published',
+        params: {},
+        href: '/classes/C1',
+        createdAt: '2026-03-01T08:00:00.000Z',
+      });
+    });
+  });
+
+  it('are served by the server, so not even their owner reads them directly', async () => {
+    await assertFails(getDoc(doc(student(), 'notifications', 'n1')));
+    await assertFails(getDoc(doc(anonymous(), 'notifications', 'n1')));
+  });
+
+  it("cannot be marked read by a client, which could mark anyone else's too", async () => {
+    await assertFails(updateDoc(doc(student(), 'notifications', 'n1'), { readAt: 'now' }));
+    await assertFails(deleteDoc(doc(student(), 'notifications', 'n1')));
+  });
+
+  it('cannot be forged - a student could otherwise announce their own mark', async () => {
+    await assertFails(
+      setDoc(doc(student(), 'notifications', 'forged'), {
+        id: 'forged',
+        recipientUid: OTHER_STUDENT_UID,
+        kind: 'grade.published',
+        params: {},
+        href: '/classes/C1',
+        createdAt: '2026-03-01T08:00:00.000Z',
+      }),
+    );
+  });
+});
+
 describe('groups and membership', () => {
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {

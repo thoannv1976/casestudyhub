@@ -218,6 +218,14 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // A notification is addressed to one person, but it is still written and
+    // read through the server. A rule could allow a client to read its own
+    // row; it could not stop that client marking somebody else's as read, nor
+    // write the ones this app derives at read time. So the server does both.
+    match /notifications/{notificationId} {
+      allow read, write: if false;
+    }
+
     // ----- never readable by a client --------------------------------------
     match /auditLogs/{logId} {
       allow read, write: if false;

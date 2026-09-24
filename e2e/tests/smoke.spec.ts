@@ -1100,6 +1100,46 @@ test('the lecturer publishes, and the group sees the mark', async ({ page }) => 
   await expect(page.getByText('Framework version 2026.1')).toBeVisible();
 });
 
+/**
+ * Notifications (SRS Module 15). The mark was published in the test above, so
+ * this checks the part a student actually experiences: they were told,
+ * without anyone having to tell them in person.
+ */
+test('the student is told their mark is out, in their own language', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/dashboard');
+
+  // The bell counts what is waiting, on whatever page they happen to be on.
+  const bell = page.getByTestId('notification-bell');
+  await expect(page.getByTestId('notification-count')).toBeVisible({ timeout: 15_000 });
+
+  await bell.click();
+  await page.waitForURL(/\/notifications$/);
+
+  const list = page.getByTestId('notification-list');
+  await expect(list).toContainText('Your mark');
+  await expect(list.getByText('New').first()).toBeVisible();
+
+  // Nothing stored is a sentence: the same notification reads in Vietnamese
+  // for a reader who switches, which is why only a key is written down.
+  await page.goto('/vi/notifications');
+  await expect(page.getByTestId('notification-list')).toContainText('\u0111\u00e3 \u0111\u01b0\u1ee3c c\u00f4ng b\u1ed1');
+});
+
+test('marking everything read empties the bell and keeps it empty', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/notifications');
+
+  await page.getByRole('button', { name: 'Mark all as read' }).click();
+  await expect(page.getByRole('button', { name: 'Mark all as read' })).toBeDisabled();
+  await expect(page.getByText('Nothing unread')).toBeVisible();
+
+  // A reload proves it was written down rather than only crossed off on screen.
+  await page.reload();
+  await expect(page.getByText('Nothing unread')).toBeVisible();
+  await expect(page.getByTestId('notification-count')).toHaveCount(0);
+});
+
 test('a published mark cannot be quietly edited', async ({ page }) => {
   await signIn(page, LECTURER.email, LECTURER.newPassword);
   await page.goto(`/en${gradeUrl}`);
