@@ -51,6 +51,13 @@ export const userProfileSchema = z.object({
   globalRole: userRoleSchema,
   preferredLanguage: localeSchema,
   status: userStatusSchema,
+  /**
+   * The account is on a password somebody else typed and cannot do anything
+   * until it chooses its own. Written since staff accounts existed, but not
+   * read back until an administrator needed to see which accounts are waiting
+   * on their owner.
+   */
+  mustChangePassword: z.boolean().optional(),
   photoUrl: z.url().optional(),
 });
 export type UserProfile = z.infer<typeof userProfileSchema>;

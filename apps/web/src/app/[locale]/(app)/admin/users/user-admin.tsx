@@ -6,8 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useTranslations } from 'next-intl';
 import {
   LOCALES,
-  createStaffAccountSchema,
-  type CreateStaffAccountRequest,
+  createAccountSchema,
+  type CreateAccountRequest,
   type UserProfile,
 } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
@@ -22,6 +22,9 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
   const router = useRouter();
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [createdEmail, setCreatedEmail] = useState<string | null>(null);
+  /** Shown once, because this is the only moment the password is readable. */
+  const [handedOver, setHandedOver] = useState<{ email: string; password: string } | null>(null);
+  const [suggestion, setSuggestion] = useState('');
   const [busy, setBusy] = useState(false);
 
   const {
@@ -29,18 +32,19 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
     handleSubmit,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<CreateStaffAccountRequest>({
-    resolver: zodResolver(createStaffAccountSchema),
+  } = useForm<CreateAccountRequest>({
+    resolver: zodResolver(createAccountSchema),
     defaultValues: {
       email: '',
       fullName: '',
       role: 'lecturer',
       temporaryPassword: '',
       preferredLanguage: 'vi',
+      studentId: '',
     },
   });
 
-  async function onSubmit(values: CreateStaffAccountRequest) {
+  async function onSubmit(values: CreateAccountRequest) {
     setErrorKey(null);
     setCreatedEmail(null);
 
@@ -58,10 +62,12 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
 
     setCreatedEmail(values.email);
     reset();
+    setNewRole('lecturer');
     router.refresh();
   }
 
-  async function patch(body: Record<string, unknown>) {
+  /** Returns whether it worked, so a caller knows not to close its form. */
+  async function patch(body: Record<string, unknown>): Promise<boolean> {
     setBusy(true);
     setErrorKey(null);
     try {
@@ -72,10 +78,15 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
       });
       if (!response.ok) {
         const payload = await response.json().catch(() => null);
-        setErrorKey(payload?.error?.messageKey ?? 'errors.unexpected');
-        return;
+        setErrorKey(
+          payload?.error?.details?.fields?.[0]?.messageKey ??
+            payload?.error?.messageKey ??
+            'errors.unexpected',
+        );
+        return false;
       }
       router.refresh();
+      return true;
     } finally {
       setBusy(false);
     }
@@ -93,6 +104,56 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
     if (!reason || reason.trim().length < 3) return;
     void patch({ targetUid: user.uid, status: next, reason });
   }
+
+  /**
+   * Setting a password and correcting a name both need more than one field and
+   * a reason, so they open a panel under the table rather than a prompt box.
+   * Only one is open at a time: two half-filled forms for two different people
+   * is how the wrong person gets the new password.
+   */
+  const [editing, setEditing] = useState<{
+    user: UserProfile;
+    kind: 'password' | 'profile';
+  } | null>(null);
+
+  async function resetPassword(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing) return;
+    const form = new FormData(event.currentTarget);
+    const ok = await patch({
+      targetUid: editing.user.uid,
+      temporaryPassword: String(form.get('newTemporaryPassword') ?? ''),
+      reason: String(form.get('resetReason') ?? ''),
+    });
+    if (ok) {
+      setHandedOver({
+        email: editing.user.email,
+        password: String(form.get('newTemporaryPassword') ?? ''),
+      });
+      setEditing(null);
+    }
+  }
+
+  async function saveProfile(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editing) return;
+    const form = new FormData(event.currentTarget);
+    const ok = await patch({
+      targetUid: editing.user.uid,
+      fullName: String(form.get('editFullName') ?? ''),
+      preferredLanguage: String(form.get('editLanguage') ?? 'vi'),
+      reason: String(form.get('profileReason') ?? ''),
+    });
+    if (ok) setEditing(null);
+  }
+
+  /**
+   * Which role the create form is on, tracked beside react-hook-form rather
+   * than through `watch`: that returns a function the React Compiler will not
+   * memoize, and it made this whole component opt out of compilation.
+   */
+  const roleField = register('role');
+  const [newRole, setNewRole] = useState('lecturer');
 
   const messageFor = (key?: string) =>
     key ? tError(key.startsWith('errors.') ? key : 'errors.validationFailed') : undefined;
@@ -124,9 +185,17 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
           </Field>
 
           <Field label={t('role')} htmlFor="staffRole">
-            <Select id="staffRole" {...register('role')}>
+            <Select
+              id="staffRole"
+              {...roleField}
+              onChange={(event) => {
+                setNewRole(event.target.value);
+                void roleField.onChange(event);
+              }}
+            >
               <option value="lecturer">{t('roleLecturer')}</option>
               <option value="admin">{t('roleAdmin')}</option>
+              <option value="student">{t('roleStudent')}</option>
             </Select>
           </Field>
 
@@ -140,6 +209,17 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
             </Select>
           </Field>
         </div>
+
+        {newRole === 'student' ? (
+          <Field
+            label={t('studentId')}
+            htmlFor="staffStudentId"
+            hint={t('studentIdHint')}
+            error={messageFor(errors.studentId?.message)}
+          >
+            <Input id="staffStudentId" {...register('studentId')} />
+          </Field>
+        ) : null}
 
         <Field
           label={t('temporaryPassword')}
@@ -200,15 +280,40 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
                   </td>
                   <td className="px-4 py-3">
                     {user.status === 'suspended' ? t('suspended') : t('active')}
+                    {user.mustChangePassword ? (
+                      <span className="text-muted mt-1 block text-xs">{t('owesPassword')}</span>
+                    ) : null}
                   </td>
-                  <td className="px-4 py-3 text-right">
-                    <Button
-                      variant="ghost"
-                      disabled={isSelf || busy}
-                      onClick={() => toggleStatus(user)}
-                    >
-                      {user.status === 'suspended' ? t('unsuspend') : t('suspend')}
-                    </Button>
+                  <td className="px-4 py-3">
+                    <div className="flex flex-wrap justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        disabled={busy}
+                        onClick={() => setEditing({ user, kind: 'profile' })}
+                      >
+                        {t('edit')}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        // An administrator sets their own password on their own
+                        // page, which asks for the current one first.
+                        disabled={isSelf || busy}
+                        onClick={() => {
+                          setSuggestion(temporaryPassword());
+                          setHandedOver(null);
+                          setEditing({ user, kind: 'password' });
+                        }}
+                      >
+                        {t('resetPassword')}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        disabled={isSelf || busy}
+                        onClick={() => toggleStatus(user)}
+                      >
+                        {user.status === 'suspended' ? t('unsuspend') : t('suspend')}
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -216,7 +321,129 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
           </tbody>
         </table>
       </div>
+
+      {editing?.kind === 'password' ? (
+        <form
+          onSubmit={resetPassword}
+          className="surface-card space-y-4 rounded-xl p-5"
+          data-testid="reset-password-panel"
+        >
+          <h3 className="text-base font-semibold">
+            {t('resetPasswordFor', { name: editing.user.fullName })}
+          </h3>
+          <p className="text-muted text-sm">{t('resetPasswordBody')}</p>
+
+          <Field
+            label={t('temporaryPassword')}
+            htmlFor="newTemporaryPassword"
+            hint={t('temporaryPasswordHint')}
+          >
+            <div className="flex gap-2">
+              <Input
+                id="newTemporaryPassword"
+                name="newTemporaryPassword"
+                defaultValue={suggestion}
+                required
+                minLength={8}
+              />
+              <Button variant="ghost" onClick={() => setSuggestion(temporaryPassword())}>
+                {t('suggest')}
+              </Button>
+            </div>
+          </Field>
+
+          <Field label={t('reason')} htmlFor="resetReason" hint={t('resetReasonHint')}>
+            <Input id="resetReason" name="resetReason" required minLength={10} maxLength={500} />
+          </Field>
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={busy}>
+              {t('resetPasswordConfirm')}
+            </Button>
+            <Button variant="ghost" onClick={() => setEditing(null)}>
+              {t('cancel')}
+            </Button>
+          </div>
+        </form>
+      ) : null}
+
+      {editing?.kind === 'profile' ? (
+        <form
+          onSubmit={saveProfile}
+          className="surface-card space-y-4 rounded-xl p-5"
+          data-testid="edit-profile-panel"
+        >
+          <h3 className="text-base font-semibold">
+            {t('editProfileFor', { name: editing.user.fullName })}
+          </h3>
+          <p className="text-muted text-sm">
+            {t('editProfileBody', { email: editing.user.email })}
+          </p>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={tAuth('fullName')} htmlFor="editFullName">
+              <Input
+                id="editFullName"
+                name="editFullName"
+                defaultValue={editing.user.fullName}
+                required
+                minLength={2}
+              />
+            </Field>
+            <Field label={tAuth('preferredLanguage')} htmlFor="editLanguage">
+              <Select
+                id="editLanguage"
+                name="editLanguage"
+                defaultValue={editing.user.preferredLanguage}
+              >
+                {LOCALES.map((value) => (
+                  <option key={value} value={value}>
+                    {LOCALE_LABELS[value]}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </div>
+
+          <Field label={t('reason')} htmlFor="profileReason">
+            <Input id="profileReason" name="profileReason" required minLength={3} maxLength={500} />
+          </Field>
+
+          <div className="flex gap-2">
+            <Button type="submit" disabled={busy}>
+              {t('save')}
+            </Button>
+            <Button variant="ghost" onClick={() => setEditing(null)}>
+              {t('cancel')}
+            </Button>
+          </div>
+        </form>
+      ) : null}
+
+      {handedOver ? (
+        <Alert tone="success">
+          <span data-testid="handed-over">
+            {t('handedOver', { email: handedOver.email, password: handedOver.password })}
+          </span>
+        </Alert>
+      ) : null}
+
       <p className="text-muted text-xs">{t('selfNote')}</p>
     </div>
   );
+}
+
+/**
+ * A temporary password worth suggesting: long enough, and mixed enough to pass
+ * the same rule the server applies. It is only ever read once, by the person
+ * who hands it over.
+ */
+function temporaryPassword(): string {
+  const alphabet = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const pick = (from: string, count: number) =>
+    Array.from(crypto.getRandomValues(new Uint32Array(count)))
+      .map((value) => from[value % from.length])
+      .join('');
+  return `${pick(alphabet, 8)}${pick(digits, 3)}`;
 }

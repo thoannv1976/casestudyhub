@@ -284,7 +284,10 @@
     "policyInvalid": "Một khung đánh giá đã lưu không thỏa mãn chính quy tắc của nó, nên bị từ chối thay vì dùng để chấm bài.",
     "policyVersionExists": "Số phiên bản này đã được dùng. Một phiên bản khung không bao giờ được sửa: hãy đặt số phiên bản mới cho thay đổi này.",
     "policyReasonTooShort": "Hãy ghi ít nhất mười ký tự lý do thay đổi khung. Ghi chú này tồn tại lâu hơn người thực hiện.",
-    "policyNotYoursToVersion": "Thêm phiên bản cho một khung mà các lớp khác đang dùng là quyết định của quản trị viên. Hãy sao chép khung sang tên mới để đổi quy tắc cho riêng học phần của bạn."
+    "policyNotYoursToVersion": "Thêm phiên bản cho một khung mà các lớp khác đang dùng là quyết định của quản trị viên. Hãy sao chép khung sang tên mới để đổi quy tắc cho riêng học phần của bạn.",
+    "useOwnPasswordPage": "Hãy dùng trang đổi mật khẩu của chính mình để đặt mật khẩu cho bạn.",
+    "studentIdRequired": "Tài khoản sinh viên cần mã sinh viên: danh sách lớp được đối chiếu theo mã đó.",
+    "reasonTooShort": "Hãy ghi ít nhất mười ký tự lý do. Đây là ghi chú mà người đọc lại sau này chỉ còn biết dựa vào."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -411,7 +414,7 @@
   },
   "userAdmin": {
     "title": "Người dùng",
-    "subtitle": "Tạo tài khoản cán bộ, đổi vai trò và khóa tài khoản. Mọi thay đổi đều được ghi nhật ký.",
+    "subtitle": "Tạo tài khoản, sửa họ tên, đặt lại mật khẩu cho người đã mất, đổi vai trò và khoá tài khoản. Mọi thay đổi đều được ghi lại kèm người thực hiện và lý do.",
     "createStaff": "Tạo tài khoản",
     "created": "Đã tạo tài khoản cho {email}. Hãy đưa mật khẩu tạm trực tiếp cho họ; họ bắt buộc đổi khi đăng nhập lần đầu.",
     "role": "Vai trò",
@@ -427,7 +430,23 @@
     "temporaryPasswordHint": "Đưa trực tiếp cho họ. Mật khẩu này hết tác dụng ngay khi họ đặt mật khẩu riêng.",
     "roleReasonPrompt": "Vì sao đổi vai trò của {email}?",
     "statusReasonPrompt": "Vì sao đổi trạng thái của {email}?",
-    "selfNote": "Bạn không thể tự đổi vai trò hay tự khóa tài khoản của mình."
+    "selfNote": "Bạn không thể tự đổi vai trò, tự khoá tài khoản hay tự đặt mật khẩu ở đây — hãy dùng trang hồ sơ cá nhân.",
+    "studentId": "Mã sinh viên",
+    "studentIdHint": "Danh sách lớp được đối chiếu theo mã này, nên phải đúng mã khoa đang dùng.",
+    "edit": "Sửa",
+    "save": "Lưu",
+    "cancel": "Huỷ",
+    "reason": "Lý do",
+    "suggest": "Gợi ý một mật khẩu",
+    "resetPassword": "Đặt lại mật khẩu",
+    "resetPasswordFor": "Đặt mật khẩu mới cho {name}",
+    "resetPasswordBody": "Người này sẽ phải tự chọn mật khẩu ở lần đăng nhập kế tiếp, và mọi phiên đang mở của họ sẽ bị đăng xuất.",
+    "resetPasswordConfirm": "Đặt mật khẩu này",
+    "resetReasonHint": "Ít nhất mười ký tự. Đây là ghi chú mà người đọc lại sau này chỉ còn biết dựa vào.",
+    "handedOver": "Mật khẩu của {email} giờ là {password}. Hãy đưa tận tay — đây là lần duy nhất mật khẩu được hiển thị.",
+    "editProfileFor": "Sửa thông tin của {name}",
+    "editProfileBody": "Địa chỉ đăng nhập ({email}) và mã sinh viên không sửa ở đây: đổi một trong hai là khoá người ta ra khỏi chính bài làm của mình.",
+    "owesPassword": "Đang dùng mật khẩu tạm"
   },
   "academicAdmin": {
     "title": "Cấu trúc đào tạo",

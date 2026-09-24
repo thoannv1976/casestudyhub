@@ -1,6 +1,19 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createStaffAccountSchema, setRoleSchema, setStatusSchema } from '@casestudyhub/shared';
-import { createStaffAccount, listUsers, setUserRole, setUserStatus } from '@casestudyhub/core';
+import {
+  createAccountSchema,
+  resetUserPasswordSchema,
+  setRoleSchema,
+  setStatusSchema,
+  updateUserProfileSchema,
+} from '@casestudyhub/shared';
+import {
+  createAccount,
+  listUsers,
+  resetUserPassword,
+  setUserRole,
+  setUserStatus,
+  updateUserByAdmin,
+} from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { respondWithError } from '@/lib/api/respond';
 
@@ -24,30 +37,46 @@ export async function GET(request: NextRequest) {
   }
 }
 
-/** Creates a lecturer or admin account with a temporary password. */
+/** Creates an account of any role, with a temporary password to hand over. */
 export async function POST(request: NextRequest) {
   try {
     const actor = await requirePermission('user.manage');
-    const input = createStaffAccountSchema.parse(await request.json());
-    const { uid } = await createStaffAccount(actor, input);
+    const input = createAccountSchema.parse(await request.json());
+    const { uid } = await createAccount(actor, input);
     return NextResponse.json({ uid }, { status: 201 });
   } catch (error) {
     return respondWithError(error);
   }
 }
 
-/** Changes a role or a status. Both are audited and neither may target self. */
+/**
+ * The four things an administrator does to an existing account: change its
+ * role, suspend or restore it, set a password for somebody who has lost
+ * theirs, and correct a name. All four are audited and carry a reason, and
+ * the first three refuse to target the caller.
+ *
+ * Which one is meant is read from the field that is present, so a body that
+ * names none of them is a validation failure rather than a silent no-op.
+ */
 export async function PATCH(request: NextRequest) {
   try {
     const actor = await requirePermission('user.manage');
-    const body = await request.json();
+    const body: unknown = await request.json();
+    const fields = typeof body === 'object' && body !== null ? body : {};
 
-    if ('role' in body) {
+    if ('role' in fields) {
       const { targetUid, role, reason } = setRoleSchema.parse(body);
       await setUserRole(actor, targetUid, role, reason);
-    } else {
+    } else if ('status' in fields) {
       const { targetUid, status, reason } = setStatusSchema.parse(body);
       await setUserStatus(actor, targetUid, status, reason);
+    } else if ('temporaryPassword' in fields) {
+      const { targetUid, temporaryPassword, reason } = resetUserPasswordSchema.parse(body);
+      await resetUserPassword(actor, targetUid, temporaryPassword, reason);
+    } else {
+      const { targetUid, fullName, preferredLanguage, reason } =
+        updateUserProfileSchema.parse(body);
+      await updateUserByAdmin(actor, targetUid, { fullName, preferredLanguage }, reason);
     }
 
     return NextResponse.json({ ok: true });

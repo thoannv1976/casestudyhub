@@ -16,6 +16,7 @@ export const AUDIT_ACTIONS = [
   'class.student_approved',
   'staff.account_created',
   'user.password_changed',
+  'user.profile_corrected',
   'group.created',
   'group.locked',
   'group.member_moved',

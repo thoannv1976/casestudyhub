@@ -7,7 +7,9 @@ import {
   changePasswordSchema,
   createClassSchema,
   createCourseSchema,
-  createStaffAccountSchema,
+  createAccountSchema,
+  resetUserPasswordSchema,
+  updateUserProfileSchema,
   NOTIFICATION_KINDS,
   notificationKeyOf,
   joinClassSchema,
@@ -124,12 +126,32 @@ describe('validation messages are translated', () => {
       joinMode: 'whatever',
     }),
     ...messagesOf(createCourseSchema, { code: 'x', name: 'A', defaultLanguage: 'fr' }),
-    ...messagesOf(createStaffAccountSchema, {
+    ...messagesOf(createAccountSchema, {
       email: 'nope',
       fullName: 'A',
       role: 'superuser',
       temporaryPassword: 'short',
       preferredLanguage: 'fr',
+    }),
+    // A student account without the code a roster is matched against.
+    ...messagesOf(createAccountSchema, {
+      email: 'sv@x.edu.vn',
+      fullName: 'Nguyen Van A',
+      role: 'student',
+      temporaryPassword: 'tempPass2026',
+      preferredLanguage: 'vi',
+    }),
+    // Setting somebody else's password, with too little said about why.
+    ...messagesOf(resetUserPasswordSchema, {
+      targetUid: 'u1',
+      temporaryPassword: 'short',
+      reason: 'lost it',
+    }),
+    ...messagesOf(updateUserProfileSchema, {
+      targetUid: 'u1',
+      fullName: 'A',
+      preferredLanguage: 'fr',
+      reason: '',
     }),
     ...messagesOf(removeEnrollmentSchema, { enrollmentId: 'e1', reason: 'x' }),
     // The question wall is the one form the whole class types into at once.

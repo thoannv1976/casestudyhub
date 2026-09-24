@@ -25,6 +25,18 @@ const LECTURER = {
 };
 const CLASS_CODE = `E2E-${RUN}`;
 
+/** The password an administrator sets for the lecturer, partway through. */
+const RESET_PASSWORD = 'resetPass2026';
+const CORRECTED_NAME = 'Tran Thi Bich Lecturer';
+
+/** A student an administrator adds, for one who could not register. */
+const ADDED_STUDENT = {
+  studentId: `SVADM${RUN}`,
+  fullName: 'Le Thi Added',
+  email: `added.${RUN}@e2e.test`,
+  temporaryPassword: 'addedPass2026',
+};
+
 /** Seeded by e2e/seed.mjs, so a group can reach the required four members. */
 const SEEDED_STUDENTS = [2, 3, 4].map((index) => ({
   email: `student${index}@e2e.test`,
@@ -1467,6 +1479,104 @@ test('a student cannot reach the assessment framework, let alone change it', asy
     failOnStatusCode: false,
   });
   expect(response.status()).toBe(403);
+});
+
+/**
+ * User administration (SRS 3.1). Before this there was no way back into an
+ * account whose password was lost - no self-service reset, and nothing an
+ * administrator could do - so a student who forgot theirs lost their
+ * coursework with it.
+ */
+test('an administrator sets a new password for somebody who has lost theirs', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/users');
+
+  const row = page.getByRole('row').filter({ hasText: LECTURER.email });
+  await row.getByRole('button', { name: 'Reset password' }).click();
+
+  const panel = page.getByTestId('reset-password-panel');
+  await expect(panel).toBeVisible();
+
+  // The suggestion is filled in already; this run needs a known one.
+  await panel.locator('#newTemporaryPassword').fill(RESET_PASSWORD);
+  await panel.locator('#resetReason').fill('They rang the office having forgotten it.');
+  await panel.getByRole('button', { name: 'Set this password' }).click();
+
+  // Shown once, because this is the only moment it is readable.
+  await expect(page.getByTestId('handed-over')).toContainText(RESET_PASSWORD);
+  await expect(row).toContainText('On a temporary password');
+
+  // The new password works, and gets them no further than choosing their own.
+  await signOut(page);
+  await signIn(page, LECTURER.email, RESET_PASSWORD);
+  await page.waitForURL('**/change-password');
+  await page.goto('/en/teaching');
+  await page.waitForURL('**/change-password');
+
+  await page.locator('#newPassword').fill(LECTURER.newPassword);
+  await page.locator('#confirmPassword').fill(LECTURER.newPassword);
+  await page.getByRole('button', { name: 'Change password' }).click();
+  await page.waitForURL('**/dashboard');
+});
+
+test('an administrator cannot set their own password from the user table', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/users');
+
+  const own = page.getByRole('row').filter({ hasText: ADMIN.email });
+  await expect(own.getByRole('button', { name: 'Reset password' })).toBeDisabled();
+
+  // And not through the API either, which is where the rule actually lives.
+  const users = await page.request.get('/api/admin/users?search=' + ADMIN.email);
+  const callerUid = (await users.json()).users[0].uid;
+  const response = await page.request.patch('/api/admin/users', {
+    data: {
+      targetUid: callerUid,
+      temporaryPassword: 'somePass2026',
+      reason: 'Trying to go round the change-password page.',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
+test('an administrator corrects a name without touching the sign-in address', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/users');
+
+  const row = page.getByRole('row').filter({ hasText: LECTURER.email });
+  await row.getByRole('button', { name: 'Edit' }).click();
+
+  const panel = page.getByTestId('edit-profile-panel');
+  await panel.locator('#editFullName').fill(CORRECTED_NAME);
+  await panel.locator('#profileReason').fill('Spelling corrected from the faculty list.');
+  await panel.getByRole('button', { name: 'Save' }).click();
+
+  await expect(page.getByRole('cell', { name: CORRECTED_NAME })).toBeVisible();
+  // The address they sign in with is untouched, which is the whole point.
+  await expect(page.getByRole('cell', { name: LECTURER.email })).toBeVisible();
+});
+
+test('an administrator creates a student account for one who could not register', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/users');
+
+  await page.locator('#staffName').fill(ADDED_STUDENT.fullName);
+  await page.locator('#staffEmail').fill(ADDED_STUDENT.email);
+  await page.locator('#staffRole').selectOption('student');
+
+  // The code a class roster is matched against, asked for only for a student.
+  await page.locator('#staffStudentId').fill(ADDED_STUDENT.studentId);
+  await page.locator('#tempPassword').fill(ADDED_STUDENT.temporaryPassword);
+  await page.getByRole('button', { name: 'Create account' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText(ADDED_STUDENT.email);
+
+  await signOut(page);
+  await signIn(page, ADDED_STUDENT.email, ADDED_STUDENT.temporaryPassword);
+  await page.waitForURL('**/change-password');
 });
 
 test('a student is refused the administration pages', async ({ page }) => {

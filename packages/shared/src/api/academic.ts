@@ -52,20 +52,62 @@ export const approveEnrollmentSchema = z.object({
 });
 
 /**
- * Admin creates a staff account. The temporary password is handed over out of
- * band and must be changed at first sign-in, so it never becomes a shared
- * long-term credential.
+ * A password an administrator types for somebody else. Long enough not to be
+ * guessed, mixed enough not to be a word, and short-lived either way: whoever
+ * receives one must replace it before they can do anything.
  */
-export const createStaffAccountSchema = z.object({
-  email: z.email('errors.emailInvalid'),
+export const temporaryPasswordSchema = z
+  .string({ error: 'errors.passwordTooShort' })
+  .min(8, 'errors.passwordTooShort')
+  .max(128, 'errors.passwordTooLong')
+  .refine((value) => /[A-Za-z]/.test(value) && /[0-9]/.test(value), 'errors.passwordTooSimple');
+
+/**
+ * Admin creates an account. The temporary password is handed over out of band
+ * and must be changed at first sign-in, so it never becomes a shared long-term
+ * credential.
+ *
+ * Students normally register themselves; this covers the ones who cannot -
+ * an exchange student without a university address yet, somebody whose
+ * registration failed. A student account needs a student code, because that
+ * code is what a class roster is matched against.
+ */
+export const createAccountSchema = z
+  .object({
+    email: z.email('errors.emailInvalid'),
+    fullName: z.string().trim().min(2, 'errors.fullNameInvalid').max(120, 'errors.fullNameInvalid'),
+    // Spelled out rather than reusing `userRoleSchema`, which carries no
+    // message key: a form that rejects a role has to say so in both languages.
+    role: z.enum(['lecturer', 'admin', 'student'], { error: 'errors.roleInvalid' }),
+    temporaryPassword: temporaryPasswordSchema,
+    preferredLanguage: localeSchema,
+    /** Required for a student, meaningless for anybody else. */
+    studentId: z.union([studentIdSchema, z.literal('')]).optional(),
+  })
+  .refine((input) => input.role !== 'student' || Boolean(input.studentId), {
+    message: 'errors.studentIdRequired',
+    path: ['studentId'],
+  });
+
+/**
+ * An administrator sets somebody else's password.
+ *
+ * It asks for more of a reason than a role change does: this is the one action
+ * that hands one person the ability to sign in as another, and the note is
+ * what a later reader has to go on.
+ */
+export const resetUserPasswordSchema = z.object({
+  targetUid: z.string().min(1),
+  temporaryPassword: temporaryPasswordSchema,
+  reason: z.string().trim().min(10, 'errors.reasonTooShort').max(500),
+});
+
+/** An administrator corrects somebody's name or the language they read in. */
+export const updateUserProfileSchema = z.object({
+  targetUid: z.string().min(1),
   fullName: z.string().trim().min(2, 'errors.fullNameInvalid').max(120, 'errors.fullNameInvalid'),
-  role: z.enum(['lecturer', 'admin'], { error: 'errors.roleInvalid' }),
-  temporaryPassword: z
-    .string({ error: 'errors.passwordTooShort' })
-    .min(8, 'errors.passwordTooShort')
-    .max(128, 'errors.passwordTooLong')
-    .refine((value) => /[A-Za-z]/.test(value) && /[0-9]/.test(value), 'errors.passwordTooSimple'),
   preferredLanguage: localeSchema,
+  reason: z.string().trim().min(3, 'errors.reasonRequired').max(500),
 });
 
 export const changePasswordSchema = z
@@ -116,7 +158,9 @@ export type CreateSemesterRequest = z.infer<typeof createSemesterSchema>;
 export type CreateCourseRequest = z.infer<typeof createCourseSchema>;
 export type CreateClassRequest = z.infer<typeof createClassSchema>;
 export type JoinClassRequest = z.infer<typeof joinClassSchema>;
-export type CreateStaffAccountRequest = z.infer<typeof createStaffAccountSchema>;
+export type CreateAccountRequest = z.infer<typeof createAccountSchema>;
+export type ResetUserPasswordRequest = z.infer<typeof resetUserPasswordSchema>;
+export type UpdateUserProfileRequest = z.infer<typeof updateUserProfileSchema>;
 export type ChangePasswordRequest = z.infer<typeof changePasswordSchema>;
 
 /** Creating a case study in the library (SRS 5.2). */

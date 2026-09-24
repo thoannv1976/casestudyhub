@@ -284,7 +284,10 @@
     "policyInvalid": "A stored assessment framework does not satisfy its own rules and was refused rather than used to mark work.",
     "policyVersionExists": "That version number is already in use. A framework version is never edited: give the change a new version number.",
     "policyReasonTooShort": "Say in at least ten characters why the framework is changing. This outlives whoever made the change.",
-    "policyNotYoursToVersion": "Adding a version to a framework other classes already use is an administrator's decision. Clone it under a new name to change the rules for your own course."
+    "policyNotYoursToVersion": "Adding a version to a framework other classes already use is an administrator's decision. Clone it under a new name to change the rules for your own course.",
+    "useOwnPasswordPage": "Use your own change-password page to set your own password.",
+    "studentIdRequired": "A student account needs a student code: that code is what a class roster is matched against.",
+    "reasonTooShort": "Say in at least ten characters why. This is the note a later reader has to go on."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -411,7 +414,7 @@
   },
   "userAdmin": {
     "title": "Users",
-    "subtitle": "Create staff accounts, change roles and suspend accounts. Every change is recorded.",
+    "subtitle": "Create accounts, correct a name, set a password for somebody who has lost theirs, change roles and suspend accounts. Every change is recorded with who made it and why.",
     "createStaff": "Create account",
     "created": "Account created for {email}. Give them the temporary password directly; they must change it at first sign-in.",
     "role": "Role",
@@ -427,7 +430,23 @@
     "temporaryPasswordHint": "Hand it over directly. It stops working as soon as they choose their own.",
     "roleReasonPrompt": "Why is the role of {email} changing?",
     "statusReasonPrompt": "Why is the status of {email} changing?",
-    "selfNote": "You cannot change your own role or suspend your own account."
+    "selfNote": "You cannot change your own role, suspend your own account, or set your own password here — use your profile page for that.",
+    "studentId": "Student code",
+    "studentIdHint": "A class roster is matched against this code, so it must be the one the faculty uses.",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "reason": "Reason",
+    "suggest": "Suggest one",
+    "resetPassword": "Reset password",
+    "resetPasswordFor": "Set a new password for {name}",
+    "resetPasswordBody": "They will have to choose their own at the next sign-in, and every session they have open now will be signed out.",
+    "resetPasswordConfirm": "Set this password",
+    "resetReasonHint": "At least ten characters. This is the note a later reader has to go on.",
+    "handedOver": "The password for {email} is now {password}. Give it to them directly — this is the only time it is shown.",
+    "editProfileFor": "Correct the details of {name}",
+    "editProfileBody": "The sign-in address ({email}) and the student code are not changed here: changing either would lock somebody out of their own coursework.",
+    "owesPassword": "On a temporary password"
   },
   "academicAdmin": {
     "title": "Academic structure",
