@@ -85,9 +85,24 @@ if [[ "${SKIP_FIRESTORE:-}" == "1" ]]; then
   echo "  (bỏ qua theo yêu cầu SKIP_FIRESTORE=1)"
 elif npx --yes firebase-tools@latest projects:list >/dev/null 2>&1; then
   (cd firebase && npx --yes firebase-tools@latest deploy \
-    --only firestore:rules,firestore:indexes,storage \
+    --only firestore:rules,firestore:indexes \
     --project "$PROJECT_ID" --non-interactive)
-  echo "  đã đẩy rules và index"
+  echo "  đã đẩy Firestore rules và index"
+
+  # storage.rules chỉ có hiệu lực với bucket được gắn vào Firebase Storage.
+  # Project này dùng một bucket GCS thường, và mọi byte đều đi qua Admin SDK
+  # phía sau route handler — Admin SDK bỏ qua rules, nên file này không chi
+  # phối gì ở production. Deploy được thì tốt (phòng khi sau này bucket được
+  # gắn vào Firebase Storage); không được thì không phải lý do chặn bản phát
+  # hành, nên chỉ báo rồi đi tiếp.
+  if (cd firebase && npx --yes firebase-tools@latest deploy \
+        --only storage --project "$PROJECT_ID" --non-interactive) >/dev/null 2>&1; then
+    echo "  đã đẩy Storage rules"
+  else
+    echo "  (bỏ qua Storage rules: project chưa bật Firebase Storage."
+    echo "   Ứng dụng không cần — file nằm ở bucket ${BUCKET_NAME} và chỉ"
+    echo "   đọc được qua route handler đã kiểm tra quyền.)"
+  fi
 else
   echo
   echo "✗ firebase-tools chưa đăng nhập, nên không đẩy được rules và index." >&2
