@@ -49,12 +49,12 @@ Dự án GCP: `casestudy1-509414`. Vùng: `asia-southeast1`.
 
 Ba lỗi từng lọt tới production, nên mỗi thay đổi đi qua cả bốn lớp:
 
-| Lớp | Lệnh | Bắt được gì |
-|---|---|---|
-| Unit | `npm test` | Logic thuần, đối chiếu khoá song ngữ |
-| Emulator | `npm run test:rules` | Security Rules, đồng thời, Auth + Firestore cùng lúc |
-| Image | job CI `Container image` | Bản build standalone chạy được trong container |
-| E2E | `npm run test:e2e` | Luồng thật trên bản build production |
+| Lớp      | Lệnh                     | Bắt được gì                                          |
+| -------- | ------------------------ | ---------------------------------------------------- |
+| Unit     | `npm test`               | Logic thuần, đối chiếu khoá song ngữ                 |
+| Emulator | `npm run test:rules`     | Security Rules, đồng thời, Auth + Firestore cùng lúc |
+| Image    | job CI `Container image` | Bản build standalone chạy được trong container       |
+| E2E      | `npm run test:e2e`       | Luồng thật trên bản build production                 |
 
 **Emulator không kiểm tra composite index.** Thêm truy vấn nhiều điều kiện thì
 phải tự thêm vào `firebase/firestore.indexes.json` — đây là loại lỗi tới
