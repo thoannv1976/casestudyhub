@@ -120,7 +120,10 @@ export default async function ClassReportPage({
 
       <Card>
         <CardTitle>{t('cloTitle')}</CardTitle>
-        <Alert tone="error">{t('cloCaveat')}</Alert>
+        {/* The caveat goes only when a faculty has said the mapping matches
+            their syllabus. Until then every reader is told, on the report
+            itself, that these numbers rest on an illustrative table. */}
+        {report.cloMappingConfirmed ? null : <Alert tone="error">{t('cloCaveat')}</Alert>}
         <p className="text-muted mt-3 text-sm">
           {t('cloThreshold', { threshold: percent(report.cloThreshold) })}
         </p>
@@ -129,6 +132,9 @@ export default async function ClassReportPage({
             <li key={clo.cloId} className="flex flex-wrap items-center justify-between gap-2">
               <span>
                 <span className="font-medium">{clo.cloId}</span>
+                {report.cloNames[clo.cloId] ? (
+                  <span className="ml-2">{report.cloNames[clo.cloId]}</span>
+                ) : null}
                 <span className="text-muted ml-2 text-xs">
                   {clo.criterionIds
                     .map((criterionId) => tRubric(`criteria.${criterionId}`))

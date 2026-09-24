@@ -1477,6 +1477,40 @@ test('a lecturer publishes a new framework version without moving a published ma
   await expect(page.getByText('Framework version 2026.1')).toBeVisible();
 });
 
+/**
+ * Course outcomes (SRS Phần VI). The report carries a warning that its CLO
+ * mapping is illustrative; this is the path by which a faculty removes it,
+ * honestly - by checking the mapping and saying so.
+ */
+test('confirming the outcome mapping removes the caveat from the report', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  const reportClassId = page.url().split('/teaching/')[1]?.split(/[?#]/)[0] ?? '';
+
+  await page.goto(`/en/teaching/${reportClassId}/report`);
+
+  // As shipped, the report says the mapping has not been checked.
+  await expect(page.getByTestId('alert-error')).toContainText('illustrative');
+
+  await page.goto('/en/framework');
+  await page.getByLabel('Framework name').fill(`ftu-clo-${RUN}`);
+  await page.getByLabel('New version number').fill('2026.1');
+  await page.getByLabel('Checked against the syllabus').check();
+  await page.getByLabel('Counts as met at (%)').fill('60');
+  await page
+    .getByLabel('Reason (at least 10 characters)')
+    .fill('Checked the mapping against the 2026 syllabus.');
+  await page.getByRole('button', { name: 'Publish this version' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('published');
+
+  // The class already running keeps the framework it was created under, so its
+  // report is unchanged - which is the point of freezing a version.
+  await page.goto(`/en/teaching/${reportClassId}/report`);
+  await expect(page.getByTestId('alert-error')).toContainText('illustrative');
+});
+
 test('a student cannot reach the assessment framework, let alone change it', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

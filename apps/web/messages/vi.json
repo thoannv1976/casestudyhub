@@ -870,7 +870,14 @@
     "reasonBody": "Một thay đổi khung tồn tại lâu hơn người thực hiện. Lý do được ghi vào nhật ký kiểm toán cùng phiên bản mới.",
     "reason": "Lý do (ít nhất 10 ký tự)",
     "publish": "Công bố phiên bản này",
-    "published": "Phiên bản mới đã được công bố. Các lớp tạo từ giờ sẽ dùng nó; lớp đang có giữ nguyên phiên bản của mình."
+    "published": "Phiên bản mới đã được công bố. Các lớp tạo từ giờ sẽ dùng nó; lớp đang có giữ nguyên phiên bản của mình.",
+    "cloTitle": "Chuẩn đầu ra học phần",
+    "cloBody": "Tên khoa đặt cho từng chuẩn đầu ra, và tiêu chí nào đo nó. Bảng ánh xạ đi cùng khung đánh giá, nên một báo cáo giữ đúng bảng lúc nó được lập.",
+    "cloCriterion": "Tiêu chí",
+    "cloThreshold": "Tính là đạt từ (%)",
+    "cloThresholdHint": "Tỷ lệ điểm của chuẩn đầu ra mà bài làm phải đạt. Đây là quyết định của khoa, không phải giá trị mặc định.",
+    "cloConfirmed": "Đã đối chiếu với đề cương",
+    "cloConfirmedHint": "Chưa tích ô này thì mọi báo cáo đều ghi rõ bảng ánh xạ chỉ là minh hoạ."
   },
   "progress": {
     "filterLabel": "Hiện",

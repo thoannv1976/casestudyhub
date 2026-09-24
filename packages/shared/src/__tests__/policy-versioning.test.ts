@@ -109,3 +109,58 @@ describe('the next version number', () => {
     );
   });
 });
+
+describe('course learning outcomes', () => {
+  it('carries the faculty’s own wording, not a message key', () => {
+    const parsed = presentationPolicySchema.safeParse(
+      edited({
+        clos: [{ id: 'CLO9', name: 'Xây dựng khuyến nghị cho ban giám đốc' }],
+      }),
+    );
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.clos[0]?.name).toBe('Xây dựng khuyến nghị cho ban giám đốc');
+  });
+
+  it('starts unconfirmed, so a report says so until a faculty checks it', () => {
+    expect(DEFAULT_PRESENTATION_POLICY.cloMappingConfirmed).toBe(false);
+  });
+
+  it('refuses a threshold outside a share of the marks', () => {
+    expect(presentationPolicySchema.safeParse(edited({ cloThreshold: 1.5 })).success).toBe(false);
+    expect(presentationPolicySchema.safeParse(edited({ cloThreshold: -0.1 })).success).toBe(false);
+    expect(presentationPolicySchema.safeParse(edited({ cloThreshold: 0.6 })).success).toBe(true);
+  });
+
+  it('defaults the outcome fields, so a framework written before them still loads', () => {
+    const { clos, cloThreshold, cloMappingConfirmed, ...older } = DEFAULT_PRESENTATION_POLICY;
+    expect(clos.length).toBeGreaterThan(0);
+    expect(cloThreshold).toBe(0.5);
+    expect(cloMappingConfirmed).toBe(false);
+
+    // A stored framework from before this field existed must not stop a class
+    // being marked - the whole point of freezing a version is that it keeps
+    // working.
+    const parsed = presentationPolicySchema.safeParse({ ...older, version: '2025.1' });
+    expect(parsed.success).toBe(true);
+    expect(parsed.data?.cloThreshold).toBe(0.5);
+    expect(parsed.data?.clos).toEqual([]);
+  });
+
+  it('keeps the mapping on the criterion, which is what freezes it', () => {
+    const measured = DEFAULT_PRESENTATION_POLICY.rubric.criteria.filter(
+      (criterion) => criterion.cloIds.length > 0,
+    );
+    expect(measured.length).toBeGreaterThan(0);
+
+    // Every outcome a criterion claims to measure is one the framework names,
+    // or a report would print an id nobody can explain.
+    const named = new Set(DEFAULT_PRESENTATION_POLICY.clos.map((clo) => clo.id));
+    for (const criterion of measured) {
+      for (const cloId of criterion.cloIds) {
+        expect(named.has(cloId), `${criterion.id} measures ${cloId}, which is not named`).toBe(
+          true,
+        );
+      }
+    }
+  });
+});

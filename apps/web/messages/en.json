@@ -870,7 +870,14 @@
     "reasonBody": "A framework change outlives whoever made it. This is written to the audit log with the new version.",
     "reason": "Reason (at least 10 characters)",
     "publish": "Publish this version",
-    "published": "The new version is published. Classes created from now on will use it; existing classes keep theirs."
+    "published": "The new version is published. Classes created from now on will use it; existing classes keep theirs.",
+    "cloTitle": "Course learning outcomes",
+    "cloBody": "What the faculty calls each outcome, and which criteria measure it. The mapping is carried with the framework, so a report keeps the mapping it was produced under.",
+    "cloCriterion": "Criterion",
+    "cloThreshold": "Counts as met at (%)",
+    "cloThresholdHint": "The share of an outcome's points a piece of work must reach. This is a faculty decision, not a default.",
+    "cloConfirmed": "Checked against the syllabus",
+    "cloConfirmedHint": "Until this is ticked, every report says on its face that the mapping is illustrative."
   },
   "progress": {
     "filterLabel": "Show",

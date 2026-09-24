@@ -29,7 +29,13 @@ import { getCase } from '../cases/cases';
  * note, and a report built on drafts would move under the reader.
  */
 
-/** The share of a learning outcome a piece of work must reach to have met it. */
+/**
+ * The share of a learning outcome a piece of work must reach to have met it.
+ *
+ * Kept only as the answer for a class whose framework predates the field. The
+ * live figure comes from the framework the class was created under, so a
+ * faculty that changes it changes their reports and nobody else's.
+ */
 export const DEFAULT_CLO_THRESHOLD = 0.5;
 
 export interface ClassReport {
@@ -44,6 +50,10 @@ export interface ClassReport {
   criteria: CriterionAverage[];
   clos: CloAttainment[];
   cloThreshold: number;
+  /** What the faculty calls each outcome, from the framework. */
+  cloNames: Record<string, string>;
+  /** False until the faculty has checked the mapping against the syllabus. */
+  cloMappingConfirmed: boolean;
   participation: Participation;
   lateGroups: number;
   /**
@@ -58,7 +68,9 @@ export async function classReport(
   options: { cloThreshold?: number } = {},
 ): Promise<ClassReport> {
   const db = getDb();
-  const threshold = options.cloThreshold ?? DEFAULT_CLO_THRESHOLD;
+  // The caller may still override, which is what a "what if the threshold
+  // were 60%" question needs; otherwise it is the framework's, not a constant.
+  const thresholdOverride = options.cloThreshold;
 
   const [policy, details, roster, assignments, sessions] = await Promise.all([
     policyOfClass(classId),
@@ -67,6 +79,8 @@ export async function classReport(
     listAssignments(classId),
     listSessions(classId),
   ]);
+
+  const threshold = thresholdOverride ?? policy.cloThreshold ?? DEFAULT_CLO_THRESHOLD;
 
   const assignmentIds = assignments.map((assignment) => assignment.id);
 
@@ -112,6 +126,8 @@ export async function classReport(
     criteria: criterionAverages(marked, policy.rubric),
     clos: cloAttainment(marked, policy.rubric, threshold),
     cloThreshold: threshold,
+    cloNames: Object.fromEntries(policy.clos.map((clo) => [clo.id, clo.name])),
+    cloMappingConfirmed: policy.cloMappingConfirmed,
     participation: participationOf({
       enrolledUids: activeUids,
       askedUids: questionDocs.docs.map((doc) => doc.get('askedByUid') as string),
