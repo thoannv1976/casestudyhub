@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { getSystemSettings, platformMetrics } from '@casestudyhub/core';
+import { aiStatus, getSystemSettings, platformMetrics } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { AiProbePanel } from './ai-probe';
 import { SystemSettingsForm } from './system-settings-form';
 
 export const dynamic = 'force-dynamic';
@@ -108,6 +109,8 @@ export default async function SystemPage({ params }: { params: Promise<{ locale:
           </div>
         ) : null}
       </Card>
+
+      <AiProbePanel status={aiStatus()} />
 
       <SystemSettingsForm settings={settings} />
     </div>

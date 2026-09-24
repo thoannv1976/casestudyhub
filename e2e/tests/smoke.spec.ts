@@ -117,7 +117,14 @@ test.describe.configure({ mode: 'serial' });
 test('the service answers before anything else is attempted', async ({ request }) => {
   const response = await request.get('/api/health');
   expect(response.ok()).toBe(true);
-  expect((await response.json()).status).toBe('ok');
+
+  const body = await response.json();
+  expect(body.status).toBe('ok');
+  // It used to report `phase: 1`, written when there was one phase and still
+  // saying so through four. A liveness probe that lies about the build is
+  // worse than one that says less.
+  expect(body).not.toHaveProperty('phase');
+  expect(body.revision).toBeTruthy();
 });
 
 test('a student registers and reaches their dashboard', async ({ page }) => {
@@ -1792,6 +1799,34 @@ test('a student cannot revise a case, however they ask', async ({ page }) => {
     failOnStatusCode: false,
   });
   expect(response.status()).toBe(403);
+});
+
+/**
+ * Telling "no model configured" apart from "the model is broken" (SRS Module
+ * 03). Without this screen both look identical to whoever is standing in
+ * front of it, because every AI feature here is advisory by design.
+ */
+test('the system page says the model is not configured, and why that is not an error', async ({
+  page,
+}) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  await expect(page.getByText('Not configured', { exact: true })).toBeVisible();
+  await expect(page.getByText('enable-ai.sh')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Test the model' }).click();
+  await expect(page.getByTestId('ai-probe-result')).toContainText('nothing was called');
+});
+
+test('a lecturer cannot test the model or read how it is configured', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+
+  const status = await page.request.get('/api/admin/ai', { failOnStatusCode: false });
+  expect(status.status()).toBe(403);
+
+  const probe = await page.request.post('/api/admin/ai', { failOnStatusCode: false });
+  expect(probe.status()).toBe(403);
 });
 
 test('a student is refused the administration pages', async ({ page }) => {

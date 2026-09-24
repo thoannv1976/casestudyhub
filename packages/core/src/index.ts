@@ -26,6 +26,7 @@ export * from './ai/evaluation';
 export * from './ai/answers';
 export * from './ai/tutor';
 export * from './dashboard/dashboard';
+export * from './ai/diagnostics';
 export * from './settings/settings';
 export * from './notifications/notifications';
 export * from './policy/policy-store';

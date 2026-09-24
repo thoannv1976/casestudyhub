@@ -21,6 +21,7 @@ const {
   platformMetrics,
   setAiProvider,
   getAiProvider,
+  probeAi,
   AiBudgetSpentError,
 } = await import('@casestudyhub/core');
 const { COLLECTIONS, DEFAULT_SYSTEM_SETTINGS, SYSTEM_SETTINGS_ID, usagePeriodOf } =
@@ -30,7 +31,7 @@ const admin = { uid: 'sys_admin', email: 'admin@x.edu.vn', role: 'admin' as cons
 const REASON = 'Closing registration now that the term has started.';
 
 /** A provider that never reaches a network and always answers. */
-function fakeProvider(calls: { count: number }) {
+function fakeProvider(calls: { count: number }, value: Record<string, unknown> = { ok: true }) {
   return {
     name: 'fake',
     model: 'fake-1',
@@ -43,7 +44,7 @@ function fakeProvider(calls: { count: number }) {
     }> {
       calls.count += 1;
       return {
-        value: request.schema.parse({ ok: true }),
+        value: request.schema.parse(value),
         model: 'fake-1',
         promptTokens: 100,
         outputTokens: 20,
@@ -184,6 +185,64 @@ describe('the model budget', () => {
     await expect(
       getAiProvider().generate({ schema, system: '', prompt: '', responseSchema: {} }),
     ).rejects.toBeInstanceOf(AiBudgetSpentError);
+    expect(calls.count).toBe(0);
+  });
+});
+
+describe('the model check on the administration page', () => {
+  it('says nothing was called when no model is configured', async () => {
+    setAiProvider(null);
+    const probe = await probeAi();
+
+    expect(probe.ok).toBe(false);
+    if (!probe.ok) expect(probe.reason).toBe('notConfigured');
+  });
+
+  it('reports what actually answered, and counts the call like any other', async () => {
+    const calls = { count: 0 };
+    setAiProvider(fakeProvider(calls, { answer: 'ready' }));
+
+    const probe = await probeAi();
+    expect(probe.ok).toBe(true);
+    if (probe.ok) {
+      expect(probe.answer).toBe('ready');
+      expect(probe.model).toBe('fake-1');
+    }
+
+    // Through the ordinary gateway, not around it: a check that behaved
+    // differently from a real call would prove nothing about real calls.
+    expect((await currentAiUsage()).calls).toBe(1);
+  });
+
+  it('hands back the real failure verbatim, which is the whole point', async () => {
+    setAiProvider({
+      name: 'broken',
+      model: 'fake-1',
+      generate() {
+        return Promise.reject(
+          new Error('404 Publisher Model `projects/p/models/gemini-9` was not found'),
+        );
+      },
+    });
+
+    const probe = await probeAi();
+    expect(probe.ok).toBe(false);
+    if (!probe.ok) {
+      expect(probe.reason).toBe('failed');
+      // Not tidied into "something went wrong": this is the sentence that
+      // tells an administrator the model name is wrong.
+      expect(probe.detail).toContain('gemini-9');
+    }
+  });
+
+  it('says the budget is spent rather than blaming the model', async () => {
+    await saveSystemSettings(admin, { ...DEFAULT_SYSTEM_SETTINGS, aiMonthlyCallBudget: 0 }, REASON);
+    const calls = { count: 0 };
+    setAiProvider(fakeProvider(calls));
+
+    const probe = await probeAi();
+    expect(probe.ok).toBe(false);
+    if (!probe.ok) expect(probe.reason).toBe('budgetSpent');
     expect(calls.count).toBe(0);
   });
 });

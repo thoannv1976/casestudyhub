@@ -948,6 +948,23 @@
     "reason": "Reason",
     "reasonHint": "Recorded with the change, for whoever reads the log later.",
     "save": "Save settings",
-    "saved": "Saved. These apply from now, to everybody."
+    "saved": "Saved. These apply from now, to everybody.",
+    "aiStatusTitle": "The model",
+    "aiStatusBody": "Every AI feature here is advisory, so \"not configured\" is something the interface reports rather than an error. That makes a genuine failure — a wrong model name, a service account without the role — look exactly the same from the outside. This is where the two are told apart.",
+    "aiOn": "Configured",
+    "aiOff": "Not configured",
+    "aiOffHint": "Run scripts/enable-ai.sh on the deployment to turn the model on. The platform works without it.",
+    "aiTransport": "Reached by",
+    "aiVertex": "Vertex AI, runtime service account",
+    "aiApiKey": "API key",
+    "aiModel": "Model",
+    "aiLocation": "Region",
+    "aiProbe": "Test the model",
+    "aiProbing": "Asking…",
+    "aiProbeCost": "Asks the model one trivial question, through the same gateway every other call uses. It counts as one call against the month's budget.",
+    "aiProbeOk": "{model} answered \"{answer}\" in {ms}ms, using {tokens} tokens.",
+    "aiProbeNotConfigured": "No model is configured for this deployment, so nothing was called.",
+    "aiProbeBudget": "The month's budget of {budget} calls is spent, so nothing was called.",
+    "aiProbeFailed": "The model was called and the call failed. The reply is below, exactly as it came back."
   }
 }
