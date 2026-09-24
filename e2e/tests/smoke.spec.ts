@@ -1817,6 +1817,40 @@ test('the system page says the model is not configured, and why that is not an e
 
   await page.getByRole('button', { name: 'Test the model' }).click();
   await expect(page.getByTestId('ai-probe-result')).toContainText('nothing was called');
+
+  // The switch is a setting, not an environment variable, so it is here and
+  // one request turns it on. It used to be a variable that every deploy wiped.
+  await page.getByRole('button', { name: 'Turn the model on' }).click();
+  await expect(page.getByText('Configured', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('ai-status')).toContainText('gemini');
+
+  // Turning it off again needs nothing but the same switch.
+  await page.getByRole('button', { name: 'Turn the model off' }).click();
+  await expect(page.getByText('Not configured', { exact: true })).toBeVisible();
+});
+
+test('saving the other settings does not turn the model off', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  await page.getByRole('button', { name: 'Turn the model on' }).click();
+  await expect(page.getByText('Configured', { exact: true })).toBeVisible();
+
+  // The settings form does not offer every setting. Sending only the ones it
+  // shows would turn off whatever it leaves out - which is precisely how the
+  // deploy script used to turn off the model.
+  await page.getByLabel('Model calls per month').fill('250');
+  await page.getByLabel('Reason').fill('Lowering the budget for the term.');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+
+  await page.reload();
+  await expect(page.getByText('Configured', { exact: true })).toBeVisible();
+  await expect(page.getByTestId('ai-usage')).toContainText('/ 250');
+
+  // Leave the deployment as the rest of the run expects it.
+  await page.getByRole('button', { name: 'Turn the model off' }).click();
+  await expect(page.getByText('Not configured', { exact: true })).toBeVisible();
 });
 
 test('a lecturer cannot test the model or read how it is configured', async ({ page }) => {

@@ -68,7 +68,7 @@ export default async function CaseKnowledgePage({
   const questions = await listCaseQuestions(caseId, { forOtherCohort: !isStaff });
   const versions = isStaff ? await listCaseVersions(caseId) : [];
 
-  const aiAvailable = aiIsAvailable();
+  const aiAvailable = await aiIsAvailable();
   // A tutor conversation belongs to one student, and is loaded for them only.
   const tutorSession = isStaff ? null : await getTutorSession(caseId, user.uid);
 

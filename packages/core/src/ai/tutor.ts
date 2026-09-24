@@ -85,7 +85,7 @@ export async function askTutor(
   const existing = await getTutorSession(caseStudyId, student.uid);
   const history = trimTranscript(existing?.turns ?? []);
 
-  const provider = getAiProvider();
+  const provider = await getAiProvider();
   const result = await provider.generate({
     system: `${TUTOR_GUARDRAILS}\n\n${TUTOR_MODE_INSTRUCTIONS[mode]}`,
     prompt: [
@@ -163,7 +163,7 @@ export async function suggestQuestions(
   caseStudyId: string,
   count = 6,
 ): Promise<SuggestedQuestion[]> {
-  const provider = getAiProvider();
+  const provider = await getAiProvider();
   const result = await provider.generate({
     system:
       'You help a university lecturer prepare the Q&A after a student case study presentation. Propose questions that test understanding rather than recall, and that the attached case material can settle.',

@@ -67,6 +67,7 @@ export default async function GradePage({
   // The version frozen when the case was set, so a framework published
   // since cannot change what this group is marked against.
   const policy = await policyOfAssignment(assignment);
+  const aiAvailable = await aiIsAvailable();
 
   const [caseStudy, groups, members, assessment, isLate, session] = await Promise.all([
     getCase(assignment.caseStudyId),
@@ -186,7 +187,7 @@ export default async function GradePage({
       <Card>
         <CardTitle>{tAi('title')}</CardTitle>
         <div className="mt-4">
-          <AiPanel assignmentId={assignmentId} available={aiIsAvailable()} initial={aiAssessment} />
+          <AiPanel assignmentId={assignmentId} available={aiAvailable} initial={aiAssessment} />
         </div>
       </Card>
 

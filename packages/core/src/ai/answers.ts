@@ -123,7 +123,7 @@ export async function answerQuestionBank(
   const files = await caseMaterial(caseStudyId);
   if (files.length === 0) throw new AppError('POLICY_VIOLATION', 'errors.nothingToEvaluate');
 
-  const provider = getAiProvider();
+  const provider = await getAiProvider();
   const db = getDb();
 
   let answered = 0;

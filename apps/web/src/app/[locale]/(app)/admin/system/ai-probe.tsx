@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { AiProbe, AiStatus } from '@casestudyhub/core';
+import type { SystemSettings } from '@casestudyhub/shared';
+import { useRouter } from '@/i18n/navigation';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert, Button } from '@/components/ui/form';
 
@@ -14,10 +16,38 @@ import { Alert, Button } from '@/components/ui/form';
  * wrong model name, a service account missing the role - looks identical from
  * the outside. This is the one screen that tells them apart.
  */
-export function AiProbePanel({ status }: { status: AiStatus }) {
+export function AiProbePanel({ status, settings }: { status: AiStatus; settings: SystemSettings }) {
   const t = useTranslations('systemAdmin');
+  const router = useRouter();
   const [probe, setProbe] = useState<AiProbe | null>(null);
   const [busy, setBusy] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  /**
+   * Turning the model on and off is one request, not a deploy.
+   *
+   * It used to be an environment variable, and the deploy script replaced the
+   * whole variable set rather than merging into it - so every release turned
+   * the model off, silently, because "no model configured" is a normal state
+   * here rather than an error.
+   */
+  async function setEnabled(aiEnabled: boolean) {
+    setSaving(true);
+    setProbe(null);
+    try {
+      await fetch('/api/admin/system', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          settings: { ...settings, aiEnabled },
+          reason: aiEnabled ? 'Turned the model on.' : 'Turned the model off.',
+        }),
+      });
+      router.refresh();
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function run() {
     setBusy(true);
@@ -66,6 +96,21 @@ export function AiProbePanel({ status }: { status: AiStatus }) {
         </dl>
       ) : (
         <p className="mt-4 text-sm">{t('aiOffHint')}</p>
+      )}
+
+      {/* An API key is a credential and lives in the environment, so this
+          switch has nothing to offer when one is set. */}
+      {status.transport === 'apiKey' ? null : (
+        <div className="mt-4">
+          <Button
+            variant="ghost"
+            disabled={saving}
+            onClick={() => void setEnabled(!settings.aiEnabled)}
+          >
+            {settings.aiEnabled ? t('aiTurnOff') : t('aiTurnOn')}
+          </Button>
+          <p className="text-muted mt-2 text-xs">{t('aiToggleHint')}</p>
+        </div>
       )}
 
       <div className="mt-4">

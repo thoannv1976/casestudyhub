@@ -8,6 +8,7 @@ import {
   type AiResult,
 } from './provider';
 import { currentAiUsage, getSystemSettings, recordAiCall } from '../settings/settings';
+import type { SystemSettings } from '@casestudyhub/shared';
 
 /**
  * Google's Gemini models, reached two ways.
@@ -33,32 +34,44 @@ export interface GeminiConfig {
   apiKey?: string;
 }
 
-/** What this deployment is configured to use, if anything. */
-export function readGeminiConfig(env: NodeJS.ProcessEnv = process.env): GeminiConfig | null {
-  const model = env.AI_MODEL?.trim() || DEFAULT_MODEL;
-
+/**
+ * What this deployment is configured to use, if anything.
+ *
+ * Two routes, and they are not the same kind of thing. An API key is a
+ * credential, so it comes from the environment and takes precedence. Vertex
+ * needs no secret - a switch, a model name and a region - so it comes from the
+ * platform settings, where an administrator can turn it off without a deploy
+ * and no deploy can turn it off without an administrator.
+ */
+export function readGeminiConfig(
+  settings: Pick<SystemSettings, 'aiEnabled' | 'aiModel' | 'aiLocation'>,
+  env: NodeJS.ProcessEnv = process.env,
+): GeminiConfig | null {
   if (env.GEMINI_API_KEY?.trim()) {
-    return { model, transport: 'apiKey', apiKey: env.GEMINI_API_KEY.trim() };
-  }
-
-  // Opting in explicitly: a project id is always present on Cloud Run, so
-  // using it alone as the signal would turn AI on for every deployment.
-  if (env.VERTEX_AI_ENABLED === 'true') {
-    const projectId = env.GOOGLE_CLOUD_PROJECT?.trim();
-    if (!projectId) return null;
     return {
-      model,
-      transport: 'vertex',
-      projectId,
-      location: env.VERTEX_AI_LOCATION?.trim() || DEFAULT_LOCATION,
+      model: env.AI_MODEL?.trim() || settings.aiModel || DEFAULT_MODEL,
+      transport: 'apiKey',
+      apiKey: env.GEMINI_API_KEY.trim(),
     };
   }
 
-  return null;
+  if (!settings.aiEnabled) return null;
+
+  // The project id is always present on Cloud Run, so it can never be the
+  // signal on its own - the switch above is.
+  const projectId = env.GOOGLE_CLOUD_PROJECT?.trim();
+  if (!projectId) return null;
+
+  return {
+    model: settings.aiModel || DEFAULT_MODEL,
+    transport: 'vertex',
+    projectId,
+    location: settings.aiLocation || DEFAULT_LOCATION,
+  };
 }
 
-export function isAiConfigured(env: NodeJS.ProcessEnv = process.env): boolean {
-  return readGeminiConfig(env) !== null;
+export async function isAiConfigured(): Promise<boolean> {
+  return readGeminiConfig(await getSystemSettings()) !== null;
 }
 
 function endpointFor(config: GeminiConfig): string {
@@ -193,13 +206,13 @@ export function setAiProvider(provider: AiProvider | null): void {
   override = provider;
 }
 
-export function getAiProvider(): AiProvider {
+export async function getAiProvider(): Promise<AiProvider> {
   if (override) return metered(override);
-  const config = readGeminiConfig();
+  const config = readGeminiConfig(await getSystemSettings());
   if (!config) throw new AiNotConfiguredError();
   return metered(createGeminiProvider(config));
 }
 
-export function aiIsAvailable(): boolean {
-  return override !== null || isAiConfigured();
+export async function aiIsAvailable(): Promise<boolean> {
+  return override !== null || (await isAiConfigured());
 }

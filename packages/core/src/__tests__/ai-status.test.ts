@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { DEFAULT_SYSTEM_SETTINGS } from '@casestudyhub/shared';
 import { readGeminiConfig } from '../ai/vertex';
 
 /**
@@ -9,8 +10,8 @@ import { readGeminiConfig } from '../ai/vertex';
  * worth proving is that it drops the secret on the way out.
  */
 
-function statusOf(env: NodeJS.ProcessEnv) {
-  const config = readGeminiConfig(env);
+function statusOf(env: NodeJS.ProcessEnv, settings: Partial<typeof DEFAULT_SYSTEM_SETTINGS> = {}) {
+  const config = readGeminiConfig({ ...DEFAULT_SYSTEM_SETTINGS, ...settings }, env);
   if (!config) return { configured: false, transport: null, model: null, location: null };
   return {
     configured: true,
@@ -31,12 +32,10 @@ describe('how the model is configured', () => {
   });
 
   it('reports the Vertex route, with the region that decides the endpoint', () => {
-    const status = statusOf({
-      VERTEX_AI_ENABLED: 'true',
-      GOOGLE_CLOUD_PROJECT: 'casestudy1-509414',
-      VERTEX_AI_LOCATION: 'asia-southeast1',
-      AI_MODEL: 'gemini-2.5-flash',
-    });
+    const status = statusOf(
+      { GOOGLE_CLOUD_PROJECT: 'casestudy1-509414' },
+      { aiEnabled: true, aiModel: 'gemini-2.5-flash', aiLocation: 'asia-southeast1' },
+    );
 
     expect(status).toMatchObject({
       configured: true,
@@ -47,13 +46,29 @@ describe('how the model is configured', () => {
   });
 
   it('needs the project id as well as the switch, or Vertex has no endpoint', () => {
-    expect(statusOf({ VERTEX_AI_ENABLED: 'true' }).configured).toBe(false);
+    expect(statusOf({}, { aiEnabled: true }).configured).toBe(false);
   });
 
   it('does not turn itself on just because a project id exists', () => {
     // Every Cloud Run deployment has one, so using it as the signal would
     // enable the model everywhere.
     expect(statusOf({ GOOGLE_CLOUD_PROJECT: 'casestudy1-509414' }).configured).toBe(false);
+  });
+
+  it('ignores the environment variable that a deploy used to wipe', () => {
+    // VERTEX_AI_ENABLED was the switch until a deploy replaced the whole
+    // variable set and turned the model off with nobody noticing. It is not
+    // read any more; the setting is the only switch.
+    expect(statusOf({ VERTEX_AI_ENABLED: 'true', GOOGLE_CLOUD_PROJECT: 'p' }).configured).toBe(
+      false,
+    );
+  });
+
+  it('is turned off by the setting alone, with no deploy involved', () => {
+    const on = statusOf({ GOOGLE_CLOUD_PROJECT: 'p' }, { aiEnabled: true });
+    const off = statusOf({ GOOGLE_CLOUD_PROJECT: 'p' }, { aiEnabled: false });
+    expect(on.configured).toBe(true);
+    expect(off.configured).toBe(false);
   });
 
   it('never carries any part of an API key out with it', () => {
@@ -65,11 +80,10 @@ describe('how the model is configured', () => {
   });
 
   it('prefers the API key when both are set, as the provider does', () => {
-    const status = statusOf({
-      GEMINI_API_KEY: 'AIzaSy-key',
-      VERTEX_AI_ENABLED: 'true',
-      GOOGLE_CLOUD_PROJECT: 'p',
-    });
+    const status = statusOf(
+      { GEMINI_API_KEY: 'AIzaSy-key', GOOGLE_CLOUD_PROJECT: 'p' },
+      { aiEnabled: true },
+    );
     // Status that disagreed with the provider would send somebody looking in
     // the wrong place.
     expect(status.transport).toBe('apiKey');

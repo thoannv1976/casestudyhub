@@ -37,6 +37,10 @@ export function SystemSettingsForm({ settings }: { settings: SystemSettings }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           settings: {
+            // Spread first: this form does not offer every setting, and a
+            // partial object would turn off whatever it leaves out - which is
+            // exactly how the deploy script used to turn off the model.
+            ...settings,
             registrationOpen: form.get('registrationOpen') === 'on',
             maxImportKb: Number(form.get('maxImportKb')),
             aiMonthlyCallBudget: Number(form.get('aiMonthlyCallBudget')),

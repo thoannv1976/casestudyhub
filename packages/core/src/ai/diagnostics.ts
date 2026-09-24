@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AiBudgetSpentError, AiNotConfiguredError } from './provider';
 import { getAiProvider, readGeminiConfig } from './vertex';
+import { getSystemSettings } from '../settings/settings';
 
 /**
  * Is the model reachable, and if not, why (SRS Module 03).
@@ -23,8 +24,8 @@ export interface AiStatus {
   location: string | null;
 }
 
-export function aiStatus(): AiStatus {
-  const config = readGeminiConfig();
+export async function aiStatus(): Promise<AiStatus> {
+  const config = readGeminiConfig(await getSystemSettings());
   if (!config) {
     return { configured: false, transport: null, model: null, location: null };
   }
@@ -62,7 +63,8 @@ const probeSchema = z.object({ answer: z.string().min(1).max(200) });
  */
 export async function probeAi(): Promise<AiProbe> {
   try {
-    const result = await getAiProvider().generate({
+    const provider = await getAiProvider();
+    const result = await provider.generate({
       system: 'You are a connectivity check. Answer in at most five words.',
       prompt: 'Reply with the single word: ready.',
       schema: probeSchema,

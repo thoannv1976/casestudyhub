@@ -22,6 +22,8 @@ const {
   setAiProvider,
   getAiProvider,
   probeAi,
+  aiStatus,
+  aiIsAvailable,
   AiBudgetSpentError,
 } = await import('@casestudyhub/core');
 const { COLLECTIONS, DEFAULT_SYSTEM_SETTINGS, SYSTEM_SETTINGS_ID, usagePeriodOf } =
@@ -151,8 +153,8 @@ describe('the model budget', () => {
     setAiProvider(fakeProvider(calls));
 
     const schema = { parse: (value: unknown) => value } as never;
-    await getAiProvider().generate({ schema, system: '', prompt: '', responseSchema: {} });
-    await getAiProvider().generate({ schema, system: '', prompt: '', responseSchema: {} });
+    await (await getAiProvider()).generate({ schema, system: '', prompt: '', responseSchema: {} });
+    await (await getAiProvider()).generate({ schema, system: '', prompt: '', responseSchema: {} });
 
     expect(calls.count).toBe(2);
     expect((await currentAiUsage()).calls).toBe(2);
@@ -166,9 +168,9 @@ describe('the model budget', () => {
     setAiProvider(fakeProvider(calls));
     const schema = { parse: (value: unknown) => value } as never;
 
-    await getAiProvider().generate({ schema, system: '', prompt: '', responseSchema: {} });
+    await (await getAiProvider()).generate({ schema, system: '', prompt: '', responseSchema: {} });
     await expect(
-      getAiProvider().generate({ schema, system: '', prompt: '', responseSchema: {} }),
+      (await getAiProvider()).generate({ schema, system: '', prompt: '', responseSchema: {} }),
     ).rejects.toBeInstanceOf(AiBudgetSpentError);
 
     // The refused call never reached the model, so it cost nothing.
@@ -183,9 +185,79 @@ describe('the model budget', () => {
     const schema = { parse: (value: unknown) => value } as never;
 
     await expect(
-      getAiProvider().generate({ schema, system: '', prompt: '', responseSchema: {} }),
+      (await getAiProvider()).generate({ schema, system: '', prompt: '', responseSchema: {} }),
     ).rejects.toBeInstanceOf(AiBudgetSpentError);
     expect(calls.count).toBe(0);
+  });
+});
+
+describe('the switch that turns the model on', () => {
+  it('is off on a deployment nobody has configured', async () => {
+    setAiProvider(null);
+    expect((await aiStatus()).configured).toBe(false);
+    expect(await aiIsAvailable()).toBe(false);
+  });
+
+  it('turns the model on from the settings alone, with no deploy involved', async () => {
+    setAiProvider(null);
+    process.env.GOOGLE_CLOUD_PROJECT = 'demo-casestudyhub';
+
+    await saveSystemSettings(
+      admin,
+      {
+        ...DEFAULT_SYSTEM_SETTINGS,
+        aiEnabled: true,
+        aiModel: 'gemini-2.5-flash',
+        aiLocation: 'global',
+      },
+      'Turned the model on.',
+    );
+
+    const status = await aiStatus();
+    expect(status).toMatchObject({
+      configured: true,
+      transport: 'vertex',
+      model: 'gemini-2.5-flash',
+      location: 'global',
+    });
+  });
+
+  it('is not turned off by anything a deploy writes', async () => {
+    process.env.GOOGLE_CLOUD_PROJECT = 'demo-casestudyhub';
+    await saveSystemSettings(
+      admin,
+      { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: true },
+      'Turned the model on.',
+    );
+    setAiProvider(null);
+
+    // This is the bug: the deploy script replaced the whole environment
+    // variable set, so the release after somebody enabled the model turned it
+    // straight back off - silently, because "not configured" is a normal
+    // state here rather than an error. The switch is not an environment
+    // variable any more, so wiping them changes nothing.
+    delete process.env.VERTEX_AI_ENABLED;
+    delete process.env.VERTEX_AI_LOCATION;
+    delete process.env.AI_MODEL;
+
+    expect((await aiStatus()).configured).toBe(true);
+  });
+
+  it('is turned off again by the switch, and nothing else is needed', async () => {
+    process.env.GOOGLE_CLOUD_PROJECT = 'demo-casestudyhub';
+    await saveSystemSettings(
+      admin,
+      { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: true },
+      'Turned the model on.',
+    );
+    await saveSystemSettings(
+      admin,
+      { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: false },
+      'Turned the model off.',
+    );
+    setAiProvider(null);
+
+    expect((await aiStatus()).configured).toBe(false);
   });
 });
 

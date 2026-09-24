@@ -131,6 +131,11 @@ if gcloud iam service-accounts describe "$RUNTIME_SA" >/dev/null 2>&1; then
   echo "  chạy bằng $RUNTIME_SA"
 fi
 
+# --update-env-vars, never --set-env-vars. `--set-env-vars` REPLACES the whole
+# variable set instead of merging into it, so every release wiped any variable
+# this script does not name. That is how a deploy used to turn the model off
+# with nobody noticing: "no model configured" is a normal state here, not an
+# error, so nothing complained.
 gcloud run deploy "$SERVICE" \
   --image "${IMAGE}:latest" \
   --region "$REGION" \
@@ -141,8 +146,16 @@ gcloud run deploy "$SERVICE" \
   --max-instances 4 \
   --memory 1Gi \
   --cpu 1 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${BUCKET_NAME},NODE_ENV=production" \
+  --update-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},FIREBASE_STORAGE_BUCKET=${BUCKET_NAME},NODE_ENV=production" \
   --quiet
+
+# Printed after every deploy: anything this script did not set is a variable
+# somebody added by hand, and seeing the list is how a wipe would be noticed
+# on the day rather than three weeks later.
+echo
+echo "▶ Biến môi trường của bản vừa deploy:"
+gcloud run services describe "$SERVICE" --region "$REGION" \
+  --format 'value(spec.template.spec.containers[0].env)' | tr ';' '\n' | sed 's/^/    /'
 
 URL="$(gcloud run services describe "$SERVICE" --region "$REGION" --format 'value(status.url)')"
 

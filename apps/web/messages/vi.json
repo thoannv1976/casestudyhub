@@ -978,6 +978,9 @@
     "aiProbeOk": "{model} trả lời \"{answer}\" trong {ms}ms, dùng {tokens} token.",
     "aiProbeNotConfigured": "Bản deploy này chưa cấu hình mô hình nào, nên không gọi gì cả.",
     "aiProbeBudget": "Đã hết hạn mức {budget} lượt của tháng, nên không gọi gì cả.",
-    "aiProbeFailed": "Đã gọi mô hình và lượt gọi thất bại. Phản hồi nguyên văn ở dưới."
+    "aiProbeFailed": "Đã gọi mô hình và lượt gọi thất bại. Phản hồi nguyên văn ở dưới.",
+    "aiTurnOn": "Bật mô hình",
+    "aiTurnOff": "Tắt mô hình",
+    "aiToggleHint": "Có hiệu lực ngay, với mọi người. Vertex AI không cần bí mật nào — chỉ cần công tắc này — nên không lần deploy nào đổi được, và cũng không lần deploy nào xoá được."
   }
 }

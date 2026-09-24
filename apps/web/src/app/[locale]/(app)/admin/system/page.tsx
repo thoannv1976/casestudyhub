@@ -43,7 +43,11 @@ export default async function SystemPage({ params }: { params: Promise<{ locale:
     );
   }
 
-  const [metrics, settings] = await Promise.all([platformMetrics(), getSystemSettings()]);
+  const [metrics, settings, ai] = await Promise.all([
+    platformMetrics(),
+    getSystemSettings(),
+    aiStatus(),
+  ]);
 
   const counts = [
     { key: 'students', value: metrics.users.student },
@@ -110,7 +114,7 @@ export default async function SystemPage({ params }: { params: Promise<{ locale:
         ) : null}
       </Card>
 
-      <AiProbePanel status={aiStatus()} />
+      <AiProbePanel status={ai} settings={settings} />
 
       <SystemSettingsForm settings={settings} />
     </div>

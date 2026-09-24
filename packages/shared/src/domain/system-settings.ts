@@ -35,6 +35,25 @@ export const systemSettingsSchema = z.object({
    * them.
    */
   aiMonthlyCallBudget: z.number().int().min(0).max(100_000).default(500),
+
+  /**
+   * Whether the platform calls Gemini through Vertex AI, using the Cloud Run
+   * service account.
+   *
+   * This lived in an environment variable until a deploy wiped it: the deploy
+   * script replaced the whole variable set rather than merging into it, so the
+   * next release silently turned the model off - and because "no model
+   * configured" is a normal state here rather than an error, nobody would have
+   * noticed until a lecturer asked where the buttons went.
+   *
+   * Turning Vertex on needs no secret at all, only a switch, a model name and
+   * a region, which is exactly what this document is for. An API key is
+   * different and stays in the environment, because it is a credential.
+   */
+  aiEnabled: z.boolean().default(false),
+  aiModel: z.string().trim().min(1).max(80).default('gemini-2.5-flash'),
+  /** `global` serves Gemini everywhere and is the least region-restricted. */
+  aiLocation: z.string().trim().min(1).max(40).default('global'),
 });
 export type SystemSettings = z.infer<typeof systemSettingsSchema>;
 
