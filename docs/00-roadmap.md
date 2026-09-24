@@ -70,7 +70,12 @@ lên trình bày đến lúc sinh viên nhìn thấy điểm đã công bố.
 | --- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------- |
 | 16  | Báo cáo lớp và chuẩn đầu ra | Phân phối điểm (chỉ tính điểm đã công bố), lớp mạnh/yếu ở tiêu chí nào theo tỷ lệ, mức đạt chuẩn đầu ra có ngưỡng do khoa đặt, ai đã tham gia và **ai chưa tham gia gì**; tải về CSV mở được bằng Excel tiếng Việt | ✅         |
 | 17  | Hồ sơ học tập sinh viên     | Một trang cho sinh viên xem toàn bộ quá trình: vai trò đã đảm nhận, câu hỏi đã đặt, câu đã trả lời trực tiếp, nhóm đã chấm, và điểm — chỉ hiện khi đã công bố                                                      | ✅         |
-| 18  | Tích hợp Moodle/LTI         | Cần thông tin kết nối LTI của trường (client id, khóa, endpoint). Chưa làm — xuất CSV ở PR 16 đã phục vụ được việc nộp điểm lên hệ thống của trường trong lúc chờ                                                  | ⏸️         |
+| 18  | Phòng học tự cập nhật       | Một lần hỏi cho cả phòng mỗi 10 giây, mang theo trạng thái phiên; giảng viên mở chấm điểm là cả lớp thấy mà không phải tải lại. Chạy được trên điện thoại 390px                                                    | ✅         |
+| 19  | Thông báo                   | Bốn sự kiện được ghi ngay lúc xảy ra; nhắc hạn nộp suy ra lúc đọc nên tự biến mất khi nộp đủ. Lưu khoá i18n + tham số, không bao giờ lưu câu đã dịch                                                               | ✅         |
+| 20  | Khung đánh giá sửa được     | Mọi quy tắc học thuật thành dữ liệu có phiên bản trong `policies/{id}__{version}`; ghi bằng `create`, không bao giờ ghi đè. Lớp và bài giao đóng băng phiên bản, nên điểm đã công bố không thể đổi                 | ✅         |
+| 21  | Quản lý người dùng          | Quản trị viên đặt lại mật khẩu cho người đã mất (mật khẩu tạm, ép đổi, cắt mọi phiên, ghi nhật ký người thực hiện khác người bị tác động), sửa hồ sơ, tạo tài khoản sinh viên                                      | ✅         |
+| 22  | Dashboard và tiến độ        | Dashboard hiện việc thật theo vai trò thay cho dòng "Phase 1 đang được xây dựng"; trang lớp lọc nhóm theo chưa nộp / quá hạn / sẵn sàng chấm / đã công bố                                                          | ✅         |
+| —   | Tích hợp Moodle/LTI         | Cần thông tin kết nối LTI của trường (client id, khóa, endpoint). Chưa làm — xuất CSV ở PR 16 đã phục vụ được việc nộp điểm lên hệ thống của trường trong lúc chờ                                                  | ⏸️         |
 
 **Ghi chú thiết kế Phase 4**
 

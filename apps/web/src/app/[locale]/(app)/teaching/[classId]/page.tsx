@@ -12,6 +12,7 @@ import {
   listRoster,
   listSessions,
   listSubmissions,
+  progressOfAssignments,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -83,6 +84,10 @@ export default async function ClassDetailPage({
       ),
     ),
   );
+  // Worked out on the server: it needs the policy each assignment froze, the
+  // draft marks and the published grades, none of which the browser may read.
+  const progressByAssignment = await progressOfAssignments(assignments);
+
   const joined = roster.filter((row) => row.studentUid && row.status === 'active').length;
   const expected = roster.filter((row) => row.status !== 'removed').length;
 
@@ -161,6 +166,7 @@ export default async function ClassDetailPage({
             cases={cases}
             assignments={assignments}
             submissionsByAssignment={submissionsByAssignment}
+            progressByAssignment={progressByAssignment}
           />
         </div>
       </Card>

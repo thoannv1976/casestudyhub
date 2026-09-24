@@ -317,9 +317,16 @@
     "roleAdmin": "Administrator",
     "roleLecturer": "Lecturer",
     "roleStudent": "Student",
-    "nextSteps": "What you can do now",
-    "phase1Note": "Phase 1 is being built. Classes, groups, the case library and submissions arrive in the next milestones.",
-    "yourAccount": "Your account"
+    "liveNow": "Happening in class now",
+    "waitingOnYou": "Waiting on you",
+    "yourWork": "What you owe",
+    "yourMarks": "Marks published to you",
+    "yourClasses": "Classes you teach",
+    "enrolledOn": "Your classes",
+    "nothingWaiting": "Nothing is waiting on you. Every group is either still within its deadline or already published.",
+    "nothingDue": "Nothing is due. Everything your group owes has been handed in.",
+    "noClassesStaff": "You are not teaching a class yet. Create one from the teaching page.",
+    "noClassesStudent": "You have not joined a class yet. Ask your lecturer for the class code."
   },
   "profile": {
     "title": "My profile",
@@ -864,5 +871,18 @@
     "reason": "Reason (at least 10 characters)",
     "publish": "Publish this version",
     "published": "The new version is published. Classes created from now on will use it; existing classes keep theirs."
+  },
+  "progress": {
+    "filterLabel": "Show",
+    "columnLabel": "Progress",
+    "noneMatch": "Nothing in this state.",
+    "all": "All",
+    "needsLecturer": "Waiting on you",
+    "awaiting": "Not handed in",
+    "overdue": "Overdue",
+    "complete": "Ready to mark",
+    "marked": "Marked, not published",
+    "published": "Published",
+    "missing": "{count, plural, one {# deliverable missing} other {# deliverables missing}}"
   }
 }

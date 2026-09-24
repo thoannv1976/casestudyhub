@@ -11,6 +11,7 @@ export * from './domain/ai';
 export * from './analytics/analytics';
 export * from './domain/tutor';
 export * from './domain/notifications';
+export * from './domain/progress';
 export * from './policy/presentation-policy';
 export * from './policy/role-allocation';
 export * from './policy/grading';

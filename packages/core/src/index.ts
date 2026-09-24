@@ -25,6 +25,7 @@ export * from './ai/vertex';
 export * from './ai/evaluation';
 export * from './ai/answers';
 export * from './ai/tutor';
+export * from './dashboard/dashboard';
 export * from './notifications/notifications';
 export * from './policy/policy-store';
 export * from './analytics/reports';

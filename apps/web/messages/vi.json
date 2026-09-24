@@ -317,9 +317,16 @@
     "roleAdmin": "Quản trị viên",
     "roleLecturer": "Giảng viên",
     "roleStudent": "Sinh viên",
-    "nextSteps": "Việc bạn làm được lúc này",
-    "phase1Note": "Phase 1 đang được xây dựng. Lớp học, nhóm, thư viện case và nộp bài sẽ có ở các milestone tiếp theo.",
-    "yourAccount": "Tài khoản của bạn"
+    "liveNow": "Đang diễn ra trên lớp",
+    "waitingOnYou": "Chờ bạn xử lý",
+    "yourWork": "Việc bạn còn nợ",
+    "yourMarks": "Điểm đã công bố cho bạn",
+    "yourClasses": "Lớp bạn phụ trách",
+    "enrolledOn": "Lớp của bạn",
+    "nothingWaiting": "Không có việc nào chờ bạn. Mọi nhóm đều còn hạn hoặc đã được công bố điểm.",
+    "nothingDue": "Không còn gì phải nộp. Nhóm bạn đã nộp đủ.",
+    "noClassesStaff": "Bạn chưa phụ trách lớp nào. Tạo lớp ở trang Giảng dạy.",
+    "noClassesStudent": "Bạn chưa vào lớp nào. Hãy hỏi giảng viên mã lớp."
   },
   "profile": {
     "title": "Hồ sơ của tôi",
@@ -864,5 +871,18 @@
     "reason": "Lý do (ít nhất 10 ký tự)",
     "publish": "Công bố phiên bản này",
     "published": "Phiên bản mới đã được công bố. Các lớp tạo từ giờ sẽ dùng nó; lớp đang có giữ nguyên phiên bản của mình."
+  },
+  "progress": {
+    "filterLabel": "Hiện",
+    "columnLabel": "Tiến độ",
+    "noneMatch": "Không có mục nào ở trạng thái này.",
+    "all": "Tất cả",
+    "needsLecturer": "Chờ bạn xử lý",
+    "awaiting": "Chưa nộp đủ",
+    "overdue": "Quá hạn",
+    "complete": "Sẵn sàng chấm",
+    "marked": "Đã chấm, chưa công bố",
+    "published": "Đã công bố",
+    "missing": "thiếu {count} sản phẩm"
   }
 }

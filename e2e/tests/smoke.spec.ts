@@ -29,6 +29,9 @@ const CLASS_CODE = `E2E-${RUN}`;
 const RESET_PASSWORD = 'resetPass2026';
 const CORRECTED_NAME = 'Tran Thi Bich Lecturer';
 
+/** Set if a test reset the student's password; null while it is their own. */
+const LECTURER_SET_STUDENT_PASSWORD: string | null = null;
+
 /** A student an administrator adds, for one who could not register. */
 const ADDED_STUDENT = {
   studentId: `SVADM${RUN}`,
@@ -130,6 +133,12 @@ test('a student registers and reaches their dashboard', async ({ page }) => {
 
   await page.waitForURL('**/dashboard');
   await expect(page.getByRole('heading', { level: 1 })).toContainText(STUDENT.fullName);
+
+  // The dashboard used to tell everybody "Phase 1 is being built". A new
+  // account has no class yet, and that is what it should say.
+  await expect(page.getByText('have not joined a class yet')).toBeVisible();
+  await expect(page.getByText('Phase 1')).toHaveCount(0);
+
   await signOut(page);
 });
 
@@ -1577,6 +1586,48 @@ test('an administrator creates a student account for one who could not register'
   await signOut(page);
   await signIn(page, ADDED_STUDENT.email, ADDED_STUDENT.temporaryPassword);
   await page.waitForURL('**/change-password');
+});
+
+/**
+ * The dashboard (SRS Modules 03 and 04). By this point in the run the student
+ * has a class, a group, an assignment and a published mark, so it has real
+ * work to sort - which is the whole reason it was rewritten.
+ */
+test('the dashboard shows a student what they owe and what was marked', async ({ page }) => {
+  await signIn(page, STUDENT.email, LECTURER_SET_STUDENT_PASSWORD ?? STUDENT.password);
+  await page.goto('/en/dashboard');
+
+  // Their class, by name, with a way into it.
+  await expect(page.getByRole('link', { name: new RegExp(CLASS_CODE) })).toBeVisible();
+
+  // The mark published earlier in this run.
+  await expect(page.getByTestId('dashboard-marks')).toContainText('Amazon');
+});
+
+test('the dashboard shows a lecturer only what is waiting on them', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/dashboard');
+
+  await expect(page.getByRole('heading', { name: 'Waiting on you' })).toBeVisible();
+
+  // Every group in this run has been marked and published, so nothing is
+  // outstanding - and saying so is the point, not an empty list.
+  await expect(page.getByText('Nothing is waiting on you')).toBeVisible();
+});
+
+test('the class page filters groups by how far they have got', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  // The progress column, and the filter that answers "which ones are behind".
+  await expect(page.getByRole('button', { name: /^Published \(/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Published \(/ }).click();
+  await expect(page.getByRole('cell', { name: 'Published' })).toBeVisible();
+
+  await page.getByRole('button', { name: /^Overdue \(/ }).click();
+  await expect(page.getByText('Nothing in this state')).toBeVisible();
 });
 
 test('a student is refused the administration pages', async ({ page }) => {
