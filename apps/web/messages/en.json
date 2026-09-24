@@ -287,7 +287,9 @@
     "policyNotYoursToVersion": "Adding a version to a framework other classes already use is an administrator's decision. Clone it under a new name to change the rules for your own course.",
     "useOwnPasswordPage": "Use your own change-password page to set your own password.",
     "studentIdRequired": "A student account needs a student code: that code is what a class roster is matched against.",
-    "reasonTooShort": "Say in at least ten characters why. This is the note a later reader has to go on."
+    "reasonTooShort": "Say in at least ten characters why. This is the note a later reader has to go on.",
+    "registrationClosed": "Registration is closed. Ask your lecturer to add you to the class.",
+    "aiBudgetSpent": "The month's budget of model calls is spent. An administrator can raise it on the system settings page."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -347,7 +349,9 @@
     "usersTitle": "Users",
     "usersBody": "Create lecturer and admin accounts, change roles, suspend accounts.",
     "academicTitle": "Academic structure",
-    "academicBody": "Academic years, semesters and courses."
+    "academicBody": "Academic years, semesters and courses.",
+    "systemTitle": "System",
+    "systemBody": "Platform figures, and the settings that apply to everybody."
   },
   "password": {
     "title": "Change password",
@@ -891,5 +895,39 @@
     "marked": "Marked, not published",
     "published": "Published",
     "missing": "{count, plural, one {# deliverable missing} other {# deliverables missing}}"
+  },
+  "systemAdmin": {
+    "title": "System",
+    "subtitle": "What the platform holds, and the few switches that change how it behaves. Academic rules are not here — how long a group speaks or what a criterion is worth belongs to the assessment framework, which is versioned so a change cannot reach work already marked.",
+    "metricsTitle": "What the platform holds",
+    "counts": {
+      "students": "Students",
+      "lecturers": "Lecturers",
+      "admins": "Administrators",
+      "suspended": "Suspended accounts",
+      "activeClasses": "Classes running",
+      "liveSessions": "Presentations live now",
+      "completedSessions": "Presentations finished",
+      "submissions": "Files handed in",
+      "publishedGrades": "Marks published"
+    },
+    "aiTitle": "What the model has cost",
+    "aiBody": "Counted for {period}. The model is billed per call, so this is the number that decides what the faculty is charged.",
+    "aiCalls": "Calls this month",
+    "aiPromptTokens": "Tokens sent",
+    "aiOutputTokens": "Tokens returned",
+    "aiBudgetSpent": "This month's budget is spent. The AI features will refuse until the budget is raised or the month turns.",
+    "settingsTitle": "Settings",
+    "settingsBody": "These take effect at once and apply to everybody. Each is recorded with who changed it and why.",
+    "registrationOpen": "Students may create their own account",
+    "registrationOpenHint": "Close this once a term has started, and add late arrivals from the user page.",
+    "maxImportKb": "Largest class list upload (KB)",
+    "maxImportKbHint": "A faculty list is a few kilobytes. Anything much larger is not a class list.",
+    "aiMonthlyCallBudget": "Model calls per month",
+    "aiMonthlyCallBudgetHint": "Zero stops the AI features without unsetting the credentials.",
+    "reason": "Reason",
+    "reasonHint": "Recorded with the change, for whoever reads the log later.",
+    "save": "Save settings",
+    "saved": "Saved. These apply from now, to everybody."
   }
 }

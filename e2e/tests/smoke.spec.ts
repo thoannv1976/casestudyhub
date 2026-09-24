@@ -1664,6 +1664,75 @@ test('the class page filters groups by how far they have got', async ({ page }) 
   await expect(page.getByText('Nothing in this state')).toBeVisible();
 });
 
+/**
+ * Platform settings (SRS Module 03). Each of these changes something; a switch
+ * that changed nothing would be worse than no switch.
+ */
+test('an administrator sees what the platform holds', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  const metrics = page.getByTestId('platform-metrics');
+  await expect(metrics).toContainText('Students');
+  await expect(metrics).toContainText('Marks published');
+
+  // The model has not been called in this run, against the shipped budget.
+  await expect(page.getByTestId('ai-usage')).toContainText('0 / 500');
+});
+
+test('closing registration closes the form, not just the request', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  await page.getByLabel('Students may create their own account').uncheck();
+  await page.getByLabel('Reason').fill('Term has started.');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+
+  await signOut(page);
+  await page.goto('/en/register');
+  await expect(page.getByTestId('alert-error')).toContainText('Registration is closed');
+  await expect(page.locator('#studentId')).toHaveCount(0);
+
+  // The API refuses too, which is where the rule actually lives.
+  const response = await page.request.post('/api/auth/register', {
+    data: {
+      studentId: `SVCLOSED${RUN}`,
+      fullName: 'Nguyen Van Closed',
+      email: `closed.${RUN}@e2e.test`,
+      password: 'closed2026',
+      confirmPassword: 'closed2026',
+      preferredLanguage: 'en',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+
+  // Put it back, so the rest of the run is unaffected.
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+  await page.getByLabel('Students may create their own account').check();
+  await page.getByLabel('Reason').fill('Reopening after the check.');
+  await page.getByRole('button', { name: 'Save settings' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+});
+
+test('a lecturer cannot reach the system settings, let alone change them', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+
+  await page.goto('/en/admin/system');
+  await expect(page.getByTestId('alert-error')).toContainText('do not have permission');
+
+  const response = await page.request.put('/api/admin/system', {
+    data: {
+      settings: { registrationOpen: true, maxImportKb: 512, aiMonthlyCallBudget: 99999 },
+      reason: 'Raising a budget that is not mine to raise.',
+    },
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

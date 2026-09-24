@@ -55,6 +55,19 @@ export class AiNotConfiguredError extends Error {
   }
 }
 
+/**
+ * The month's model budget is spent. A separate error from "not configured":
+ * the model works and the faculty has decided how much of it to buy, so the
+ * interface should say that rather than suggest somebody sets a key.
+ */
+export class AiBudgetSpentError extends Error {
+  readonly messageKey = 'errors.aiBudgetSpent';
+  constructor(readonly budget: number) {
+    super(`The monthly budget of ${budget} model calls is spent.`);
+    this.name = 'AiBudgetSpentError';
+  }
+}
+
 export class AiResponseError extends Error {
   readonly messageKey = 'errors.aiResponseUnusable';
   constructor(detail: string) {

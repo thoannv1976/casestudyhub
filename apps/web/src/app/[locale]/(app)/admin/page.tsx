@@ -60,6 +60,12 @@ export default async function AdminPage({ params }: { params: Promise<{ locale: 
             <CardBody>{t('academicBody')}</CardBody>
           </Card>
         </Link>
+        <Link href="/admin/system" className="block">
+          <Card className="hover:border-brand-400 h-full transition-colors">
+            <CardTitle>{t('systemTitle')}</CardTitle>
+            <CardBody>{t('systemBody')}</CardBody>
+          </Card>
+        </Link>
       </div>
     </div>
   );

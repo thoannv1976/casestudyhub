@@ -31,6 +31,7 @@ export const COLLECTIONS = {
   cloMappings: 'cloMappings',
   notifications: 'notifications',
   auditLogs: 'auditLogs',
+  aiUsage: 'aiUsage',
   systemSettings: 'systemSettings',
 } as const;
 

@@ -304,6 +304,29 @@ describe('rate limit counters', () => {
   });
 });
 
+describe('platform settings and what the model cost', () => {
+  beforeEach(async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, 'systemSettings', 'platform'), { aiMonthlyCallBudget: 500 });
+      await setDoc(doc(db, 'aiUsage', '2026-03'), { period: '2026-03', calls: 3 });
+    });
+  });
+
+  it('cannot be read or changed by any client, administrator included', async () => {
+    await assertFails(getDoc(doc(admin(), 'systemSettings', 'platform')));
+    await assertFails(
+      updateDoc(doc(admin(), 'systemSettings', 'platform'), { aiMonthlyCallBudget: 99999 }),
+    );
+  });
+
+  it('will not let anybody spend somebody else’s budget by rewriting the count', async () => {
+    await assertFails(getDoc(doc(student(), 'aiUsage', '2026-03')));
+    await assertFails(updateDoc(doc(admin(), 'aiUsage', '2026-03'), { calls: 0 }));
+    await assertFails(deleteDoc(doc(admin(), 'aiUsage', '2026-03')));
+  });
+});
+
 describe('the assessment framework', () => {
   beforeEach(async () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {

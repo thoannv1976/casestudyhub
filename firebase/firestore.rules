@@ -243,6 +243,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // What the model has been asked to do this month, and what it cost. A
+    // client that could write this could spend somebody else's budget; one
+    // that could read it learns nothing it needs.
+    match /aiUsage/{period} {
+      allow read, write: if false;
+    }
+
     // ----- everything else -------------------------------------------------
     // Anything not named above stays closed. A collection is opened only with
     // the module that needs it, its server-side checks and its tests.

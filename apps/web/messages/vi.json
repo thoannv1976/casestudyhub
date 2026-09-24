@@ -287,7 +287,9 @@
     "policyNotYoursToVersion": "Thêm phiên bản cho một khung mà các lớp khác đang dùng là quyết định của quản trị viên. Hãy sao chép khung sang tên mới để đổi quy tắc cho riêng học phần của bạn.",
     "useOwnPasswordPage": "Hãy dùng trang đổi mật khẩu của chính mình để đặt mật khẩu cho bạn.",
     "studentIdRequired": "Tài khoản sinh viên cần mã sinh viên: danh sách lớp được đối chiếu theo mã đó.",
-    "reasonTooShort": "Hãy ghi ít nhất mười ký tự lý do. Đây là ghi chú mà người đọc lại sau này chỉ còn biết dựa vào."
+    "reasonTooShort": "Hãy ghi ít nhất mười ký tự lý do. Đây là ghi chú mà người đọc lại sau này chỉ còn biết dựa vào.",
+    "registrationClosed": "Đăng ký đang đóng. Hãy nhờ giảng viên thêm bạn vào lớp.",
+    "aiBudgetSpent": "Đã hết hạn mức lượt gọi mô hình của tháng. Quản trị viên có thể nâng hạn mức ở trang cấu hình hệ thống."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -347,7 +349,9 @@
     "usersTitle": "Người dùng",
     "usersBody": "Tạo tài khoản giảng viên và quản trị, đổi vai trò, khóa tài khoản.",
     "academicTitle": "Cấu trúc đào tạo",
-    "academicBody": "Năm học, học kỳ và học phần."
+    "academicBody": "Năm học, học kỳ và học phần.",
+    "systemTitle": "Hệ thống",
+    "systemBody": "Số liệu nền tảng, và các cấu hình áp dụng cho mọi người."
   },
   "password": {
     "title": "Đổi mật khẩu",
@@ -891,5 +895,39 @@
     "marked": "Đã chấm, chưa công bố",
     "published": "Đã công bố",
     "missing": "thiếu {count} sản phẩm"
+  },
+  "systemAdmin": {
+    "title": "Hệ thống",
+    "subtitle": "Nền tảng đang có những gì, và vài công tắc thay đổi cách nó chạy. Quy tắc học thuật không nằm ở đây — nhóm được nói bao lâu hay tiêu chí đáng bao nhiêu điểm thuộc về khung đánh giá, vốn có phiên bản để một thay đổi không chạm tới bài đã chấm.",
+    "metricsTitle": "Nền tảng đang có gì",
+    "counts": {
+      "students": "Sinh viên",
+      "lecturers": "Giảng viên",
+      "admins": "Quản trị viên",
+      "suspended": "Tài khoản bị khoá",
+      "activeClasses": "Lớp đang chạy",
+      "liveSessions": "Buổi đang diễn ra",
+      "completedSessions": "Buổi đã xong",
+      "submissions": "File đã nộp",
+      "publishedGrades": "Điểm đã công bố"
+    },
+    "aiTitle": "Mô hình đã tốn bao nhiêu",
+    "aiBody": "Tính cho {period}. Mô hình tính tiền theo lượt gọi, nên đây là con số quyết định khoa phải trả bao nhiêu.",
+    "aiCalls": "Lượt gọi trong tháng",
+    "aiPromptTokens": "Token đã gửi",
+    "aiOutputTokens": "Token nhận về",
+    "aiBudgetSpent": "Đã hết hạn mức tháng này. Các tính năng AI sẽ từ chối cho tới khi nâng hạn mức hoặc sang tháng mới.",
+    "settingsTitle": "Cấu hình",
+    "settingsBody": "Các mục này có hiệu lực ngay và áp dụng cho mọi người. Mỗi thay đổi đều được ghi lại kèm người thực hiện và lý do.",
+    "registrationOpen": "Sinh viên được tự tạo tài khoản",
+    "registrationOpenHint": "Đóng lại khi học kỳ đã bắt đầu, rồi thêm người vào sau ở trang Người dùng.",
+    "maxImportKb": "Dung lượng tối đa file danh sách lớp (KB)",
+    "maxImportKbHint": "Danh sách lớp chỉ vài kilobyte. Lớn hơn nhiều thì không phải danh sách lớp.",
+    "aiMonthlyCallBudget": "Số lượt gọi mô hình mỗi tháng",
+    "aiMonthlyCallBudgetHint": "Đặt 0 để tắt tính năng AI mà không cần xoá thông tin xác thực.",
+    "reason": "Lý do",
+    "reasonHint": "Được ghi kèm thay đổi, cho người đọc nhật ký sau này.",
+    "save": "Lưu cấu hình",
+    "saved": "Đã lưu. Có hiệu lực từ bây giờ, với mọi người."
   }
 }
