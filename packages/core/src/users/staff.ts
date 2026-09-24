@@ -1,7 +1,10 @@
+import { randomBytes } from 'node:crypto';
 import { FieldValue } from 'firebase-admin/firestore';
 import { FirebaseAuthError } from 'firebase-admin/auth';
 import {
   COLLECTIONS,
+  matchesSearch,
+  type ImportedStudent,
   type CreateAccountRequest,
   type Locale,
   type UserProfile,
@@ -11,7 +14,7 @@ import { getAdminAuth, getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { AppError } from '../errors';
 import { revokeSessions } from '../auth/tokens';
-import { registerStudent } from './registration';
+import { registerStudent, studentIdKey } from './registration';
 import type { SessionUser } from '../auth/types';
 
 /**
@@ -167,30 +170,51 @@ export interface UserListFilters {
   limit?: number;
 }
 
-export async function listUsers(filters: UserListFilters = {}): Promise<UserProfile[]> {
-  const db = getDb();
+/**
+ * How many accounts a search reads before giving up.
+ *
+ * Searching happens in memory rather than through an index, deliberately.
+ * Firestore has no substring search, and the search that matters here is for
+ * a Vietnamese name somebody typed without diacritics - "nguyen van a" must
+ * find "Nguyễn Văn A". No index does that; an index would need a second,
+ * folded copy of every name, kept in step for ever, and it would still only
+ * match from the start of the string.
+ *
+ * A faculty has hundreds of accounts, not millions, so reading them is the
+ * cheaper answer by a wide margin. If this platform ever holds more than this
+ * many, the search says so rather than quietly returning the first thousand.
+ */
+const SEARCH_SCAN_LIMIT = 2_000;
 
-  if (filters.search) {
-    const term = filters.search.trim();
-    const [byEmail, byStudentId] = await Promise.all([
-      db.collection(COLLECTIONS.users).where('email', '==', term.toLowerCase()).limit(5).get(),
-      db.collection(COLLECTIONS.users).where('studentId', '==', term).limit(5).get(),
-    ]);
-    const docs = [...byEmail.docs, ...byStudentId.docs];
-    return docs
-      .map((snapshot) => userProfileSchema.safeParse(snapshot.data()))
-      .filter((parsed) => parsed.success)
-      .map((parsed) => parsed.data);
-  }
+export interface UserSearchResult {
+  users: UserProfile[];
+  /** True when the scan hit its limit, so the answer may be incomplete. */
+  truncated: boolean;
+}
+
+export async function searchUsers(filters: UserListFilters = {}): Promise<UserSearchResult> {
+  const db = getDb();
 
   let query = db.collection(COLLECTIONS.users).orderBy('createdAt', 'desc');
   if (filters.role) query = query.where('globalRole', '==', filters.role);
 
-  const snapshot = await query.limit(filters.limit ?? 50).get();
-  return snapshot.docs
+  const scanning = Boolean(filters.search?.trim());
+  const snapshot = await query.limit(scanning ? SEARCH_SCAN_LIMIT : (filters.limit ?? 50)).get();
+
+  const users = snapshot.docs
     .map((docSnapshot) => userProfileSchema.safeParse(docSnapshot.data()))
     .filter((parsed) => parsed.success)
-    .map((parsed) => parsed.data);
+    .map((parsed) => parsed.data)
+    .filter((user) => !filters.search || matchesSearch(user, filters.search));
+
+  return {
+    users: users.slice(0, filters.limit ?? 50),
+    truncated: scanning && snapshot.size === SEARCH_SCAN_LIMIT,
+  };
+}
+
+export async function listUsers(filters: UserListFilters = {}): Promise<UserProfile[]> {
+  return (await searchUsers(filters)).users;
 }
 
 /**
@@ -295,4 +319,101 @@ export async function updateUserByAdmin(
     after: update,
     reason,
   });
+}
+
+/**
+ * A temporary password for somebody who is not in the room.
+ *
+ * Generated on the server with a real random source, and handed back exactly
+ * once, in the response to the import that created it. It is never stored in
+ * readable form and cannot be retrieved afterwards - an administrator who
+ * loses the list resets the accounts individually, which is the same work but
+ * with an audit entry per person.
+ */
+function temporaryPassword(): string {
+  const letters = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKMNPQRSTUVWXYZ';
+  const digits = '23456789';
+  const bytes = randomBytes(11);
+  const pick = (from: string, offset: number, count: number) =>
+    Array.from({ length: count }, (_, index) => from[bytes[offset + index]! % from.length]).join(
+      '',
+    );
+  return `${pick(letters, 0, 8)}${pick(digits, 8, 3)}`;
+}
+
+export interface ImportedAccount {
+  studentId: string;
+  fullName: string;
+  email: string;
+  /** Shown once, to be handed over. Never stored in this form. */
+  temporaryPassword: string;
+}
+
+export interface AccountImportOutcome {
+  created: ImportedAccount[];
+  /** Rows that already had an account, with the reason they were left alone. */
+  skipped: { studentId: string; messageKey: string }[];
+}
+
+/**
+ * Creates accounts for a list of students who cannot register themselves.
+ *
+ * Existing accounts are left completely alone - not updated, not given a new
+ * password. An import that reset the passwords of everybody already on the
+ * platform, because a file was uploaded twice, would be a very bad afternoon.
+ */
+export async function importAccounts(
+  actor: SessionUser,
+  students: readonly ImportedStudent[],
+  options: { dryRun?: boolean } = {},
+): Promise<AccountImportOutcome> {
+  const outcome: AccountImportOutcome = { created: [], skipped: [] };
+  const db = getDb();
+
+  for (const student of students) {
+    const key = studentIdKey(student.studentId);
+    const claimed = await db.collection(COLLECTIONS.studentIdIndex).doc(key).get();
+    if (claimed.exists) {
+      outcome.skipped.push({ studentId: student.studentId, messageKey: 'errors.studentIdTaken' });
+      continue;
+    }
+
+    const password = temporaryPassword();
+    if (options.dryRun) {
+      // The password shown in a preview is thrown away with it: the account is
+      // created on the real run, with a different one.
+      outcome.created.push({ ...student, temporaryPassword: '' });
+      continue;
+    }
+
+    try {
+      const { uid } = await registerStudent({
+        studentId: student.studentId,
+        fullName: student.fullName,
+        email: student.email,
+        password,
+        preferredLanguage: 'vi',
+      });
+      await markMustChangePassword(uid);
+      outcome.created.push({ ...student, temporaryPassword: password });
+    } catch (error) {
+      outcome.skipped.push({
+        studentId: student.studentId,
+        messageKey: error instanceof AppError ? error.messageKey : 'errors.unexpected',
+      });
+    }
+  }
+
+  if (!options.dryRun && outcome.created.length > 0) {
+    await writeAuditLog({
+      action: 'user.imported',
+      actorUid: actor.uid,
+      actorRole: actor.role,
+      target: COLLECTIONS.users,
+      // The passwords are not in the log, and never will be.
+      after: { created: outcome.created.length, skipped: outcome.skipped.length },
+    });
+  }
+
+  return outcome;
 }

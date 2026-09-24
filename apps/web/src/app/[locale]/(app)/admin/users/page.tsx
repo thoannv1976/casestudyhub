@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { listUsers } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Alert } from '@/components/ui/form';
+import { AccountImport } from './account-import';
 import { UserAdmin } from './user-admin';
 
 export const dynamic = 'force-dynamic';
@@ -37,6 +38,8 @@ export default async function UserAdminPage({ params }: { params: Promise<{ loca
         <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
         <p className="text-muted mt-2 text-sm">{t('subtitle')}</p>
       </div>
+      <AccountImport />
+
       <UserAdmin users={users} callerUid={user.uid} />
     </div>
   );

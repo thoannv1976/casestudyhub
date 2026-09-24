@@ -4,6 +4,7 @@ import {
   COLLECTIONS,
   aiAssessmentSchema,
   aiEvaluationResponseSchema,
+  currentAttachments,
   reconcileWithRubric,
   type AiAssessment,
 } from '@casestudyhub/shared';
@@ -78,7 +79,7 @@ export async function gatherEvaluationSources(assignmentId: string): Promise<Eva
   const skipped: string[] = [];
 
   const caseStudy = await getCase(assignment.caseStudyId);
-  for (const attachment of caseStudy?.attachments ?? []) {
+  for (const attachment of currentAttachments(caseStudy?.attachments ?? [])) {
     if (!canBeRead(attachment.contentType, attachment.sizeBytes)) {
       skipped.push(`case: ${attachment.fileName}`);
       continue;

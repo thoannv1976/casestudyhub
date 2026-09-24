@@ -13,8 +13,20 @@ export const caseAttachmentSchema = z.object({
   sizeBytes: z.number().int().nonnegative(),
   storagePath: z.string().min(1),
   externalUrl: z.url().optional(),
+  /**
+   * Set when the material was withdrawn from a case that classes had already
+   * been given. The bytes stay: a group set this case was handed this file,
+   * and destroying it would leave a hole in work already marked. It is simply
+   * no longer offered to anybody starting now.
+   */
+  retiredAt: z.string().optional(),
 });
 export type CaseAttachment = z.infer<typeof caseAttachmentSchema>;
+
+/** What a case offers today, which is not everything it has ever offered. */
+export function currentAttachments(attachments: readonly CaseAttachment[]): CaseAttachment[] {
+  return attachments.filter((attachment) => !attachment.retiredAt);
+}
 
 /**
  * A Case Study Template is the source material; a Case Assignment is one

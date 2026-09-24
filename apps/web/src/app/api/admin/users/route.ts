@@ -8,7 +8,7 @@ import {
 } from '@casestudyhub/shared';
 import {
   createAccount,
-  listUsers,
+  searchUsers,
   resetUserPassword,
   setUserRole,
   setUserStatus,
@@ -26,12 +26,15 @@ export async function GET(request: NextRequest) {
     const role = request.nextUrl.searchParams.get('role');
     const search = request.nextUrl.searchParams.get('search');
 
-    const users = await listUsers({
+    const result = await searchUsers({
       role: role === 'admin' || role === 'lecturer' || role === 'student' ? role : undefined,
       search: search ?? undefined,
     });
 
-    return NextResponse.json({ users });
+    // `truncated` travels with the answer: a search that silently returned the
+    // first page of a longer list would tell a lecturer somebody is not on the
+    // platform when they are.
+    return NextResponse.json(result);
   } catch (error) {
     return respondWithError(error);
   }

@@ -193,3 +193,33 @@ export function parseStudentRoster(content: string): RosterParseResult {
 
   return { rows, problems };
 }
+
+/**
+ * Folds a Vietnamese name to something two spellings of it share.
+ *
+ * A lecturer looking for Nguyễn Văn A types "nguyen van a", because that is
+ * what a keyboard gives them in a hurry. Matching without this would make the
+ * search useless for exactly the names it will mostly be used on.
+ */
+export function foldForSearch(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase()
+    .trim();
+}
+
+/** Whether a name, a student code or an address contains what was typed. */
+export function matchesSearch(
+  haystack: { fullName: string; email: string; studentId?: string },
+  term: string,
+): boolean {
+  const needle = foldForSearch(term);
+  if (!needle) return true;
+
+  return [haystack.fullName, haystack.email, haystack.studentId ?? '']
+    .map(foldForSearch)
+    .some((field) => field.includes(needle));
+}

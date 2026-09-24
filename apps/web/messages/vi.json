@@ -457,7 +457,20 @@
     "handedOver": "Mật khẩu của {email} giờ là {password}. Hãy đưa tận tay — đây là lần duy nhất mật khẩu được hiển thị.",
     "editProfileFor": "Sửa thông tin của {name}",
     "editProfileBody": "Địa chỉ đăng nhập ({email}) và mã sinh viên không sửa ở đây: đổi một trong hai là khoá người ta ra khỏi chính bài làm của mình.",
-    "owesPassword": "Đang dùng mật khẩu tạm"
+    "owesPassword": "Đang dùng mật khẩu tạm",
+    "search": "Tìm người",
+    "searchHint": "Khớp theo họ tên, mã sinh viên hoặc email. Không phân biệt dấu, nên gõ \"nguyen van a\" vẫn ra \"Nguyễn Văn A\".",
+    "searchPlaceholder": "nguyen van a",
+    "showing": "Hiện {shown} trong {total}",
+    "importTitle": "Tạo tài khoản từ danh sách",
+    "importBody": "Dành cho sinh viên không tự đăng ký được. File cần mã sinh viên, họ tên và email — đúng các cột của danh sách lớp. Không tạo gì cho tới khi bạn đã xem trước.",
+    "importPreview": "Xem trước",
+    "importCreate": "Tạo những tài khoản này",
+    "importWouldCreate": "{count, plural, =0 {Không có tài khoản mới} other {Sẽ tạo # tài khoản}}.",
+    "importCreated": "{count, plural, =0 {Không tạo tài khoản nào} other {Đã tạo # tài khoản}}.",
+    "importLine": "Dòng {line}",
+    "importPasswordsOnce": "Các mật khẩu này chỉ hiện một lần và không lấy lại được. Hãy lưu file, đưa tận tay, và mỗi người phải tự đổi ở lần đăng nhập đầu.",
+    "importDownload": "Tải về dạng bảng tính"
   },
   "academicAdmin": {
     "title": "Cấu trúc đào tạo",
@@ -948,6 +961,23 @@
     "reason": "Lý do",
     "reasonHint": "Được ghi kèm thay đổi, cho người đọc nhật ký sau này.",
     "save": "Lưu cấu hình",
-    "saved": "Đã lưu. Có hiệu lực từ bây giờ, với mọi người."
+    "saved": "Đã lưu. Có hiệu lực từ bây giờ, với mọi người.",
+    "aiStatusTitle": "Mô hình",
+    "aiStatusBody": "Mọi tính năng AI ở đây đều chỉ là tư vấn, nên \"chưa cấu hình\" là một trạng thái giao diện báo chứ không phải lỗi. Điều đó khiến một lỗi thật — sai tên model, service account thiếu quyền — nhìn từ ngoài vào giống hệt. Đây là chỗ phân biệt hai thứ đó.",
+    "aiOn": "Đã cấu hình",
+    "aiOff": "Chưa cấu hình",
+    "aiOffHint": "Chạy scripts/enable-ai.sh trên bản deploy để bật mô hình. Không có nó nền tảng vẫn chạy.",
+    "aiTransport": "Kết nối qua",
+    "aiVertex": "Vertex AI, service account của Cloud Run",
+    "aiApiKey": "API key",
+    "aiModel": "Model",
+    "aiLocation": "Vùng",
+    "aiProbe": "Thử gọi mô hình",
+    "aiProbing": "Đang hỏi…",
+    "aiProbeCost": "Hỏi mô hình một câu tầm thường, đi qua đúng cổng mà mọi lượt gọi khác dùng. Tính là một lượt trong hạn mức tháng.",
+    "aiProbeOk": "{model} trả lời \"{answer}\" trong {ms}ms, dùng {tokens} token.",
+    "aiProbeNotConfigured": "Bản deploy này chưa cấu hình mô hình nào, nên không gọi gì cả.",
+    "aiProbeBudget": "Đã hết hạn mức {budget} lượt của tháng, nên không gọi gì cả.",
+    "aiProbeFailed": "Đã gọi mô hình và lượt gọi thất bại. Phản hồi nguyên văn ở dưới."
   }
 }

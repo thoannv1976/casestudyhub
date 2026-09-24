@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { LOCALES, type CaseStudy } from '@casestudyhub/shared';
+import { LOCALES, currentAttachments, type CaseStudy } from '@casestudyhub/shared';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
 
@@ -197,10 +197,10 @@ export function CaseLibrary({
               </div>
 
               <ul className="mt-3 space-y-1 text-sm">
-                {study.attachments.length === 0 ? (
+                {currentAttachments(study.attachments).length === 0 ? (
                   <li className="text-muted">{t('noFiles')}</li>
                 ) : (
-                  study.attachments.map((attachment) => (
+                  currentAttachments(study.attachments).map((attachment) => (
                     <li key={attachment.id}>
                       <a
                         href={`/api/cases/${study.id}/attachments/${attachment.id}`}

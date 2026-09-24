@@ -14,8 +14,12 @@ export const COLLECTIONS = {
   groupMembers: 'groupMembers',
   caseStudies: 'caseStudies',
   caseVersions: 'caseVersions',
-  presentationGuides: 'presentationGuides',
-  rubrics: 'rubrics',
+  /**
+   * The assessment framework, versioned and immutable. `presentationGuides`
+   * and `rubrics` were declared beside this and never written to: the guide's
+   * rules and the rubric both live inside a policy version, and a second home
+   * for either would be a source of truth nothing freezes.
+   */
   policies: 'policies',
   assignments: 'assignments',
   submissions: 'submissions',
@@ -28,7 +32,9 @@ export const COLLECTIONS = {
   aiTutorSessions: 'aiTutorSessions',
   lecturerAssessments: 'lecturerAssessments',
   grades: 'grades',
-  cloMappings: 'cloMappings',
+  // `cloMappings` was declared here too. The mapping from a rubric criterion
+  // to a learning outcome lives on the criterion, inside the framework, so it
+  // is frozen with everything else a mark was computed from.
   notifications: 'notifications',
   auditLogs: 'auditLogs',
   aiUsage: 'aiUsage',

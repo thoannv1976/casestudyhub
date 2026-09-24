@@ -13,8 +13,16 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 process.env.GOOGLE_CLOUD_PROJECT ??= 'demo-casestudyhub';
 process.env.FIREBASE_STORAGE_BUCKET ??= 'demo-casestudyhub.appspot.com';
 
-const { getDb, getAdminAuth, createAccount, resetUserPassword, updateUserByAdmin, getUserProfile } =
-  await import('@casestudyhub/core');
+const {
+  getDb,
+  getAdminAuth,
+  createAccount,
+  resetUserPassword,
+  updateUserByAdmin,
+  getUserProfile,
+  importAccounts,
+  searchUsers,
+} = await import('@casestudyhub/core');
 const { COLLECTIONS } = await import('@casestudyhub/shared');
 
 const RUN = Date.now().toString().slice(-7);
@@ -143,6 +151,113 @@ describe('creating an account', () => {
     // And the auth account for the refused attempt is not left behind, or the
     // address is taken by somebody who has no profile and can never register.
     await expect(getAdminAuth().getUserByEmail(`second.${RUN}@x.edu.vn`)).rejects.toThrow();
+  });
+});
+
+describe('creating accounts from a list', () => {
+  const list = [
+    { studentId: `IM1${RUN}`, fullName: 'Nguyen Van A', email: `im1.${RUN}@x.edu.vn` },
+    { studentId: `IM2${RUN}`, fullName: 'Tran Thi B', email: `im2.${RUN}@x.edu.vn` },
+  ];
+
+  async function cleanImported() {
+    const auth = getAdminAuth();
+    const db = getDb();
+    for (const row of list) {
+      const user = await auth.getUserByEmail(row.email).catch(() => null);
+      if (user) {
+        await auth.deleteUser(user.uid);
+        await db.collection(COLLECTIONS.users).doc(user.uid).delete();
+      }
+      await db.collection(COLLECTIONS.studentIdIndex).doc(row.studentId.toUpperCase()).delete();
+    }
+  }
+
+  beforeEach(cleanImported);
+  afterAll(cleanImported);
+
+  it('creates nothing on a preview, whatever it reports', async () => {
+    const outcome = await importAccounts(admin, list, { dryRun: true });
+
+    expect(outcome.created).toHaveLength(2);
+    // Not a single password among them: the preview's are thrown away with it.
+    expect(outcome.created.every((row) => row.temporaryPassword === '')).toBe(true);
+    await expect(getAdminAuth().getUserByEmail(list[0]!.email)).rejects.toThrow();
+  });
+
+  it('creates the accounts and hands back each password exactly once', async () => {
+    const outcome = await importAccounts(admin, list);
+
+    expect(outcome.created).toHaveLength(2);
+    for (const row of outcome.created) {
+      expect(row.temporaryPassword.length).toBeGreaterThanOrEqual(11);
+    }
+    // Two people must not be given the same password.
+    expect(new Set(outcome.created.map((row) => row.temporaryPassword)).size).toBe(2);
+
+    const created = await getAdminAuth().getUserByEmail(list[0]!.email);
+    expect((await getUserProfile(created.uid))?.mustChangePassword).toBe(true);
+  });
+
+  it('leaves an account that already exists completely alone', async () => {
+    await importAccounts(admin, list);
+    const before = await getAdminAuth().getUserByEmail(list[0]!.email);
+
+    // The same file uploaded twice must not reset anybody's password.
+    const second = await importAccounts(admin, list);
+    expect(second.created).toHaveLength(0);
+    expect(second.skipped).toHaveLength(2);
+    expect(second.skipped[0]?.messageKey).toBe('errors.studentIdTaken');
+
+    const after = await getAdminAuth().getUserByEmail(list[0]!.email);
+    expect(after.tokensValidAfterTime).toBe(before.tokensValidAfterTime);
+  });
+
+  it('never writes a password into the audit log', async () => {
+    const outcome = await importAccounts(admin, list);
+    const logs = await getDb()
+      .collection(COLLECTIONS.auditLogs)
+      .where('actorUid', '==', admin.uid)
+      .get();
+
+    const text = JSON.stringify(logs.docs.map((doc) => doc.data()));
+    for (const row of outcome.created) {
+      expect(text).not.toContain(row.temporaryPassword);
+    }
+  });
+});
+
+describe('finding somebody', () => {
+  it('finds a Vietnamese name typed without diacritics', async () => {
+    const { uid } = await createAccount(admin, {
+      email: other.email,
+      fullName: 'Nguyễn Văn Ánh',
+      role: 'lecturer',
+      temporaryPassword: 'tempPass2026',
+      preferredLanguage: 'vi',
+    });
+
+    const found = await searchUsers({ search: 'nguyen van anh' });
+    expect(found.users.map((user) => user.uid)).toContain(uid);
+    expect(found.truncated).toBe(false);
+  });
+
+  it('finds somebody by part of their address', async () => {
+    await createAccount(admin, {
+      email: other.email,
+      fullName: 'Tran Thi B',
+      role: 'lecturer',
+      temporaryPassword: 'tempPass2026',
+      preferredLanguage: 'vi',
+    });
+
+    const found = await searchUsers({ search: other.email.split('@')[1]! });
+    expect(found.users.some((user) => user.email === other.email)).toBe(true);
+  });
+
+  it('returns nobody rather than everybody when nothing matches', async () => {
+    const found = await searchUsers({ search: 'khong-co-ai-ten-nhu-the' });
+    expect(found.users).toHaveLength(0);
   });
 });
 

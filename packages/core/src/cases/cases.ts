@@ -1,6 +1,7 @@
 import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
+  currentAttachments,
   caseVersionSchema,
   nextCaseVersionId,
   type CaseVersion,
@@ -246,7 +247,7 @@ export async function setCaseStatus(
   const existing = await getCase(caseId);
   if (!existing) throw new AppError('NOT_FOUND', 'errors.caseNotFound');
 
-  if (status === 'published' && existing.attachments.length === 0) {
+  if (status === 'published' && currentAttachments(existing.attachments).length === 0) {
     throw new AppError('POLICY_VIOLATION', 'errors.caseHasNoMaterial');
   }
 
@@ -357,21 +358,43 @@ export async function removeAttachment(
   const attachment = existing.attachments.find((candidate) => candidate.id === attachmentId);
   if (!attachment) throw new AppError('NOT_FOUND', 'errors.attachmentNotFound');
 
-  const bucket = getAdminStorage().bucket(getServerEnv().FIREBASE_STORAGE_BUCKET);
-  await bucket
-    .file(attachment.storagePath)
-    .delete()
-    .catch(() => {
-      // The record is what students see; a file already gone must not block it.
-    });
+  // Whether anything was ever set under this case decides what removal can
+  // mean. Nothing was: the file is a mistake nobody saw, and it goes. Groups
+  // were given it: the bytes stay, because a case a class worked from must
+  // still be readable when somebody asks why they were marked as they were.
+  const given = await getDb()
+    .collection(COLLECTIONS.assignments)
+    .where('caseStudyId', '==', caseId)
+    .limit(1)
+    .get();
 
-  await getDb()
-    .collection(COLLECTIONS.caseStudies)
-    .doc(caseId)
-    .update({
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.caseStudies).doc(caseId);
+
+  if (given.empty) {
+    const bucket = getAdminStorage().bucket(getServerEnv().FIREBASE_STORAGE_BUCKET);
+    await bucket
+      .file(attachment.storagePath)
+      .delete()
+      .catch(() => {
+        // The record is what students see; a file already gone must not block it.
+      });
+
+    await ref.update({
       attachments: FieldValue.arrayRemove(attachment),
       updatedAt: FieldValue.serverTimestamp(),
     });
+  } else {
+    // Rewritten whole rather than removed and re-added: `arrayUnion` on a
+    // changed object would leave both versions in the list.
+    const retired = { ...attachment, retiredAt: new Date().toISOString() };
+    await ref.update({
+      attachments: existing.attachments.map((candidate) =>
+        candidate.id === attachmentId ? retired : candidate,
+      ),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
 
   await writeAuditLog({
     action: 'case.attachment_removed',
@@ -379,5 +402,6 @@ export async function removeAttachment(
     actorRole: actor.role,
     target: `${COLLECTIONS.caseStudies}/${caseId}`,
     before: { fileName: attachment.fileName },
+    after: { destroyed: given.empty, retained: !given.empty },
   });
 }

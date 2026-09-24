@@ -457,7 +457,20 @@
     "handedOver": "The password for {email} is now {password}. Give it to them directly — this is the only time it is shown.",
     "editProfileFor": "Correct the details of {name}",
     "editProfileBody": "The sign-in address ({email}) and the student code are not changed here: changing either would lock somebody out of their own coursework.",
-    "owesPassword": "On a temporary password"
+    "owesPassword": "On a temporary password",
+    "search": "Find somebody",
+    "searchHint": "Matches a name, a student code or an address. Diacritics are ignored, so \"nguyen van a\" finds \"Nguyễn Văn A\".",
+    "searchPlaceholder": "nguyen van a",
+    "showing": "Showing {shown} of {total}",
+    "importTitle": "Create accounts from a list",
+    "importBody": "For students who cannot register themselves. The file needs a student code, a full name and an email address — the same columns as a class list. Nothing is created until you have previewed it.",
+    "importPreview": "Preview",
+    "importCreate": "Create these accounts",
+    "importWouldCreate": "{count, plural, =0 {No new accounts} one {# account would be created} other {# accounts would be created}}.",
+    "importCreated": "{count, plural, =0 {No accounts created} one {# account created} other {# accounts created}}.",
+    "importLine": "Line {line}",
+    "importPasswordsOnce": "These passwords are shown once and cannot be retrieved. Save the file, hand them over, and each person must choose their own at first sign-in.",
+    "importDownload": "Download as a spreadsheet"
   },
   "academicAdmin": {
     "title": "Academic structure",
@@ -948,6 +961,23 @@
     "reason": "Reason",
     "reasonHint": "Recorded with the change, for whoever reads the log later.",
     "save": "Save settings",
-    "saved": "Saved. These apply from now, to everybody."
+    "saved": "Saved. These apply from now, to everybody.",
+    "aiStatusTitle": "The model",
+    "aiStatusBody": "Every AI feature here is advisory, so \"not configured\" is something the interface reports rather than an error. That makes a genuine failure — a wrong model name, a service account without the role — look exactly the same from the outside. This is where the two are told apart.",
+    "aiOn": "Configured",
+    "aiOff": "Not configured",
+    "aiOffHint": "Run scripts/enable-ai.sh on the deployment to turn the model on. The platform works without it.",
+    "aiTransport": "Reached by",
+    "aiVertex": "Vertex AI, runtime service account",
+    "aiApiKey": "API key",
+    "aiModel": "Model",
+    "aiLocation": "Region",
+    "aiProbe": "Test the model",
+    "aiProbing": "Asking…",
+    "aiProbeCost": "Asks the model one trivial question, through the same gateway every other call uses. It counts as one call against the month's budget.",
+    "aiProbeOk": "{model} answered \"{answer}\" in {ms}ms, using {tokens} tokens.",
+    "aiProbeNotConfigured": "No model is configured for this deployment, so nothing was called.",
+    "aiProbeBudget": "The month's budget of {budget} calls is spent, so nothing was called.",
+    "aiProbeFailed": "The model was called and the call failed. The reply is below, exactly as it came back."
   }
 }
