@@ -5,6 +5,10 @@
 # Chạy một lần cho mỗi project. Script này:
 #   1. Bật Vertex AI API
 #   2. Cấp quyền gọi mô hình cho service account của Cloud Run
+#
+# Script này CHỈ làm những việc mà chỉ gcloud mới làm được. Việc bật/tắt mô
+# hình nằm trong app, vì nó không cần bí mật nào - và vì một biến môi trường
+# thì lần deploy sau sẽ xoá mất.
 #   3. Bật AI trên dịch vụ Cloud Run đang chạy
 #
 # Không có bí mật nào phải lưu: Cloud Run dùng chính service account của nó,
@@ -45,22 +49,17 @@ gcloud projects add-iam-policy-binding "$PROJECT_ID" \
   --role="roles/aiplatform.user" --condition=None --quiet >/dev/null
 echo "  $RUNTIME_SA"
 
-echo "▶ [3/3] Bật AI trên dịch vụ đang chạy..."
-gcloud run services update "$SERVICE" \
-  --project "$PROJECT_ID" \
-  --region "$REGION" \
-  --update-env-vars "VERTEX_AI_ENABLED=true,VERTEX_AI_LOCATION=${AI_LOCATION},AI_MODEL=${AI_MODEL}" \
-  --quiet
-
+echo "▶ [3/3] Xong phần cần gcloud."
 echo
 echo "════════════════════════════════════════════════════════"
-echo "  Đã bật AI."
+echo "  Dự án đã sẵn sàng gọi mô hình. Còn một bước cuối, trong app:"
 echo
-echo "  Kiểm tra: mở màn hình chấm điểm của một nhóm."
-echo "  Thẻ \"Mô hình đã đọc được gì\" phải có nút yêu cầu đọc tài liệu"
-echo "  thay vì dòng chữ báo chưa cấu hình."
+echo "    Quản trị → Hệ thống → thẻ \"Mô hình\" → bấm \"Bật mô hình\""
 echo
-echo "  Tắt lại bất cứ lúc nào:"
-echo "    gcloud run services update $SERVICE --region $REGION \\"
-echo "      --update-env-vars VERTEX_AI_ENABLED=false"
+echo "  Công tắc đó nằm trong cơ sở dữ liệu, không phải biến môi trường,"
+echo "  nên không lần deploy nào tắt được nó. Trước đây nó là biến môi"
+echo "  trường và mỗi lần deploy lại xoá mất, lặng lẽ."
+echo
+echo "  Cùng chỗ đó có nút \"Thử gọi mô hình\" để kiểm ngay, và nút tắt"
+echo "  khi cần."
 echo "════════════════════════════════════════════════════════"

@@ -28,7 +28,8 @@ const {
   suggestQuestions,
   AiNotConfiguredError,
 } = await import('@casestudyhub/core');
-const { COLLECTIONS, DEFAULT_PRESENTATION_POLICY } = await import('@casestudyhub/shared');
+const { COLLECTIONS, DEFAULT_SYSTEM_SETTINGS, DEFAULT_PRESENTATION_POLICY } =
+  await import('@casestudyhub/shared');
 
 const CLASS_ID = 'AI-A01';
 const ASSIGNMENT_ID = 'AI-A1';
@@ -224,11 +225,11 @@ afterAll(async () => {
 });
 
 describe('a deployment with no model configured', () => {
-  it('reports itself as unconfigured rather than breaking', () => {
-    // Nothing in the emulator environment sets GEMINI_API_KEY or turns Vertex
-    // on, which is exactly the state a fresh deployment is in.
-    expect(readGeminiConfig({})).toBeNull();
-    expect(aiIsAvailable()).toBe(false);
+  it('reports itself as unconfigured rather than breaking', async () => {
+    // Nothing sets GEMINI_API_KEY and the switch is off, which is exactly the
+    // state a fresh deployment is in.
+    expect(readGeminiConfig(DEFAULT_SYSTEM_SETTINGS, {})).toBeNull();
+    expect(await aiIsAvailable()).toBe(false);
   });
 
   it('refuses the request with a message the interface can translate', async () => {
@@ -241,12 +242,13 @@ describe('a deployment with no model configured', () => {
   });
 
   it('turns on with an API key, and with Vertex only when asked explicitly', () => {
-    expect(readGeminiConfig({ GEMINI_API_KEY: 'k' })?.transport).toBe('apiKey');
+    const off = DEFAULT_SYSTEM_SETTINGS;
+    const on = { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: true };
+
+    expect(readGeminiConfig(off, { GEMINI_API_KEY: 'k' })?.transport).toBe('apiKey');
     // A project id alone is not consent: every Cloud Run deployment has one.
-    expect(readGeminiConfig({ GOOGLE_CLOUD_PROJECT: 'p' })).toBeNull();
-    expect(
-      readGeminiConfig({ GOOGLE_CLOUD_PROJECT: 'p', VERTEX_AI_ENABLED: 'true' })?.transport,
-    ).toBe('vertex');
+    expect(readGeminiConfig(off, { GOOGLE_CLOUD_PROJECT: 'p' })).toBeNull();
+    expect(readGeminiConfig(on, { GOOGLE_CLOUD_PROJECT: 'p' })?.transport).toBe('vertex');
   });
 });
 

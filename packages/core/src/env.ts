@@ -18,15 +18,16 @@ const serverEnvSchema = z.object({
    */
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
   /**
-   * The model, turned on one of two ways. On Cloud Run, VERTEX_AI_ENABLED
-   * uses the runtime service account and there is no secret to manage;
-   * GEMINI_API_KEY is the quicker route before the Vertex AI API is enabled.
-   * With neither set, every AI feature reports itself as not configured and
-   * the rest of the platform is unaffected.
+   * An API key is a credential, so it belongs in the environment and takes
+   * precedence over everything else. The Vertex route needs no secret - a
+   * switch, a model and a region - and lives in the platform settings
+   * instead, where a deploy cannot reach it.
+   *
+   * With neither, every AI feature reports itself as not configured and the
+   * rest of the platform is unaffected.
    */
   GEMINI_API_KEY: z.string().optional(),
-  VERTEX_AI_ENABLED: z.enum(['true', 'false']).optional(),
-  VERTEX_AI_LOCATION: z.string().optional(),
+  /** Overrides the model name for the API key route only. */
   AI_MODEL: z.string().optional(),
 });
 

@@ -146,7 +146,7 @@ export async function evaluateSubmission(
     'List in "gaps" anything the rubric asks for that the documents do not contain.',
   ].join('\n');
 
-  const provider = getAiProvider();
+  const provider = await getAiProvider();
   const result = await provider.generate({
     system: SYSTEM_PROMPT,
     prompt,

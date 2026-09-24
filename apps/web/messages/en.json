@@ -978,6 +978,9 @@
     "aiProbeOk": "{model} answered \"{answer}\" in {ms}ms, using {tokens} tokens.",
     "aiProbeNotConfigured": "No model is configured for this deployment, so nothing was called.",
     "aiProbeBudget": "The month's budget of {budget} calls is spent, so nothing was called.",
-    "aiProbeFailed": "The model was called and the call failed. The reply is below, exactly as it came back."
+    "aiProbeFailed": "The model was called and the call failed. The reply is below, exactly as it came back.",
+    "aiTurnOn": "Turn the model on",
+    "aiTurnOff": "Turn the model off",
+    "aiToggleHint": "Takes effect at once, for everybody. Vertex AI needs no secret — only this switch — so no deploy can change it and no deploy can undo it."
   }
 }
