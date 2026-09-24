@@ -20,6 +20,10 @@ PROJECT_ID="${PROJECT_ID:-casestudy1-509414}"
 REGION="${REGION:-asia-southeast1}"
 WEB_APP_NAME="${WEB_APP_NAME:-CaseStudy Hub Web}"
 SECRET_NAME="${SECRET_NAME:-firebase-web-config}"
+# A bucket name with dots would be treated as a domain and need verification,
+# so the platform uses a plain name. Nothing depends on the Firebase default
+# bucket: the code takes the name from FIREBASE_STORAGE_BUCKET.
+BUCKET_NAME="${BUCKET_NAME:-${PROJECT_ID}-files}"
 RUNTIME_SA_ID="${RUNTIME_SA_ID:-casestudyhub-runtime}"
 
 FIREBASE_API="https://firebase.googleapis.com/v1beta1"
@@ -73,17 +77,18 @@ print(node if not isinstance(node, (dict, list)) else json.dumps(node))
 }
 
 # ---------------------------------------------------------------------------
-echo "▶ [1/6] Bật API (lần đầu mất 1–2 phút)..."
+echo "▶ [1/7] Bật API (lần đầu mất 1–2 phút)..."
 gcloud services enable \
   firebase.googleapis.com \
   identitytoolkit.googleapis.com \
   firestore.googleapis.com \
+  storage.googleapis.com \
   secretmanager.googleapis.com \
   cloudresourcemanager.googleapis.com \
   --quiet
 
 # ---------------------------------------------------------------------------
-echo "▶ [2/6] Thêm project vào Firebase..."
+echo "▶ [2/7] Thêm project vào Firebase..."
 EXISTING_FIREBASE="$(api_call GET "${FIREBASE_API}/projects/${PROJECT_ID}")"
 if [[ -n "$(json_get "$EXISTING_FIREBASE" projectId)" ]]; then
   echo "  (đã là Firebase project, bỏ qua)"
@@ -94,7 +99,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-echo "▶ [3/6] Tạo Cloud Firestore (Native mode, $REGION)..."
+echo "▶ [3/7] Tạo Cloud Firestore (Native mode, $REGION)..."
 if gcloud firestore databases describe --database='(default)' >/dev/null 2>&1; then
   echo "  (đã có, bỏ qua)"
 else
@@ -105,7 +110,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-echo "▶ [4/6] Bật đăng nhập Email/Password..."
+echo "▶ [4/7] Bật đăng nhập Email/Password..."
 api_call POST "${IDENTITY_API}/projects/${PROJECT_ID}/identityPlatform:initializeAuth" '{}' >/dev/null
 AUTH_CONFIG="$(api_call PATCH \
   "${IDENTITY_API}/projects/${PROJECT_ID}/config?updateMask=signIn.email.enabled,signIn.email.passwordRequired" \
@@ -119,7 +124,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-echo "▶ [5/6] Tạo Firebase Web App và lưu cấu hình..."
+echo "▶ [5/7] Tạo Firebase Web App và lưu cấu hình..."
 WEB_APPS="$(api_call GET "${FIREBASE_API}/projects/${PROJECT_ID}/webApps")"
 APP_ID="$(json_get "$WEB_APPS" apps.appId)"
 
@@ -158,7 +163,20 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-echo "▶ [6/6] Tạo service account cho Cloud Run..."
+echo "▶ [6/7] Tạo kho lưu tài liệu (Cloud Storage)..."
+if gcloud storage buckets describe "gs://${BUCKET_NAME}" >/dev/null 2>&1; then
+  echo "  (đã có, bỏ qua)"
+else
+  gcloud storage buckets create "gs://${BUCKET_NAME}" \
+    --location="$REGION" \
+    --uniform-bucket-level-access \
+    --public-access-prevention \
+    --quiet
+fi
+echo "  gs://${BUCKET_NAME}"
+
+# ---------------------------------------------------------------------------
+echo "▶ [7/7] Tạo service account cho Cloud Run..."
 RUNTIME_SA="${RUNTIME_SA_ID}@${PROJECT_ID}.iam.gserviceaccount.com"
 if gcloud iam service-accounts describe "$RUNTIME_SA" >/dev/null 2>&1; then
   echo "  (đã có, bỏ qua)"
@@ -167,7 +185,8 @@ else
     --display-name="CaseStudy Hub Cloud Run runtime" --quiet
 fi
 
-for ROLE in roles/datastore.user roles/firebaseauth.admin roles/secretmanager.secretAccessor; do
+for ROLE in roles/datastore.user roles/firebaseauth.admin roles/secretmanager.secretAccessor \
+            roles/storage.objectAdmin; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${RUNTIME_SA}" \
     --role="$ROLE" --condition=None --quiet >/dev/null
@@ -177,6 +196,8 @@ echo "  $RUNTIME_SA"
 echo
 echo "════════════════════════════════════════════════════════"
 echo "  Firebase đã sẵn sàng."
+echo
+echo "  Kho tài liệu: gs://${BUCKET_NAME}"
 echo
 echo "  Bước tiếp theo — deploy bản mới:"
 echo "    bash scripts/deploy-cloudshell.sh"

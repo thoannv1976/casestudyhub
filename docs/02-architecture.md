@@ -14,7 +14,7 @@ Cloud Run: casestudyhub-web
         │
         ├── Firebase Authentication      danh tính + custom claims (role)
         ├── Cloud Firestore              dữ liệu nghiệp vụ, kiểm tra quyền lần 2
-        ├── Cloud Storage                học liệu và bài nộp (signed URL)
+        ├── Cloud Storage                học liệu và bài nộp (đi qua server)
         └── Secret Manager               API key
         │
         ▼ (Phase 3)
@@ -73,6 +73,22 @@ Hệ quả:
   không bao giờ bị tính lại sai (acceptance test số 12).
 - Mọi điểm đều giải thích được: `ScoreBreakdown` ghi rõ điểm thô, mức phạt, phần
   bị mất, trọng số và version policy đã dùng.
+
+## File không bao giờ public
+
+Học liệu và bài nộp nằm trong một bucket bật `public-access-prevention`, và
+**mọi lượt tải đều đi qua một route handler** kiểm tra quyền trước khi trả byte
+đầu tiên: sinh viên chỉ đọc được case đã công bố.
+
+Cách còn lại là phát signed URL. Nhanh hơn và đỡ tốn băng thông Cloud Run, nhưng
+một khi đã phát ra thì đường link đó tự nó là quyền truy cập — ai có link cũng
+đọc được, kể cả người ngoài học phần. Với tài liệu học thuật và bài nộp của sinh
+viên, đánh đổi đó không đáng. Khi băng thông thành vấn đề thì đổi sang signed URL
+có thời hạn ngắn, và chỗ phải sửa chỉ nằm trong `packages/core/src/cases/`.
+
+Hệ quả kỹ thuật: file được nạp vào bộ nhớ của request handler, nên nền tảng đặt
+trần **32 MB** cho mỗi file, thấp hơn mức chính sách học phần cho phép. Muốn
+nâng trần thì phải chuyển sang resumable upload trước.
 
 ## i18n
 

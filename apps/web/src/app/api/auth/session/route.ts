@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { sessionRequestSchema } from '@casestudyhub/shared';
 import { SESSION_COOKIE_NAME, SESSION_MAX_AGE_MS, createSessionCookie } from '@casestudyhub/core';
+import { secureCookieFlag } from '@/lib/api/cookies';
 import { respondWithError } from '@/lib/api/respond';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
       name: SESSION_COOKIE_NAME,
       value: cookie,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: secureCookieFlag(),
       sameSite: 'lax',
       path: '/',
       maxAge: SESSION_MAX_AGE_MS / 1000,
@@ -43,7 +44,7 @@ export async function DELETE() {
       name: SESSION_COOKIE_NAME,
       value: '',
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: secureCookieFlag(),
       sameSite: 'lax',
       path: '/',
       maxAge: 0,

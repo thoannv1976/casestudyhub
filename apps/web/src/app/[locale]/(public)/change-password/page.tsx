@@ -35,7 +35,7 @@ export default async function ChangePasswordPage({
   const t = await getTranslations('password');
 
   return (
-    <div className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
+    <main id="main-content" className="mx-auto w-full max-w-md px-4 py-12 sm:px-6">
       <h1 className="text-2xl font-semibold tracking-tight">{t('title')}</h1>
       <p className="text-muted mt-2 text-sm">{t('subtitle')}</p>
 
@@ -48,6 +48,6 @@ export default async function ChangePasswordPage({
       <div className="surface-card mt-6 rounded-xl p-6">
         <ChangePasswordForm email={user.email} />
       </div>
-    </div>
+    </main>
   );
 }

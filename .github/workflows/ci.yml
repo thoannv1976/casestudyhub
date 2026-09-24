@@ -88,6 +88,48 @@ jobs:
         if: failure()
         run: docker logs web || true
 
+  e2e:
+    name: End-to-end smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    # Drives the production build through a browser against the Firebase
+    # Emulator. This is the only layer that catches a fault which appears only
+    # once Next.js splits the server code into chunks -- exactly how staff
+    # account creation broke in production while every other check stayed green.
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      # The Firebase emulators are Java processes.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Build and run the end-to-end suite
+        run: npm run test:e2e
+
+      - name: Upload the failure report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   rules:
     name: Firestore security rules
     runs-on: ubuntu-latest

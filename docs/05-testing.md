@@ -33,7 +33,7 @@ npm test -- grading   # lọc theo tên file
 | 11  | Hai sinh viên cùng join nhóm gần đầy              | Integration (transaction) | 4            | ⏳         |
 | 12  | Đổi rubric không làm sai lệch điểm đã công bố     | Unit                      | 1            | ✅         |
 
-## Unit test — 87 test
+## Unit test — 113 test
 
 **Policy engine & tính điểm** (`packages/shared/src/__tests__/grading.test.ts`)
 
@@ -104,6 +104,71 @@ Excel thực sự xuất ra:
   lộ thông tin nội bộ.
 - Biến môi trường thiếu thì báo rõ tên biến thay vì lỗi mơ hồ.
 
+## Kiểm thử đầu-cuối (E2E)
+
+```bash
+npm run test:e2e
+```
+
+Lệnh này build ứng dụng với cấu hình trỏ vào emulator, bật Firebase Emulator,
+tạo sẵn một tài khoản quản trị, rồi cho Playwright điều khiển trình duyệt chạy
+trọn một câu chuyện. Toàn bộ mất khoảng 15 giây.
+
+**Vì sao phải chạy trên bản build production, không phải `next dev`:** lỗi 500
+khi tạo tài khoản giảng viên chỉ xuất hiện khi Next.js chia mã server thành
+nhiều chunk — điều `next dev` không làm. Toàn bộ 87 unit test và 30 rules test
+đều xanh trong khi production hỏng. E2E là lớp duy nhất bắt được loại lỗi đó.
+
+### 33 kịch bản
+
+1. Dịch vụ trả lời `/api/health` trước khi thử bất cứ điều gì khác.
+2. Sinh viên đăng ký và vào được trang làm việc của mình.
+3. **Không đăng ký được hai lần cùng một mã sinh viên** — và lần hỏng không để
+   lại tài khoản rác.
+4. Quản trị viên tạo năm học → học kỳ → học phần → lớp.
+5. **Quản trị viên tạo tài khoản giảng viên kèm mật khẩu tạm** — chính là thao
+   tác đã trả về 500 trên production.
+6. Mật khẩu tạm **không vào được trang nào khác**: gõ thẳng địa chỉ khác vẫn bị
+   đẩy về trang đổi mật khẩu; đổi xong mới vào được.
+7. Mật khẩu tạm cũ **hết tác dụng** ngay sau khi đổi.
+8. Sinh viên nhập mã lớp và vào được lớp.
+9. Sinh viên **không vào được cùng một lớp hai lần**.
+10. Giảng viên thấy đúng sinh viên đó trong danh sách lớp.
+11. Sinh viên gõ thẳng địa chỉ trang quản trị thì **bị từ chối** và không thấy
+    dữ liệu người dùng nào.
+12. Khách chưa đăng nhập bị đẩy về trang đăng nhập.
+
+**Nhóm và phân vai (PR 5):** giảng viên tạo nhóm; sinh viên vào nhóm; không giữ
+hai nhóm trong một lớp; ba sinh viên nữa vào cho đủ bốn; nhóm 4/4 không nhận
+thêm; **phân vai tự động cho nhóm 4 người ra đúng R1+R5, R2, R3, R4+R6**; nhóm
+chưa đủ người thì không phân vai được; sinh viên thấy vai của mình.
+
+**Thư viện case (PR 6):** thêm case và tải PDF thật lên; file giả mạo định dạng
+bị từ chối; bản nháp sinh viên không thấy; công bố xong sinh viên đọc được và
+tải được đúng content-type.
+
+**Giao bài và nộp bài (PR 7):** giao case cho nhóm; nhóm thấy phải nộp gì và nộp
+slide; **nộp lại tạo phiên bản 2 mà phiên bản 1 vẫn còn**; sai định dạng bị từ
+chối; không có phiên đăng nhập thì không tải được file; giảng viên thấy tiến độ.
+
+**Bảo mật và tiếp cận (PR 8):** sinh viên **không đọc được lớp mình không thuộc**
+(403 với phiên hợp lệ, không phải chỉ 401 với khách); bàn phím nhảy được tới nội
+dung chính; mỗi trang khai báo đúng ngôn ngữ.
+
+## Kiểm thử đồng thời (PR 5)
+
+`firebase/tests/group-concurrency.test.ts` chạy code nghiệp vụ thật qua Admin
+SDK trên emulator, vì Security Rules **không diễn đạt được** quy tắc "chỉ một
+người lấy được chỗ cuối" — đó là việc của transaction, và cách kiểm chứng trung
+thực duy nhất là cho nhiều sinh viên cùng với tay vào một chỗ.
+
+- Hai sinh viên cùng lúc giành chỗ cuối → **đúng một người được**, `memberCount`
+  bằng 1 (acceptance test 11).
+- Sáu sinh viên cùng lúc vào nhóm 4 chỗ → **đúng 4 người được**.
+- Một sinh viên bấm vào hai nhóm cùng lúc → chỉ một nhóm nhận (acceptance test 2).
+- Vào nhóm thứ hai tuần tự cũng bị từ chối.
+- Nhóm đã khóa không nhận thêm ai; nhóm do giảng viên xếp thì sinh viên không tự vào được.
+
 ## Kiểm thử Security Rules
 
 ```bash
@@ -117,7 +182,7 @@ chưa có); CI đã cài sẵn.
 Nguyên tắc: mỗi collection được mở trong rules phải có test chứng minh cả hai
 chiều — người đúng quyền ghi được, người sai quyền bị chặn.
 
-### Đã có — 30 test rules
+### Đã có — 54 test rules và test đồng thời
 
 **`users`** — sinh viên đọc được hồ sơ của chính mình nhưng **không** đọc được
 hồ sơ người khác và không liệt kê được toàn bộ tài khoản; giảng viên đọc và liệt

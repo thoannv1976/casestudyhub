@@ -4,6 +4,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { getSessionUser } from '@casestudyhub/core/auth/session';
 import { AppNav, type NavItem } from '@/components/app-nav';
 import { LocaleSwitcher } from '@/components/locale-switcher';
+import { NotificationBell } from '@/components/notification-bell';
 import { SignOutButton } from '@/components/sign-out-button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { Link } from '@/i18n/navigation';
@@ -37,10 +38,15 @@ export default async function AppLayout({
   const items: NavItem[] = [{ href: '/dashboard', labelKey: 'dashboard' }];
   if (user.role === 'student') {
     items.push({ href: '/classes', labelKey: 'myClasses' });
+    items.push({ href: '/portfolio', labelKey: 'portfolio' });
   }
   if (user.role === 'lecturer' || user.role === 'admin') {
     items.push({ href: '/teaching', labelKey: 'teaching' });
+    // The academic rules themselves, for whoever may author them. The page
+    // checks the permission again; this only decides whether to offer it.
+    items.push({ href: '/framework', labelKey: 'framework' });
   }
+  items.push({ href: '/cases', labelKey: 'caseLibrary' });
   items.push({ href: '/profile', labelKey: 'profile' });
   if (user.role === 'admin') {
     items.push({ href: '/admin', labelKey: 'admin' });
@@ -57,9 +63,13 @@ export default async function AppLayout({
             >
               CH
             </span>
-            <span className="font-semibold">{tApp('name')}</span>
+            {/* The wordmark stands down on a phone: four controls and a name
+                do not fit in 390px, and the mark alone still says where you
+                are. */}
+            <span className="hidden font-semibold sm:inline">{tApp('name')}</span>
           </Link>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <NotificationBell />
             <LocaleSwitcher />
             <ThemeToggle />
             <SignOutButton />
@@ -71,7 +81,9 @@ export default async function AppLayout({
         <aside className="hidden w-52 shrink-0 md:block">
           <AppNav items={items} variant="sidebar" />
         </aside>
-        <main className="min-w-0 flex-1 pb-20 md:pb-0">{children}</main>
+        <main id="main-content" className="min-w-0 flex-1 pb-20 md:pb-0">
+          {children}
+        </main>
       </div>
 
       <div className="sticky bottom-0 md:hidden">

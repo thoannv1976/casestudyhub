@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { classCodeSchema, localeSchema } from './identity';
+import { presentationRoleIdSchema } from './roles';
 
 /** University -> Academic year -> Semester -> Course -> Class (SRS 3.2). */
 
@@ -85,6 +86,24 @@ export const GROUP_FORMATION_MODES = [
 ] as const;
 export const groupFormationModeSchema = z.enum(GROUP_FORMATION_MODES);
 export type GroupFormationMode = z.infer<typeof groupFormationModeSchema>;
+
+/**
+ * One student in one group. The document id is `classId__studentUid`, which is
+ * what enforces the rule that a student belongs to at most one group per class
+ * (SRS 7.2): two simultaneous joins cannot both create it.
+ */
+export const groupMemberSchema = z.object({
+  id: z.string().min(1),
+  groupId: z.string().min(1),
+  classId: z.string().min(1),
+  studentUid: z.string().min(1),
+  studentId: z.string().min(1),
+  fullName: z.string().min(1),
+  /** Presentation roles this member owns; a small group may own two. */
+  roleIds: z.array(presentationRoleIdSchema).default([]),
+  isLeader: z.boolean().default(false),
+});
+export type GroupMember = z.infer<typeof groupMemberSchema>;
 
 export const groupSchema = z.object({
   id: z.string().min(1),

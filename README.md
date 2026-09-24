@@ -96,6 +96,16 @@ Cấp quyền quản trị cho tài khoản đầu tiên (sau khi đã đăng k�
 bash scripts/grant-role.sh <email> admin
 ```
 
+Tạo sẵn một lớp demo từ chính case Amazon trong `docs/source/`:
+
+```bash
+node scripts/seed-demo.mjs <email-giảng-viên>
+```
+
+Lệnh này tạo năm học 2026–2027, học kỳ Fall 2026, học phần E-Commerce 2026,
+lớp **ECOM-2026-A01**, case **CASE01 — Amazon** (đã công bố, kèm hai file gốc)
+và 10 nhóm. Chạy lại nhiều lần không tạo bản sao.
+
 ## Nguyên tắc bắt buộc khi viết code
 
 1. **Phân quyền kiểm tra hai lớp** — server-side và Firestore Security Rules.

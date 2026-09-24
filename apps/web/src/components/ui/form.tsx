@@ -40,12 +40,22 @@ const controlClasses =
   'w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm ' +
   'transition-colors focus:border-brand-500 disabled:opacity-60 aria-[invalid=true]:border-red-500';
 
-export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={controlClasses} />;
+/**
+ * A checkbox is not a text field. The classes above stretch a control to the
+ * full width of its container and give it padding and a border, which turns a
+ * checkbox into a tall empty box - and the caller's own `className` used to be
+ * overwritten rather than merged, so passing `h-4 w-4` did nothing about it.
+ */
+const checkboxClasses = 'h-4 w-4 shrink-0 rounded border border-[var(--border-subtle)]';
+
+export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
+  const base =
+    props.type === 'checkbox' || props.type === 'radio' ? checkboxClasses : controlClasses;
+  return <input {...props} className={`${base} ${className}`.trim()} />;
 }
 
-export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={controlClasses} />;
+export function Select({ className = '', ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+  return <select {...props} className={`${controlClasses} ${className}`.trim()} />;
 }
 
 export function Button({
@@ -91,6 +101,9 @@ export function Alert({ tone, children }: { tone: 'error' | 'success'; children:
   return (
     <div
       role={tone === 'error' ? 'alert' : 'status'}
+      // Next.js injects its own role="alert" route announcer, so a test needs a
+      // way to find this element and only this one.
+      data-testid={tone === 'error' ? 'alert-error' : 'alert-success'}
       className={`rounded-lg border px-4 py-3 text-sm ${tones[tone]}`}
     >
       {children}

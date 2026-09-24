@@ -1,15 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import {
   LOCALES,
+  addClassLecturerSchema,
+  answerQuestionSchema,
+  askQuestionSchema,
   changePasswordSchema,
   createClassSchema,
   createCourseSchema,
   createStaffAccountSchema,
+  NOTIFICATION_KINDS,
+  notificationKeyOf,
   joinClassSchema,
   parseStudentRoster,
   profileUpdateSchema,
   registerRequestSchema,
   removeEnrollmentSchema,
+  saveLecturerAssessmentSchema,
   sessionRequestSchema,
 } from '@casestudyhub/shared';
 import en from '../../messages/en.json';
@@ -70,6 +76,20 @@ describe('message catalogues', () => {
   });
 });
 
+describe('every notification kind has a sentence', () => {
+  /**
+   * A kind without a message reaches a student as its own key. That happened
+   * once, because a kind carries a dot and a message key reads a dot as a
+   * namespace - so the bridge between the two is checked here rather than
+   * trusted.
+   */
+  it.each(NOTIFICATION_KINDS)('reads as a sentence in both languages: %s', (kind) => {
+    const key = `notifications.kind.${notificationKeyOf(kind)}`;
+    expect(enKeys.has(key), `${key} missing from en.json`).toBe(true);
+    expect(viKeys.has(key), `${key} missing from vi.json`).toBe(true);
+  });
+});
+
 describe('validation messages are translated', () => {
   /** Collects every message the schema can produce from a fully invalid input. */
   function messagesOf(schema: { safeParse: (value: unknown) => unknown }, input: unknown) {
@@ -112,6 +132,18 @@ describe('validation messages are translated', () => {
       preferredLanguage: 'fr',
     }),
     ...messagesOf(removeEnrollmentSchema, { enrollmentId: 'e1', reason: 'x' }),
+    // The question wall is the one form the whole class types into at once.
+    ...messagesOf(askQuestionSchema, {}),
+    ...messagesOf(askQuestionSchema, { category: 'nope', text: 'hi' }),
+    ...messagesOf(askQuestionSchema, { category: 'critical', text: 'x'.repeat(1001) }),
+    ...messagesOf(answerQuestionSchema, { questionId: 'q1', answerText: 'no' }),
+    // Marking: what the lecturer sees when the form is incomplete.
+    ...messagesOf(saveLecturerAssessmentSchema, {
+      criterionScores: { understanding: 'not a number' },
+      individual: { uid1: { rawScore: 'x' } },
+      latePenaltyWaived: true,
+    }),
+    ...messagesOf(addClassLecturerSchema, { email: 'nope' }),
     // Import problems are shown to the lecturer the same way form errors are.
     ...parseStudentRoster('studentId,email\nSV001,a@x.edu.vn').problems.map((p) => p.messageKey),
     ...parseStudentRoster('').problems.map((p) => p.messageKey),

@@ -7,6 +7,7 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
+import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { studentIdKey } from '../users/registration';
 import type { SessionUser } from '../auth/types';
@@ -299,4 +300,85 @@ export async function importRoster(
   });
 
   return outcome;
+}
+
+/**
+ * A lecturer approves a student waiting in a class set to `approval` mode.
+ *
+ * Only a row a real account is waiting on can be approved: a `pending` row that
+ * came from an imported list holds a place for somebody who has not signed up
+ * yet, and approving it would put a student in the class who cannot sign in.
+ */
+export async function approveEnrollment(
+  actor: SessionUser,
+  classId: string,
+  enrollmentIdValue: string,
+): Promise<void> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.classEnrollments).doc(enrollmentIdValue);
+
+  await db.runTransaction(async (tx) => {
+    const snapshot = await tx.get(ref);
+    if (!snapshot.exists) throw new AppError('NOT_FOUND', 'errors.enrollmentNotFound');
+    if (snapshot.get('classId') !== classId) {
+      throw new AppError('FORBIDDEN', 'errors.forbidden');
+    }
+
+    const status = snapshot.get('status') as string;
+    if (status === 'active') {
+      throw new AppError('CONFLICT', 'errors.alreadyApproved');
+    }
+    if (status === 'removed') {
+      throw new AppError('POLICY_VIOLATION', 'errors.cannotApproveRemoved');
+    }
+    if (!snapshot.get('studentUid')) {
+      throw new AppError('POLICY_VIOLATION', 'errors.nothingToApprove');
+    }
+
+    tx.update(ref, {
+      status: 'active',
+      approvedAt: FieldValue.serverTimestamp(),
+      approvedByUid: actor.uid,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(db.collection(COLLECTIONS.classes).doc(classId), {
+      studentCount: FieldValue.increment(1),
+    });
+  });
+
+  // Until now a student who asked to join a class by approval had no way of
+  // learning they had been let in, short of opening the class list again and
+  // again.
+  // The name comes from the class, not the enrolment row: an enrolment stores
+  // who joined what, not what the class is called, and a class renamed since
+  // would otherwise be announced under its old name.
+  const [approved, classSnapshot] = await Promise.all([
+    ref.get(),
+    db.collection(COLLECTIONS.classes).doc(classId).get(),
+  ]);
+  await notify({
+    recipientUids: [approved.get('studentUid') as string],
+    kind: 'enrollment.approved',
+    params: { className: (classSnapshot.get('className') as string | undefined) ?? classId },
+    href: `/classes/${classId}`,
+  });
+
+  await writeAuditLog({
+    action: 'class.student_approved',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.classEnrollments}/${enrollmentIdValue}`,
+    classId,
+    after: { status: 'active' },
+  });
+}
+
+/** Students waiting for a decision: signed up, not yet let in. */
+export function pendingApprovals(roster: readonly ClassEnrollment[]): ClassEnrollment[] {
+  return roster.filter((row) => row.status === 'pending' && Boolean(row.studentUid));
+}
+
+/** On the faculty list but never signed up - nothing to approve yet. */
+export function awaitingSignUp(roster: readonly ClassEnrollment[]): ClassEnrollment[] {
+  return roster.filter((row) => row.status === 'pending' && !row.studentUid);
 }

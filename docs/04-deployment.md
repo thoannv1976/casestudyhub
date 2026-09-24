@@ -1,18 +1,41 @@
 # Triển khai
 
-## Quy trình
+## Hai đường deploy
+
+### Từ Cloud Shell — đường đang dùng
+
+```bash
+bash scripts/setup-firebase.sh      # một lần cho mỗi project
+bash scripts/deploy-cloudshell.sh   # mỗi lần ra bản mới
+```
+
+`deploy-cloudshell.sh` chạy bảy bước, và **bước 5 đẩy Security Rules cùng
+Firestore index trước khi build image**. Đó là chủ ý: emulator phục vụ mọi truy
+vấn mà không cần index, nên nếu rules và index không đi cùng bản code cần chúng
+thì toàn bộ test vẫn xanh trong khi production hỏng. Index được đẩy trước để kịp
+xây trong lúc image build.
+
+Bước này cần `firebase-tools` đã đăng nhập:
+
+```bash
+npx --yes firebase-tools@latest login --no-localhost
+```
+
+Nếu chưa đăng nhập, script **dừng lại** thay vì deploy một ứng dụng có truy vấn
+không chạy được. Khi biết chắc rules và index đã đúng, bỏ qua bằng
+`SKIP_FIRESTORE=1 bash scripts/deploy-cloudshell.sh`.
+
+### Từ GitHub Actions — chưa bật
 
 ```
 push lên main
-   └─► GitHub Actions: CI (format, lint, typecheck, test, build)
-   └─► GitHub Actions: Deploy
-          ├─ xác thực Google qua Workload Identity Federation (không dùng file key)
-          ├─ docker build -f infra/Dockerfile
-          ├─ push image lên Artifact Registry (asia-southeast1)
-          ├─ gcloud run deploy casestudyhub-web
-          └─ kiểm tra GET /api/health trên revision mới
-   └─► GitHub Actions: Deploy rules (khi thư mục firebase/ đổi)
+   └─► CI (format, lint, typecheck, test, build image, E2E)
+   └─► Deploy            ← cần secret GCP_WORKLOAD_IDENTITY_PROVIDER
+   └─► Deploy rules      ← cần secret GCP_DEPLOY_SERVICE_ACCOUNT
 ```
+
+CI chạy trên mọi push. Hai workflow deploy chỉ chạy khi project đã thiết lập
+Workload Identity Federation; chưa có thì deploy bằng Cloud Shell như trên.
 
 Điều kiện: đã làm xong [`01-gcp-setup.md`](./01-gcp-setup.md).
 
@@ -29,13 +52,16 @@ push lên main
 
 ## Biến môi trường
 
-| Biến                      | Nguồn                       | Ghi chú                                |
-| ------------------------- | --------------------------- | -------------------------------------- |
-| `GOOGLE_CLOUD_PROJECT`    | `--set-env-vars` khi deploy |                                        |
-| `FIREBASE_STORAGE_BUCKET` | `--set-env-vars` khi deploy |                                        |
-| `NEXT_PUBLIC_FIREBASE_*`  | build arg của Docker        | nhúng vào bundle trình duyệt lúc build |
-| `GEMINI_API_KEY`          | Secret Manager (Phase 3)    | gắn bằng `--set-secrets`               |
-| Credentials               | không cần                   | Cloud Run cấp qua service account      |
+| Biến                      | Nguồn                       | Ghi chú                                 |
+| ------------------------- | --------------------------- | --------------------------------------- |
+| `GOOGLE_CLOUD_PROJECT`    | `--set-env-vars` khi deploy |                                         |
+| `FIREBASE_STORAGE_BUCKET` | `--set-env-vars` khi deploy |                                         |
+| `NEXT_PUBLIC_FIREBASE_*`  | build arg của Docker        | nhúng vào bundle trình duyệt lúc build  |
+| `VERTEX_AI_ENABLED`       | `scripts/enable-ai.sh`      | bật AI, không cần bí mật nào            |
+| `VERTEX_AI_LOCATION`      | `scripts/enable-ai.sh`      | mặc định `global`                       |
+| `AI_MODEL`                | `scripts/enable-ai.sh`      | mặc định `gemini-2.5-flash`             |
+| `GEMINI_API_KEY`          | Secret Manager              | cách thay thế; gắn bằng `--set-secrets` |
+| Credentials               | không cần                   | Cloud Run cấp qua service account       |
 
 `NEXT_PUBLIC_*` là giá trị công khai (chúng định danh project Firebase, không cấp
 quyền truy cập). Thứ bảo vệ dữ liệu là Authentication và Security Rules.

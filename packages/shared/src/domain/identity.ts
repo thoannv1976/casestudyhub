@@ -74,6 +74,7 @@ export const PERMISSIONS = [
   'grade.publish',
   'grade.viewClass',
   'grade.viewPlatform',
+  'policy.author',
   'ai.configure',
   'system.configure',
   'audit.read',
@@ -92,8 +93,14 @@ export const ROLE_PERMISSIONS: Readonly<Record<UserRole, readonly Permission[]>>
     'case.publish',
     'assignment.manage',
     'question.ask',
+    // Running the clock is operational, not academic: an admin supporting a
+    // class has to be able to start a session when the lecturer cannot. What
+    // stays out of their hands is the judgement - drafting and publishing a
+    // grade remain the lecturer's alone.
+    'presentation.control',
     'grade.viewClass',
     'grade.viewPlatform',
+    'policy.author',
     'ai.configure',
     'system.configure',
     'audit.read',
@@ -110,6 +117,10 @@ export const ROLE_PERMISSIONS: Readonly<Record<UserRole, readonly Permission[]>>
     'grade.draft',
     'grade.publish',
     'grade.viewClass',
+    // A lecturer may author a framework for their own course. Adding a
+    // version to a framework other classes already run under is a
+    // platform-wide change, so that stays with `system.configure`.
+    'policy.author',
   ],
   student: ['group.join', 'submission.create', 'question.ask', 'peerReview.submit'],
 };
