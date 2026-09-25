@@ -23,7 +23,8 @@ export const deliverableSchema = z.object({
   key: z.string().min(1),
   formats: z.array(deliverableFormatSchema).min(1),
   required: z.boolean(),
-  maxFileSizeMb: z.number().positive(),
+  /** Zero for a deliverable that is a link: there is no file to size. */
+  maxFileSizeMb: z.number().nonnegative(),
 });
 export type Deliverable = z.infer<typeof deliverableSchema>;
 
@@ -256,6 +257,16 @@ export const DEFAULT_PRESENTATION_POLICY: PresentationPolicy = {
       formats: ['PDF', 'DOCX', 'FORM'],
       required: true,
       maxFileSizeMb: 10,
+    },
+    {
+      // Recorded on a phone and put on YouTube. Asking a group to push a
+      // gigabyte through this platform as well would be asking them to do the
+      // same work twice, so this one is satisfied by a link.
+      id: 'presentation-video',
+      key: 'deliverables.presentationVideo',
+      formats: ['LINK'],
+      required: false,
+      maxFileSizeMb: 0,
     },
     {
       id: 'case-analysis-report',

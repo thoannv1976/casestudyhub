@@ -127,7 +127,8 @@
     "roleAllocationSheet": "Phiếu phân vai",
     "referenceList": "Danh mục tài liệu tham khảo",
     "aiUsageDisclosure": "Phiếu khai báo sử dụng AI",
-    "caseAnalysisReport": "Báo cáo phân tích tình huống"
+    "caseAnalysisReport": "Báo cáo phân tích tình huống",
+    "presentationVideo": "Video thuyết trình (link)"
   },
   "slides": {
     "cover": "Trang bìa: tên case, tên nhóm, thành viên và vai trò",
@@ -296,7 +297,11 @@
     "groupAlreadyChose": "Nhóm bạn đã chọn một case rồi. Muốn đổi thì nhờ giảng viên thu hồi lựa chọn cũ.",
     "noGroupYet": "Bạn chưa thuộc nhóm nào, mà case là nhóm chọn chứ không phải một người chọn.",
     "claimNotFound": "Chưa nhóm nào chọn case đó.",
-    "claimAlreadyScheduled": "Case đó đã được giao thành bài. Hãy thu hồi bài giao trước."
+    "claimAlreadyScheduled": "Case đó đã được giao thành bài. Hãy thu hồi bài giao trước.",
+    "deliverableIsNotALink": "Sản phẩm này là file, không phải link.",
+    "linkNotHttps": "Hãy dán địa chỉ https đầy đủ, bắt đầu bằng https://",
+    "linkTooLong": "Địa chỉ đó quá dài để là link tới một video.",
+    "submissionIsALink": "Bài nộp đó là một link, không phải file do nền tảng này giữ."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -603,7 +608,10 @@
     "submitted": "Đã nộp, phiên bản {version}.",
     "submittedLate": "Đã nộp, phiên bản {version}, sau hạn.",
     "uploadFor": "Tải lên {deliverable}",
-    "lateWarning": "Đã quá hạn nộp. Bạn vẫn nộp được, và bài sẽ được ghi nhận là nộp muộn."
+    "lateWarning": "Đã quá hạn nộp. Bạn vẫn nộp được, và bài sẽ được ghi nhận là nộp muộn.",
+    "externalLink": "dẫn ra ngoài",
+    "submitLink": "Nộp link",
+    "linkFor": "Link cho {deliverable}"
   },
   "session": {
     "boardTitle": "Các buổi thuyết trình",

@@ -14,6 +14,9 @@ process.env.FIREBASE_STORAGE_BUCKET ??= 'demo-casestudyhub.appspot.com';
 
 const {
   getDb,
+  submitLink,
+  listSubmissions,
+  readSubmissionFile,
   setCaseSelection,
   claimCase,
   releaseClaim,
@@ -125,6 +128,7 @@ async function wipe() {
     db.collection(COLLECTIONS.groupMembers).where('classId', '==', CLASS_ID).get(),
     db.collection(COLLECTIONS.groups).where('classId', '==', CLASS_ID).get(),
     db.collection(COLLECTIONS.assignments).where('classId', '==', CLASS_ID).get(),
+    db.collection(COLLECTIONS.submissions).where('assignmentId', '==', 'CS-A1').get(),
     db.collection(COLLECTIONS.caseStudies).where('courseId', '==', 'CS-C1').get(),
   ];
   for (const snapshot of await Promise.all(jobs)) {
@@ -309,5 +313,127 @@ describe('the lecturer changing their mind', () => {
     // The lecturer is taking the decision back, not throwing away a week of
     // the groups' reading.
     expect(await listClaims(CLASS_ID)).toHaveLength(1);
+  });
+});
+
+describe('a deliverable handed in as a link', () => {
+  const VIDEO = 'https://www.youtube.com/watch?v=abc123';
+
+  async function seedAssignment() {
+    const presentation = Date.now() + 7 * 24 * 3600_000;
+    await getDb()
+      .collection(COLLECTIONS.assignments)
+      .doc('CS-A1')
+      .set({
+        id: 'CS-A1',
+        classId: CLASS_ID,
+        groupId: GROUP_A,
+        caseStudyId: CASE_ONE,
+        caseVersionId: 'v1',
+        policyId: policy.id,
+        policyVersion: policy.version,
+        rubricVersion: policy.rubric.version,
+        presentationDate: new Date(presentation).toISOString(),
+        submissionDeadline: new Date(presentation - 24 * 3600_000).toISOString(),
+        status: 'submission_open',
+      });
+  }
+
+  it('is stored with the host a reader will see, and no bytes of ours', async () => {
+    await seedAssignment();
+    const submission = await submitLink(inA, GROUP_A, {
+      assignmentId: 'CS-A1',
+      deliverableId: 'presentation-video',
+      url: VIDEO,
+    });
+
+    expect(submission.externalUrl).toBe(VIDEO);
+    expect(submission.fileName).toBe('youtube.com');
+    expect(submission.storagePath).toBeUndefined();
+    expect(submission.versionNumber).toBe(1);
+  });
+
+  it('is versioned like a file: re-recording never overwrites', async () => {
+    await seedAssignment();
+    await submitLink(inA, GROUP_A, {
+      assignmentId: 'CS-A1',
+      deliverableId: 'presentation-video',
+      url: VIDEO,
+    });
+    const second = await submitLink(inA, GROUP_A, {
+      assignmentId: 'CS-A1',
+      deliverableId: 'presentation-video',
+      url: 'https://vimeo.com/999',
+    });
+
+    expect(second.versionNumber).toBe(2);
+    const all = await listSubmissions('CS-A1');
+    expect(all).toHaveLength(2);
+    expect(all.find((row) => row.versionNumber === 1)?.status).toBe('superseded');
+  });
+
+  it('says so rather than handing back an empty file', async () => {
+    await seedAssignment();
+    const submission = await submitLink(inA, GROUP_A, {
+      assignmentId: 'CS-A1',
+      deliverableId: 'presentation-video',
+      url: VIDEO,
+    });
+
+    // An empty buffer would be treated by a caller as a readable document.
+    await expect(readSubmissionFile(submission.id)).rejects.toThrow(/submissionIsALink/);
+  });
+
+  it('refuses a link for a deliverable that is meant to be a file', async () => {
+    await seedAssignment();
+    await expect(
+      submitLink(inA, GROUP_A, {
+        assignmentId: 'CS-A1',
+        deliverableId: 'slides-pdf',
+        url: VIDEO,
+      }),
+    ).rejects.toThrow(/deliverableIsNotALink/);
+  });
+
+  it('refuses an address a browser should not be sent to', async () => {
+    await seedAssignment();
+    for (const url of ['http://youtube.com/watch', 'youtube.com', 'javascript:alert(1)']) {
+      await expect(
+        submitLink(inA, GROUP_A, {
+          assignmentId: 'CS-A1',
+          deliverableId: 'presentation-video',
+          url,
+        }),
+      ).rejects.toThrow(/linkNotHttps/);
+    }
+  });
+
+  it('records the address in the audit log, so a swap after the deadline shows', async () => {
+    await seedAssignment();
+    await submitLink(inA, GROUP_A, {
+      assignmentId: 'CS-A1',
+      deliverableId: 'presentation-video',
+      url: VIDEO,
+    });
+
+    const logs = await getDb()
+      .collection(COLLECTIONS.auditLogs)
+      .where('actorUid', '==', inA.uid)
+      .get();
+    const entry = logs.docs
+      .map((doc) => doc.data())
+      .find((row) => row.action === 'submission.created');
+    expect(entry?.after).toMatchObject({ externalUrl: VIDEO });
+  });
+
+  it('refuses a group handing in against somebody else’s assignment', async () => {
+    await seedAssignment();
+    await expect(
+      submitLink(inB, GROUP_B, {
+        assignmentId: 'CS-A1',
+        deliverableId: 'presentation-video',
+        url: VIDEO,
+      }),
+    ).rejects.toThrow(/notYourAssignment/);
   });
 });

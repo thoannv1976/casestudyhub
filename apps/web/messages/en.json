@@ -127,7 +127,8 @@
     "roleAllocationSheet": "Role allocation sheet",
     "referenceList": "Reference list",
     "aiUsageDisclosure": "AI usage disclosure",
-    "caseAnalysisReport": "Case analysis report"
+    "caseAnalysisReport": "Case analysis report",
+    "presentationVideo": "Presentation video (link)"
   },
   "slides": {
     "cover": "Cover: case, team, members and roles",
@@ -296,7 +297,11 @@
     "groupAlreadyChose": "Your group has already chosen a case. Ask your lecturer to release it if you want to change.",
     "noGroupYet": "You are not in a group yet, and a case is chosen by a group rather than by one person.",
     "claimNotFound": "No group has chosen that case.",
-    "claimAlreadyScheduled": "That case has already been set as an assignment. Withdraw the assignment first."
+    "claimAlreadyScheduled": "That case has already been set as an assignment. Withdraw the assignment first.",
+    "deliverableIsNotALink": "This deliverable is a file, not a link.",
+    "linkNotHttps": "Give a full https address, starting with https://",
+    "linkTooLong": "That address is too long to be a link to a video.",
+    "submissionIsALink": "That submission is a link, not a file this platform holds."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -603,7 +608,10 @@
     "submitted": "Handed in as version {version}.",
     "submittedLate": "Handed in as version {version}, after the deadline.",
     "uploadFor": "Upload {deliverable}",
-    "lateWarning": "The deadline has passed. You can still hand in, and it will be recorded as late."
+    "lateWarning": "The deadline has passed. You can still hand in, and it will be recorded as late.",
+    "externalLink": "leaves this site",
+    "submitLink": "Submit link",
+    "linkFor": "Link for {deliverable}"
   },
   "session": {
     "boardTitle": "Presentations",

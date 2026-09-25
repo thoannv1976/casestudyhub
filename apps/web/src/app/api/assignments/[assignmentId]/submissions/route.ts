@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { MAX_UPLOAD_BYTES } from '@casestudyhub/shared';
-import { AppError, listSubmissions, submitDeliverable } from '@casestudyhub/core';
+import { AppError, listSubmissions, submitDeliverable, submitLink } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { assertCanAccessAssignment } from '@/lib/api/assignment-access';
 import { respondWithError } from '@/lib/api/respond';
@@ -42,11 +42,24 @@ export async function POST(
     const form = await request.formData();
     const file = form.get('file');
     const deliverableId = form.get('deliverableId');
+    const url = form.get('url');
 
-    if (!(file instanceof File)) throw new AppError('VALIDATION_FAILED', 'errors.fileMissing');
     if (typeof deliverableId !== 'string' || deliverableId.length === 0) {
       throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
     }
+
+    // A deliverable satisfied by a link carries no bytes, so the upload rules
+    // below have nothing to check and the link rules apply instead.
+    if (typeof url === 'string' && url.trim().length > 0) {
+      const submission = await submitLink(caller, assignment.groupId, {
+        assignmentId,
+        deliverableId,
+        url,
+      });
+      return NextResponse.json({ submission }, { status: 201 });
+    }
+
+    if (!(file instanceof File)) throw new AppError('VALIDATION_FAILED', 'errors.fileMissing');
     if (file.size > MAX_UPLOAD_BYTES) {
       throw new AppError('VALIDATION_FAILED', 'errors.fileTooLarge', {
         details: { maxMb: Math.floor(MAX_UPLOAD_BYTES / (1024 * 1024)) },

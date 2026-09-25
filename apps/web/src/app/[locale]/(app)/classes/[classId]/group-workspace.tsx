@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Assignment, Deliverable, Submission } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
-import { Alert } from '@/components/ui/form';
+import { Alert, Button, Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
 
 /**
@@ -45,14 +45,16 @@ export function GroupWorkspace({
 
   const deadline = new Date(assignment.submissionDeadline);
 
-  async function upload(deliverableId: string, file: File) {
+  /**
+   * A link and a file take the same road: one endpoint, one version counter,
+   * one late flag. Only what is in the body differs.
+   */
+  async function send(deliverableId: string, body: FormData) {
     setBusy(true);
     setErrorKey(null);
     setErrorDetail(null);
     setNotice(null);
     try {
-      const body = new FormData();
-      body.set('file', file);
       body.set('deliverableId', deliverableId);
 
       const response = await fetch(`/api/assignments/${assignment.id}/submissions`, {
@@ -80,6 +82,18 @@ export function GroupWorkspace({
     } finally {
       setBusy(false);
     }
+  }
+
+  async function upload(deliverableId: string, file: File) {
+    const body = new FormData();
+    body.set('file', file);
+    await send(deliverableId, body);
+  }
+
+  async function submitUrl(deliverableId: string, url: string) {
+    const body = new FormData();
+    body.set('url', url);
+    await send(deliverableId, body);
   }
 
   const versionsOf = (deliverableId: string) =>
@@ -149,12 +163,19 @@ export function GroupWorkspace({
                 <ul className="mt-3 space-y-1 text-sm">
                   {versions.map((submission) => (
                     <li key={submission.id} className="flex flex-wrap items-center gap-2">
+                      {/* A link leaves this platform, so it says where it goes
+                          and opens in its own tab; a file is served by us. */}
                       <a
-                        href={`/api/submissions/${submission.id}/file`}
+                        href={submission.externalUrl ?? `/api/submissions/${submission.id}/file`}
+                        target={submission.externalUrl ? '_blank' : undefined}
+                        rel={submission.externalUrl ? 'noreferrer' : undefined}
                         className="text-brand-600 dark:text-brand-300 underline"
                       >
                         v{submission.versionNumber} · {submission.fileName}
                       </a>
+                      {submission.externalUrl ? (
+                        <span className="text-muted text-xs">{t('externalLink')}</span>
+                      ) : null}
                       <span className="text-muted text-xs">
                         {new Date(submission.submittedAt).toLocaleString()}
                       </span>
@@ -166,7 +187,33 @@ export function GroupWorkspace({
                 </ul>
               ) : null}
 
-              {canSubmit ? (
+              {canSubmit && deliverable.formats.includes('LINK') ? (
+                <form
+                  className="mt-3 flex flex-wrap gap-2"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    const field = new FormData(event.currentTarget).get('url');
+                    if (typeof field === 'string' && field.trim()) {
+                      void submitUrl(deliverable.id, field.trim());
+                      event.currentTarget.reset();
+                    }
+                  }}
+                >
+                  <Input
+                    name="url"
+                    type="url"
+                    required
+                    placeholder="https://www.youtube.com/watch?v=…"
+                    aria-label={t('linkFor', {
+                      deliverable: tDeliverables(deliverable.key.replace('deliverables.', '')),
+                    })}
+                    className="flex-1"
+                  />
+                  <Button type="submit" disabled={busy}>
+                    {t('submitLink')}
+                  </Button>
+                </form>
+              ) : canSubmit ? (
                 <input
                   ref={(element) => {
                     inputs.current[deliverable.id] = element;

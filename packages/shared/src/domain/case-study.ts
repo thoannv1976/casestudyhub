@@ -124,24 +124,39 @@ export const assignmentSchema = z.object({
 });
 export type Assignment = z.infer<typeof assignmentSchema>;
 
-export const submissionSchema = z.object({
-  id: z.string().min(1),
-  assignmentId: z.string().min(1),
-  groupId: z.string().min(1),
-  deliverableId: z.string().min(1),
-  submittedByUid: z.string().min(1),
-  submittedAt: z.string().min(1),
-  fileName: z.string().min(1),
-  contentType: z.string().min(1),
-  sizeBytes: z.number().int().nonnegative(),
-  storagePath: z.string().min(1),
-  externalUrl: z.url().optional(),
-  /** Versions accumulate; an upload never overwrites an earlier one. */
-  versionNumber: z.number().int().positive(),
-  isLate: z.boolean(),
-  status: z.enum(['uploaded', 'processing', 'ready', 'failed', 'superseded']),
-});
+export const submissionSchema = z
+  .object({
+    id: z.string().min(1),
+    assignmentId: z.string().min(1),
+    groupId: z.string().min(1),
+    deliverableId: z.string().min(1),
+    submittedByUid: z.string().min(1),
+    submittedAt: z.string().min(1),
+    /** For a link, the host it points at - which is what a reader needs to see. */
+    fileName: z.string().min(1),
+    contentType: z.string().min(1).optional(),
+    sizeBytes: z.number().int().nonnegative().default(0),
+    /** Absent for a link: there are no bytes of ours to serve. */
+    storagePath: z.string().min(1).optional(),
+    /** Present only for a link. A presentation video lives on YouTube, not here. */
+    externalUrl: z.url().optional(),
+    /** Versions accumulate; an upload never overwrites an earlier one. */
+    versionNumber: z.number().int().positive(),
+    isLate: z.boolean(),
+    status: z.enum(['uploaded', 'processing', 'ready', 'failed', 'superseded']),
+  })
+  .refine((s) => Boolean(s.storagePath) !== Boolean(s.externalUrl), {
+    message: 'A submission is either a file we hold or a link we do not',
+    path: ['storagePath'],
+  });
 export type Submission = z.infer<typeof submissionSchema>;
+
+/** Whether this submission is a link rather than a file we hold. */
+export function isLinkSubmission(
+  submission: Pick<Submission, 'externalUrl'>,
+): submission is Pick<Submission, 'externalUrl'> & { externalUrl: string } {
+  return Boolean(submission.externalUrl);
+}
 
 export const gradeSchema = z.object({
   id: z.string().min(1),

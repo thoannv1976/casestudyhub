@@ -1989,6 +1989,34 @@ test('a student cannot take a case for a class they are not in', async ({ page }
   expect([403, 404]).toContain(response.status());
 });
 
+/**
+ * A deliverable handed in as a link (SRS Module 09). A presentation video is
+ * recorded on a phone and put on YouTube; asking a group to push a gigabyte
+ * through this platform as well would be the same work twice.
+ */
+test('a group hands in its presentation video as a link', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const video = page.getByRole('listitem').filter({ hasText: 'Presentation video' });
+
+  await video.getByRole('textbox').fill('https://www.youtube.com/watch?v=e2e-run');
+  await video.getByRole('button', { name: 'Submit link' }).click();
+
+  // The host, not the whole address: a lecturer needs to see where it goes.
+  await expect(video).toContainText('youtube.com');
+  await expect(video).toContainText('leaves this site');
+
+  // Versioned like a file. Re-recording does not overwrite.
+  await video.getByRole('textbox').fill('https://vimeo.com/e2e-second');
+  await video.getByRole('button', { name: 'Submit link' }).click();
+  await expect(video).toContainText('vimeo.com');
+  await expect(video).toContainText('v2');
+  await expect(video).toContainText('v1');
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 
