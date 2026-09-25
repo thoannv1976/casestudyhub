@@ -218,6 +218,13 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // A group's claim on a case. A client that could write one could take a
+    // case for a group it is not in, or take one already taken - the whole
+    // point is that the server writes it with `create` on a deterministic id.
+    match /caseClaims/{claimId} {
+      allow read, write: if false;
+    }
+
     // A revision of a case, frozen by every assignment set under it. Served
     // by the route handler that knows whether this reader is in a class the
     // case was set for - the same check that guards the case itself.

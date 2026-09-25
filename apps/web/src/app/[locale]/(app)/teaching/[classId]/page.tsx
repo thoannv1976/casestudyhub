@@ -11,6 +11,7 @@ import {
   listMembers,
   listRoster,
   listSessions,
+  listClaims,
   listSubmissions,
   progressOfAssignments,
 } from '@casestudyhub/core';
@@ -19,6 +20,7 @@ import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
 import { Alert } from '@/components/ui/form';
 import { AssignmentManager } from './assignment-manager';
+import { CaseSelectionBoard } from './case-selection-board';
 import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
 import { SessionBoard } from './session-board';
@@ -75,7 +77,7 @@ export default async function ClassDetailPage({
     listSessions(classId),
   ]);
 
-  const lecturers = await listClassLecturers(classId);
+  const [lecturers, claims] = await Promise.all([listClassLecturers(classId), listClaims(classId)]);
 
   const submissionsByAssignment = Object.fromEntries(
     await Promise.all(
@@ -156,6 +158,23 @@ export default async function ClassDetailPage({
           />
         </div>
       </Card>
+
+      <CaseSelectionBoard
+        classId={classId}
+        mode={details.caseSelection}
+        deadline={details.caseSelectionDeadline ?? null}
+        groupCount={groups.length}
+        claims={claims.map((claim) => ({
+          caseStudyId: claim.caseStudyId,
+          caseTitle:
+            cases.find((study) => study.id === claim.caseStudyId)?.title ?? claim.caseStudyId,
+          caseCode: cases.find((study) => study.id === claim.caseStudyId)?.caseCode ?? '',
+          groupName: groups.find((group) => group.id === claim.groupId)?.groupName ?? claim.groupId,
+          claimedByName: claim.claimedByName,
+          claimedAt: claim.claimedAt,
+          scheduled: Boolean(claim.assignmentId),
+        }))}
+      />
 
       <Card>
         <CardTitle>{tAssignments('title')}</CardTitle>

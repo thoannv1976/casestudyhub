@@ -46,9 +46,66 @@ export const classSchema = z.object({
   presentationPolicyId: z.string().min(1),
   presentationPolicyVersion: z.string().min(1),
   joinMode: z.enum(['code', 'approval', 'closed']),
+  /**
+   * Who decides which case a group works on. `lecturer_assigns` is how this
+   * platform began and stays the default; `groups_choose` lets each group
+   * claim a published case for itself, first come first served.
+   */
+  caseSelection: z.enum(['lecturer_assigns', 'groups_choose']).default('lecturer_assigns'),
+  /** ISO timestamp after which no group may claim a case. */
+  caseSelectionDeadline: z.string().optional(),
   status: z.enum(['draft', 'active', 'archived']),
 });
 export type Class = z.infer<typeof classSchema>;
+
+/**
+ * One group's claim on one case study, in one class (SRS Module 07).
+ *
+ * The document id is `${classId}__${caseStudyId}`, and that is the whole
+ * mechanism: two groups pressing the button at the same instant do not race,
+ * because the second write is refused by the database rather than by a check
+ * that read before it wrote. The same shape as a peer review and a question -
+ * a rule expressed as a name instead of as code.
+ *
+ * Scoped to the class: two classes may both study Amazon, two groups in one
+ * class may not. In `lecturer_assigns` mode there are no claims at all, and a
+ * lecturer may deliberately set one case to two groups so that the second
+ * challenges the first.
+ */
+export const caseClaimSchema = z.object({
+  id: z.string().min(1),
+  classId: z.string().min(1),
+  caseStudyId: z.string().min(1),
+  groupId: z.string().min(1),
+  /** Who in the group pressed it, so a dispute has a name attached. */
+  claimedByUid: z.string().min(1),
+  claimedByName: z.string().min(1),
+  claimedAt: z.string().min(1),
+  /** Set once the lecturer has turned the claim into a scheduled assignment. */
+  assignmentId: z.string().optional(),
+});
+export type CaseClaim = z.infer<typeof caseClaimSchema>;
+
+export function caseClaimId(classId: string, caseStudyId: string): string {
+  return `${classId}__${caseStudyId}`;
+}
+
+/** Whether a group may still claim a case in this class, and why not. */
+export function caseClaimWindow(
+  details: Pick<Class, 'caseSelection' | 'caseSelectionDeadline'>,
+  nowMs: number,
+): { open: true } | { open: false; messageKey: string } {
+  if (details.caseSelection !== 'groups_choose') {
+    return { open: false, messageKey: 'errors.caseSelectionNotOpen' };
+  }
+  if (!details.caseSelectionDeadline) return { open: true };
+
+  const deadlineMs = Date.parse(details.caseSelectionDeadline);
+  if (Number.isNaN(deadlineMs)) return { open: true };
+  return nowMs <= deadlineMs
+    ? { open: true }
+    : { open: false, messageKey: 'errors.caseSelectionClosed' };
+}
 
 export const ENROLLMENT_STATUSES = ['active', 'pending', 'removed'] as const;
 export const enrollmentStatusSchema = z.enum(ENROLLMENT_STATUSES);

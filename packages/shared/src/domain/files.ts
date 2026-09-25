@@ -119,3 +119,41 @@ export function validateUpload(
 export const attachmentUploadSchema = z.object({
   kind: z.enum(['case', 'guide', 'slide_template', 'reference', 'video']),
 });
+
+/**
+ * A submission that is a link rather than a file (SRS Module 09).
+ *
+ * A presentation video is recorded on a phone and uploaded to YouTube; asking
+ * a group to also push a gigabyte through this platform would be asking them
+ * to do the same work twice. So a deliverable whose format is `LINK` is
+ * satisfied by a URL.
+ *
+ * Any https address is accepted. Restricting to a list of hosts would block a
+ * faculty that uses something this project never heard of, and would not make
+ * the link safer: what makes it readable is that the interface shows where it
+ * goes before anybody follows it.
+ */
+export function hostOfLink(url: string): string | null {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'https:' ? parsed.hostname.replace(/^www\./, '') : null;
+  } catch {
+    return null;
+  }
+}
+
+export function validateLink(
+  url: string,
+  allowedFormats: readonly DeliverableFormat[],
+): UploadProblem | null {
+  if (!allowedFormats.includes('LINK')) {
+    return { messageKey: 'errors.deliverableIsNotALink' };
+  }
+  if (url.trim().length > 2000) return { messageKey: 'errors.linkTooLong' };
+
+  // http, a bare domain or a file:// path all fail here, and they should: a
+  // link a class will open for years has to be one a browser can open safely.
+  if (!hostOfLink(url)) return { messageKey: 'errors.linkNotHttps' };
+
+  return null;
+}

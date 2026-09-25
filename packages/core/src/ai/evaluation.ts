@@ -97,7 +97,9 @@ export async function gatherEvaluationSources(assignmentId: string): Promise<Eva
       continue;
     }
     const label = submission.deliverableId === 'slides-pdf' ? 'slides' : 'report';
-    if (!canBeRead(submission.contentType, submission.sizeBytes)) {
+    // A link is not a document this platform can hand to a model. Listed as a
+    // gap rather than passed over in silence, like any file it cannot read.
+    if (!submission.contentType || !canBeRead(submission.contentType, submission.sizeBytes)) {
       skipped.push(`${label}: ${submission.fileName}`);
       continue;
     }

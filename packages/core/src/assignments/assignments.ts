@@ -11,6 +11,7 @@ import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { groupMemberUids, notify } from '../notifications/notifications';
 import { policyOfClass } from '../policy/policy-store';
+import { linkClaimToAssignment } from '../case-selection/case-selection';
 import { AppError } from '../errors';
 import type { SessionUser } from '../auth/types';
 
@@ -97,6 +98,11 @@ export async function createAssignment(
     params: { deadline: new Date(deadlineMs).toISOString() },
     href: `/classes/${input.classId}`,
   });
+
+  // A group that chose this case for itself has its claim marked as
+  // scheduled, which is what stops the lecturer releasing it from under work
+  // that now exists.
+  await linkClaimToAssignment(input.classId, input.caseStudyId, ref.id);
 
   await writeAuditLog({
     action: 'assignment.created',

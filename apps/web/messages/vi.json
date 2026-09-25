@@ -127,7 +127,8 @@
     "roleAllocationSheet": "Phiếu phân vai",
     "referenceList": "Danh mục tài liệu tham khảo",
     "aiUsageDisclosure": "Phiếu khai báo sử dụng AI",
-    "caseAnalysisReport": "Báo cáo phân tích tình huống"
+    "caseAnalysisReport": "Báo cáo phân tích tình huống",
+    "presentationVideo": "Video thuyết trình (link)"
   },
   "slides": {
     "cover": "Trang bìa: tên case, tên nhóm, thành viên và vai trò",
@@ -289,7 +290,18 @@
     "studentIdRequired": "Tài khoản sinh viên cần mã sinh viên: danh sách lớp được đối chiếu theo mã đó.",
     "reasonTooShort": "Hãy ghi ít nhất mười ký tự lý do. Đây là ghi chú mà người đọc lại sau này chỉ còn biết dựa vào.",
     "registrationClosed": "Đăng ký đang đóng. Hãy nhờ giảng viên thêm bạn vào lớp.",
-    "aiBudgetSpent": "Đã hết hạn mức lượt gọi mô hình của tháng. Quản trị viên có thể nâng hạn mức ở trang cấu hình hệ thống."
+    "aiBudgetSpent": "Đã hết hạn mức lượt gọi mô hình của tháng. Quản trị viên có thể nâng hạn mức ở trang cấu hình hệ thống.",
+    "caseSelectionNotOpen": "Lớp này không cho nhóm tự chọn case. Giảng viên là người giao.",
+    "caseSelectionClosed": "Đã hết hạn chọn case. Hãy hỏi giảng viên.",
+    "caseAlreadyTaken": "Nhóm khác đã lấy case này trước. Hãy chọn case khác.",
+    "groupAlreadyChose": "Nhóm bạn đã chọn một case rồi. Muốn đổi thì nhờ giảng viên thu hồi lựa chọn cũ.",
+    "noGroupYet": "Bạn chưa thuộc nhóm nào, mà case là nhóm chọn chứ không phải một người chọn.",
+    "claimNotFound": "Chưa nhóm nào chọn case đó.",
+    "claimAlreadyScheduled": "Case đó đã được giao thành bài. Hãy thu hồi bài giao trước.",
+    "deliverableIsNotALink": "Sản phẩm này là file, không phải link.",
+    "linkNotHttps": "Hãy dán địa chỉ https đầy đủ, bắt đầu bằng https://",
+    "linkTooLong": "Địa chỉ đó quá dài để là link tới một video.",
+    "submissionIsALink": "Bài nộp đó là một link, không phải file do nền tảng này giữ."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -596,7 +608,10 @@
     "submitted": "Đã nộp, phiên bản {version}.",
     "submittedLate": "Đã nộp, phiên bản {version}, sau hạn.",
     "uploadFor": "Tải lên {deliverable}",
-    "lateWarning": "Đã quá hạn nộp. Bạn vẫn nộp được, và bài sẽ được ghi nhận là nộp muộn."
+    "lateWarning": "Đã quá hạn nộp. Bạn vẫn nộp được, và bài sẽ được ghi nhận là nộp muộn.",
+    "externalLink": "dẫn ra ngoài",
+    "submitLink": "Nộp link",
+    "linkFor": "Link cho {deliverable}"
   },
   "session": {
     "boardTitle": "Các buổi thuyết trình",
@@ -982,5 +997,57 @@
     "aiTurnOn": "Bật mô hình",
     "aiTurnOff": "Tắt mô hình",
     "aiToggleHint": "Có hiệu lực ngay, với mọi người. Vertex AI không cần bí mật nào — chỉ cần công tắc này — nên không lần deploy nào đổi được, và cũng không lần deploy nào xoá được."
+  },
+  "caseSelection": {
+    "title": "Chọn case study cho nhóm",
+    "body": "Ai chọn trước được trước: một nhóm đã lấy case nào thì không nhóm nào khác trong lớp lấy được nữa. Case nhóm khác đã lấy vẫn nằm trong danh sách để bạn biết nó về đâu.",
+    "deadline": "Hết hạn chọn lúc {when}.",
+    "choose": "Chọn case này",
+    "choosing": "Đang lấy…",
+    "yours": "Nhóm bạn",
+    "takenBy": "{group} đã lấy",
+    "alreadyChosen": "Nhóm bạn đã chọn xong. Muốn đổi thì hỏi giảng viên.",
+    "cannotChoose": "Bạn xem được case nào còn trống, nhưng việc chọn là của nhóm — và chỉ trong thời hạn cho phép.",
+    "boardTitle": "Cách chọn case",
+    "boardBody": "Hoặc bạn giao case cho từng nhóm, hoặc các nhóm tự lấy. Một nhóm chỉ lấy được case chưa nhóm nào trong lớp giữ.",
+    "mode": "Ai chọn",
+    "modeLecturer": "Tôi giao case",
+    "modeGroups": "Nhóm tự chọn",
+    "deadlineField": "Hết hạn chọn lúc",
+    "deadlineHint": "Để trống nếu không đặt hạn.",
+    "save": "Lưu",
+    "chosenCount": "{chosen} trong {total} nhóm đã chọn.",
+    "noneChosenYet": "Chưa nhóm nào chọn.",
+    "chosenBy": "do {name} chọn, {when}",
+    "release": "Thu hồi",
+    "releasePrompt": "Vì sao thu hồi lựa chọn {case}?",
+    "scheduled": "Đã giao bài",
+    "schedulingNote": "Chọn case không tự xếp lịch thuyết trình. Bạn tự đặt ngày ở mục Bài giao — lịch giảng là của bạn, và một case đã có bài giao thì không thu hồi được nữa."
+  },
+  "dossier": {
+    "title": "Hồ sơ buổi thuyết trình",
+    "openFromMarking": "Mở hồ sơ đầy đủ: toàn bộ câu hỏi và phiếu chấm của lớp",
+    "backToMarking": "Quay lại màn hình chấm",
+    "download": "Tải về dạng bảng tính",
+    "neverPresented": "nhóm này chưa thuyết trình",
+    "questionsTitle": "Lớp đã hỏi gì",
+    "questionsCount": "{total} câu hỏi, {answered} câu được trả lời trực tiếp. Khung yêu cầu lớp đặt ít nhất {min} câu.",
+    "answeredNothing": "Không trả lời câu nào: {names}",
+    "noQuestions": "Lớp không hỏi câu nào. Điều đó cũng đáng biết.",
+    "answered": "Đã trả lời trực tiếp",
+    "notAnswered": "Chưa trả lời trực tiếp",
+    "askedOf": "hỏi vai {role}",
+    "upvotes": "{count, plural, =0 {chưa có lượt tán thành} other {# lượt tán thành}}",
+    "anonymousToClass": "ẩn danh với lớp",
+    "scoresTitle": "Lớp đã chấm thế nào",
+    "scoresEvidence": "Điểm chấm chéo là bằng chứng cho nhận định của bạn. Nó không bao giờ được cộng vào điểm.",
+    "scoresCount": "{count} trên {eligible} sinh viên có quyền chấm đã chấm.",
+    "noScores": "Không ai chấm buổi thuyết trình này.",
+    "meanAndMedian": "Trung bình {mean}, trung vị {median}, thấp nhất {lowest}, cao nhất {highest}.",
+    "range": "{lowest}–{highest}",
+    "scorer": "Người chấm",
+    "scorerGroup": "Nhóm của họ",
+    "total": "Tổng",
+    "comment": "Nhận xét"
   }
 }

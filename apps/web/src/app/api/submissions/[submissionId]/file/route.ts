@@ -23,7 +23,8 @@ export async function GET(
 
     return new NextResponse(new Uint8Array(body), {
       headers: {
-        'Content-Type': submission.contentType,
+        // A link never reaches here: \`readSubmissionFile\` refuses it first.
+        'Content-Type': submission.contentType ?? 'application/octet-stream',
         'Content-Length': String(submission.sizeBytes),
         'Content-Disposition': `attachment; filename="v${submission.versionNumber}-${submission.fileName}"`,
         'Cache-Control': 'private, no-store',

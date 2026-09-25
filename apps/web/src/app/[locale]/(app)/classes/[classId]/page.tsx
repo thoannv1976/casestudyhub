@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
+  choosableCases,
   findMembership,
   getCase,
   getPolicy,
@@ -19,6 +20,7 @@ import {
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
+import { CasePicker } from './case-picker';
 import { Alert } from '@/components/ui/form';
 import { GroupPicker } from './group-picker';
 import { GroupWorkspace } from './group-workspace';
@@ -74,6 +76,15 @@ export default async function StudentClassPage({
   // slides and the question wall open when the group takes the floor.
   const openSessions = sessions.filter((session) => session.status !== 'scheduled');
 
+  // The picker only appears in a class whose lecturer opened self-selection,
+  // and it is built from the same reads the rest of the page already made.
+  const picker = details.caseSelection === 'groups_choose' ? await choosableCases(classId) : null;
+  const groupNameOf = (groupId: string) =>
+    groups.find((group) => group.id === groupId)?.groupName ?? groupId;
+  const ownGroupHasCase = Boolean(
+    picker?.cases.some((row) => row.claim && row.claim.groupId === membership?.groupId),
+  );
+
   // A group's work area only exists once the group has a case to work on.
   const assignments = membership ? await listAssignmentsOfGroup(membership.groupId) : [];
   const assignment = assignments[0];
@@ -106,6 +117,27 @@ export default async function StudentClassPage({
         <h1 className="text-2xl font-semibold tracking-tight">{details.className}</h1>
         <p className="text-muted mt-2 font-mono text-sm">{details.classCode}</p>
       </div>
+
+      {picker ? (
+        <CasePicker
+          classId={classId}
+          deadline={details.caseSelectionDeadline ?? null}
+          ownGroupHasCase={ownGroupHasCase}
+          // Whether the window is open was decided by the server, with the
+          // server's clock: the deadline is the same for everybody in the class.
+          canChoose={Boolean(membership?.groupId) && picker.open && user.role === 'student'}
+          cases={picker.cases.map((row) => ({
+            study: {
+              id: row.study.id,
+              caseCode: row.study.caseCode,
+              title: row.study.title,
+              company: row.study.company,
+            },
+            takenByGroupName: row.claim ? groupNameOf(row.claim.groupId) : null,
+            takenByOwnGroup: row.claim?.groupId === membership?.groupId,
+          }))}
+        />
+      ) : null}
 
       {assignment ? (
         <Card>

@@ -1918,6 +1918,153 @@ test('creating accounts from a list previews first and shows each password once'
   await page.waitForURL('**/change-password');
 });
 
+/**
+ * Groups choosing their own case (SRS Module 07). A lecturer running six
+ * groups through a library spends the first week of term collecting choices
+ * and keeping a spreadsheet so two groups do not take the same case.
+ */
+test('a lecturer opens self-selection and a group takes a case', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.getByLabel('Who chooses').selectOption('groups_choose');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('No group has chosen yet')).toBeVisible();
+
+  // The audience student is in a different group from the presenters, and
+  // their group has taken nothing.
+  await signOut(page);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const picker = page.getByTestId('case-picker');
+  await expect(picker).toContainText(`CASE${RUN}`);
+  await picker.getByRole('button', { name: 'Choose this' }).first().click();
+
+  await expect(picker.getByText("Your group's")).toBeVisible();
+  await expect(page.getByText('Your group has chosen')).toBeVisible();
+});
+
+test('the case another group took is shown as taken, not offered again', async ({ page }) => {
+  // A different student, in a different group, which has chosen nothing yet.
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const taken = page
+    .getByTestId('case-picker')
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` });
+
+  // Named rather than hidden: a group deciding what to study should see where
+  // the case went, not wonder.
+  await expect(taken).toContainText('Taken by');
+  await expect(taken.getByRole('button', { name: 'Choose this' })).toHaveCount(0);
+});
+
+test('the lecturer sees who chose what, and can free it again', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const board = page.getByTestId('claim-board');
+  await expect(board).toContainText(`CASE${RUN}`);
+  await expect(board).toContainText(AUDIENCE.fullName);
+  await expect(board.getByRole('button', { name: 'Release' })).toBeVisible();
+});
+
+test('a student cannot take a case for a class they are not in', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+
+  const response = await page.request.post('/api/classes/not-my-class/case-selection', {
+    data: { caseStudyId: 'whatever' },
+    failOnStatusCode: false,
+  });
+  expect([403, 404]).toContain(response.status());
+});
+
+/**
+ * A deliverable handed in as a link (SRS Module 09). A presentation video is
+ * recorded on a phone and put on YouTube; asking a group to push a gigabyte
+ * through this platform as well would be the same work twice.
+ */
+test('a group hands in its presentation video as a link', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const video = page.getByRole('listitem').filter({ hasText: 'Presentation video' });
+
+  await video.getByRole('textbox').fill('https://www.youtube.com/watch?v=e2e-run');
+  await video.getByRole('button', { name: 'Submit link' }).click();
+
+  // The host, not the whole address: a lecturer needs to see where it goes.
+  await expect(video).toContainText('youtube.com');
+  await expect(video).toContainText('leaves this site');
+
+  // Versioned like a file. Re-recording does not overwrite.
+  await video.getByRole('textbox').fill('https://vimeo.com/e2e-second');
+  await video.getByRole('button', { name: 'Submit link' }).click();
+  await expect(video).toContainText('vimeo.com');
+  await expect(video).toContainText('v2');
+  await expect(video).toContainText('v1');
+});
+
+/**
+ * The presentation dossier (SRS Modules 10 and 11). Every question and every
+ * peer score was always written down in full; the marking screen showed two
+ * counts and the detail was only visible while the room was still running.
+ */
+test('the dossier shows every question and every peer score after the fact', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+
+  await page.getByRole('link', { name: /Open the full dossier/ }).click();
+  await page.waitForURL(/\/presentation\/.+/);
+
+  // The question the audience student asked earlier in this run, with their
+  // name - which the class never saw, because they asked anonymously.
+  const questions = page.getByTestId('dossier-questions');
+  await expect(questions).toContainText(AUDIENCE.fullName);
+  await expect(questions).toContainText('anonymous to the class');
+
+  // And the peer scores, named, with the scorer's own group beside them.
+  const scores = page.getByTestId('dossier-scores');
+  await expect(scores).toContainText(AUDIENCE.fullName);
+});
+
+test('the dossier downloads as a spreadsheet with formulas defused', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+
+  const response = await page.request.get(`/api/assignments/${assignmentId}/dossier`);
+  expect(response.ok()).toBe(true);
+
+  const csv = await response.text();
+  expect(csv).toContain('presentation dossier');
+  expect(csv).toContain('Questions the class asked');
+  // Every question and comment in this file was typed by a student, and a
+  // spreadsheet runs a cell starting with = as a formula when it opens.
+  expect(csv).not.toMatch(/\n"?=/);
+});
+
+test('a student cannot read the dossier for their own group', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+
+  const response = await page.request.get(`/api/assignments/${assignmentId}/dossier`, {
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 
