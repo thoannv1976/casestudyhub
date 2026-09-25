@@ -130,6 +130,11 @@ async function wipe() {
     db.collection(COLLECTIONS.assignments).where('classId', '==', CLASS_ID).get(),
     db.collection(COLLECTIONS.submissions).where('assignmentId', '==', 'CS-A1').get(),
     db.collection(COLLECTIONS.caseStudies).where('courseId', '==', 'CS-C1').get(),
+    // Cleared between tests too: a `.find()` over a log that still holds the
+    // previous test's entry finds the previous test's answer.
+    ...[lecturer.uid, inA.uid, inB.uid].map((uid) =>
+      db.collection(COLLECTIONS.auditLogs).where('actorUid', '==', uid).get(),
+    ),
   ];
   for (const snapshot of await Promise.all(jobs)) {
     await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
