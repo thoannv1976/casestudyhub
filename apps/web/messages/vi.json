@@ -1023,5 +1023,31 @@
     "releasePrompt": "Vì sao thu hồi lựa chọn {case}?",
     "scheduled": "Đã giao bài",
     "schedulingNote": "Chọn case không tự xếp lịch thuyết trình. Bạn tự đặt ngày ở mục Bài giao — lịch giảng là của bạn, và một case đã có bài giao thì không thu hồi được nữa."
+  },
+  "dossier": {
+    "title": "Hồ sơ buổi thuyết trình",
+    "openFromMarking": "Mở hồ sơ đầy đủ: toàn bộ câu hỏi và phiếu chấm của lớp",
+    "backToMarking": "Quay lại màn hình chấm",
+    "download": "Tải về dạng bảng tính",
+    "neverPresented": "nhóm này chưa thuyết trình",
+    "questionsTitle": "Lớp đã hỏi gì",
+    "questionsCount": "{total} câu hỏi, {answered} câu được trả lời trực tiếp. Khung yêu cầu lớp đặt ít nhất {min} câu.",
+    "answeredNothing": "Không trả lời câu nào: {names}",
+    "noQuestions": "Lớp không hỏi câu nào. Điều đó cũng đáng biết.",
+    "answered": "Đã trả lời trực tiếp",
+    "notAnswered": "Chưa trả lời trực tiếp",
+    "askedOf": "hỏi vai {role}",
+    "upvotes": "{count, plural, =0 {chưa có lượt tán thành} other {# lượt tán thành}}",
+    "anonymousToClass": "ẩn danh với lớp",
+    "scoresTitle": "Lớp đã chấm thế nào",
+    "scoresEvidence": "Điểm chấm chéo là bằng chứng cho nhận định của bạn. Nó không bao giờ được cộng vào điểm.",
+    "scoresCount": "{count} trên {eligible} sinh viên có quyền chấm đã chấm.",
+    "noScores": "Không ai chấm buổi thuyết trình này.",
+    "meanAndMedian": "Trung bình {mean}, trung vị {median}, thấp nhất {lowest}, cao nhất {highest}.",
+    "range": "{lowest}–{highest}",
+    "scorer": "Người chấm",
+    "scorerGroup": "Nhóm của họ",
+    "total": "Tổng",
+    "comment": "Nhận xét"
   }
 }

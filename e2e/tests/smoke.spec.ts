@@ -2017,6 +2017,54 @@ test('a group hands in its presentation video as a link', async ({ page }) => {
   await expect(video).toContainText('v1');
 });
 
+/**
+ * The presentation dossier (SRS Modules 10 and 11). Every question and every
+ * peer score was always written down in full; the marking screen showed two
+ * counts and the detail was only visible while the room was still running.
+ */
+test('the dossier shows every question and every peer score after the fact', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+
+  await page.getByRole('link', { name: /Open the full dossier/ }).click();
+  await page.waitForURL(/\/presentation\/.+/);
+
+  // The question the audience student asked earlier in this run, with their
+  // name - which the class never saw, because they asked anonymously.
+  const questions = page.getByTestId('dossier-questions');
+  await expect(questions).toContainText(AUDIENCE.fullName);
+  await expect(questions).toContainText('anonymous to the class');
+
+  // And the peer scores, named, with the scorer's own group beside them.
+  const scores = page.getByTestId('dossier-scores');
+  await expect(scores).toContainText(AUDIENCE.fullName);
+});
+
+test('the dossier downloads as a spreadsheet with formulas defused', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+
+  const response = await page.request.get(`/api/assignments/${assignmentId}/dossier`);
+  expect(response.ok()).toBe(true);
+
+  const csv = await response.text();
+  expect(csv).toContain('presentation dossier');
+  expect(csv).toContain('Questions the class asked');
+  // Every question and comment in this file was typed by a student, and a
+  // spreadsheet runs a cell starting with = as a formula when it opens.
+  expect(csv).not.toMatch(/\n"?=/);
+});
+
+test('a student cannot read the dossier for their own group', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  const assignmentId = gradeUrl.split('/grade/')[1] ?? '';
+
+  const response = await page.request.get(`/api/assignments/${assignmentId}/dossier`, {
+    failOnStatusCode: false,
+  });
+  expect(response.status()).toBe(403);
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

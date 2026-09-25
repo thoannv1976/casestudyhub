@@ -22,6 +22,7 @@ import { summarisePeerReviews } from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { Link } from '@/i18n/navigation';
 import { AiPanel } from './ai-panel';
 import { GradeForm } from './grade-form';
 
@@ -49,6 +50,7 @@ export default async function GradePage({
   const user = await requireSessionUser();
   const t = await getTranslations('grading');
   const tAi = await getTranslations('ai');
+  const tDossier = await getTranslations('dossier');
   const tError = await getTranslations('errors');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
@@ -166,6 +168,16 @@ export default async function GradePage({
                   mean: peerSummary.mean.toFixed(1),
                   median: peerSummary.median.toFixed(1),
                 })}
+          </li>
+          <li>
+            {/* Two counts are a summary. A lecturer answering "why was I
+                marked like this" needs what is behind them. */}
+            <Link
+              href={`/teaching/${classId}/presentation/${assignmentId}`}
+              className="text-brand-600 dark:text-brand-300 font-medium underline"
+            >
+              {tDossier('openFromMarking')}
+            </Link>
           </li>
         </ul>
 

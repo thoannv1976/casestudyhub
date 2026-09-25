@@ -1023,5 +1023,31 @@
     "releasePrompt": "Why is the claim on {case} being released?",
     "scheduled": "Scheduled",
     "schedulingNote": "Choosing a case does not schedule the presentation. Set the date yourself under Assignments — you own the timetable, and a released case cannot be taken back once work exists under it."
+  },
+  "dossier": {
+    "title": "Presentation dossier",
+    "openFromMarking": "Open the full dossier: every question and every peer score",
+    "backToMarking": "Back to marking",
+    "download": "Download as a spreadsheet",
+    "neverPresented": "this group has not presented yet",
+    "questionsTitle": "What the class asked",
+    "questionsCount": "{total} questions, {answered} answered aloud. The framework asks for at least {min} from the class.",
+    "answeredNothing": "Answered nothing at all: {names}",
+    "noQuestions": "The class asked nothing. That is worth knowing too.",
+    "answered": "Answered aloud",
+    "notAnswered": "Not answered aloud",
+    "askedOf": "asked of {role}",
+    "upvotes": "{count, plural, =0 {no upvotes} one {# upvote} other {# upvotes}}",
+    "anonymousToClass": "anonymous to the class",
+    "scoresTitle": "What the class scored",
+    "scoresEvidence": "Peer scores are evidence for your judgement. They are never added to a mark.",
+    "scoresCount": "{count} of {eligible} students who could score did.",
+    "noScores": "Nobody scored this presentation.",
+    "meanAndMedian": "Mean {mean}, median {median}, from {lowest} to {highest}.",
+    "range": "{lowest}–{highest}",
+    "scorer": "Scored by",
+    "scorerGroup": "Their group",
+    "total": "Total",
+    "comment": "Comment"
   }
 }
