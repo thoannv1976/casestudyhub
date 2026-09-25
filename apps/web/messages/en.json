@@ -289,7 +289,14 @@
     "studentIdRequired": "A student account needs a student code: that code is what a class roster is matched against.",
     "reasonTooShort": "Say in at least ten characters why. This is the note a later reader has to go on.",
     "registrationClosed": "Registration is closed. Ask your lecturer to add you to the class.",
-    "aiBudgetSpent": "The month's budget of model calls is spent. An administrator can raise it on the system settings page."
+    "aiBudgetSpent": "The month's budget of model calls is spent. An administrator can raise it on the system settings page.",
+    "caseSelectionNotOpen": "This class is not letting groups choose their own case. Your lecturer assigns them.",
+    "caseSelectionClosed": "The window for choosing a case has closed. Ask your lecturer.",
+    "caseAlreadyTaken": "Another group took this case first. Choose a different one.",
+    "groupAlreadyChose": "Your group has already chosen a case. Ask your lecturer to release it if you want to change.",
+    "noGroupYet": "You are not in a group yet, and a case is chosen by a group rather than by one person.",
+    "claimNotFound": "No group has chosen that case.",
+    "claimAlreadyScheduled": "That case has already been set as an assignment. Withdraw the assignment first."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -982,5 +989,31 @@
     "aiTurnOn": "Turn the model on",
     "aiTurnOff": "Turn the model off",
     "aiToggleHint": "Takes effect at once, for everybody. Vertex AI needs no secret — only this switch — so no deploy can change it and no deploy can undo it."
+  },
+  "caseSelection": {
+    "title": "Choose your group's case study",
+    "body": "First come, first served: once a group takes a case, no other group in this class can. Cases another group has taken stay on the list so you can see where they went.",
+    "deadline": "Choices close {when}.",
+    "choose": "Choose this",
+    "choosing": "Taking…",
+    "yours": "Your group's",
+    "takenBy": "Taken by {group}",
+    "alreadyChosen": "Your group has chosen. Ask your lecturer if you need to change it.",
+    "cannotChoose": "You can see what is left, but choosing is done by a group — and only while the window is open.",
+    "boardTitle": "How cases are chosen",
+    "boardBody": "Either you assign each group a case, or the groups take one each. A group can only take a case no other group in this class holds.",
+    "mode": "Who chooses",
+    "modeLecturer": "I assign the cases",
+    "modeGroups": "Groups choose their own",
+    "deadlineField": "Choices close at",
+    "deadlineHint": "Leave empty for no deadline.",
+    "save": "Save",
+    "chosenCount": "{chosen} of {total} groups have chosen.",
+    "noneChosenYet": "No group has chosen yet.",
+    "chosenBy": "by {name}, {when}",
+    "release": "Release",
+    "releasePrompt": "Why is the claim on {case} being released?",
+    "scheduled": "Scheduled",
+    "schedulingNote": "Choosing a case does not schedule the presentation. Set the date yourself under Assignments — you own the timetable, and a released case cannot be taken back once work exists under it."
   }
 }

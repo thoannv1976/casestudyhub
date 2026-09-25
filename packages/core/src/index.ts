@@ -13,6 +13,7 @@ export * from './academic/enrollment';
 export * from './academic/rate-limit';
 export * from './academic/access';
 export * from './groups/groups';
+export * from './case-selection/case-selection';
 export * from './cases/cases';
 export * from './assignments/assignments';
 export * from './submissions/submissions';

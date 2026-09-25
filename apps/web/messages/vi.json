@@ -289,7 +289,14 @@
     "studentIdRequired": "Tài khoản sinh viên cần mã sinh viên: danh sách lớp được đối chiếu theo mã đó.",
     "reasonTooShort": "Hãy ghi ít nhất mười ký tự lý do. Đây là ghi chú mà người đọc lại sau này chỉ còn biết dựa vào.",
     "registrationClosed": "Đăng ký đang đóng. Hãy nhờ giảng viên thêm bạn vào lớp.",
-    "aiBudgetSpent": "Đã hết hạn mức lượt gọi mô hình của tháng. Quản trị viên có thể nâng hạn mức ở trang cấu hình hệ thống."
+    "aiBudgetSpent": "Đã hết hạn mức lượt gọi mô hình của tháng. Quản trị viên có thể nâng hạn mức ở trang cấu hình hệ thống.",
+    "caseSelectionNotOpen": "Lớp này không cho nhóm tự chọn case. Giảng viên là người giao.",
+    "caseSelectionClosed": "Đã hết hạn chọn case. Hãy hỏi giảng viên.",
+    "caseAlreadyTaken": "Nhóm khác đã lấy case này trước. Hãy chọn case khác.",
+    "groupAlreadyChose": "Nhóm bạn đã chọn một case rồi. Muốn đổi thì nhờ giảng viên thu hồi lựa chọn cũ.",
+    "noGroupYet": "Bạn chưa thuộc nhóm nào, mà case là nhóm chọn chứ không phải một người chọn.",
+    "claimNotFound": "Chưa nhóm nào chọn case đó.",
+    "claimAlreadyScheduled": "Case đó đã được giao thành bài. Hãy thu hồi bài giao trước."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -982,5 +989,31 @@
     "aiTurnOn": "Bật mô hình",
     "aiTurnOff": "Tắt mô hình",
     "aiToggleHint": "Có hiệu lực ngay, với mọi người. Vertex AI không cần bí mật nào — chỉ cần công tắc này — nên không lần deploy nào đổi được, và cũng không lần deploy nào xoá được."
+  },
+  "caseSelection": {
+    "title": "Chọn case study cho nhóm",
+    "body": "Ai chọn trước được trước: một nhóm đã lấy case nào thì không nhóm nào khác trong lớp lấy được nữa. Case nhóm khác đã lấy vẫn nằm trong danh sách để bạn biết nó về đâu.",
+    "deadline": "Hết hạn chọn lúc {when}.",
+    "choose": "Chọn case này",
+    "choosing": "Đang lấy…",
+    "yours": "Nhóm bạn",
+    "takenBy": "{group} đã lấy",
+    "alreadyChosen": "Nhóm bạn đã chọn xong. Muốn đổi thì hỏi giảng viên.",
+    "cannotChoose": "Bạn xem được case nào còn trống, nhưng việc chọn là của nhóm — và chỉ trong thời hạn cho phép.",
+    "boardTitle": "Cách chọn case",
+    "boardBody": "Hoặc bạn giao case cho từng nhóm, hoặc các nhóm tự lấy. Một nhóm chỉ lấy được case chưa nhóm nào trong lớp giữ.",
+    "mode": "Ai chọn",
+    "modeLecturer": "Tôi giao case",
+    "modeGroups": "Nhóm tự chọn",
+    "deadlineField": "Hết hạn chọn lúc",
+    "deadlineHint": "Để trống nếu không đặt hạn.",
+    "save": "Lưu",
+    "chosenCount": "{chosen} trong {total} nhóm đã chọn.",
+    "noneChosenYet": "Chưa nhóm nào chọn.",
+    "chosenBy": "do {name} chọn, {when}",
+    "release": "Thu hồi",
+    "releasePrompt": "Vì sao thu hồi lựa chọn {case}?",
+    "scheduled": "Đã giao bài",
+    "schedulingNote": "Chọn case không tự xếp lịch thuyết trình. Bạn tự đặt ngày ở mục Bài giao — lịch giảng là của bạn, và một case đã có bài giao thì không thu hồi được nữa."
   }
 }

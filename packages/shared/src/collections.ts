@@ -14,6 +14,7 @@ export const COLLECTIONS = {
   groupMembers: 'groupMembers',
   caseStudies: 'caseStudies',
   caseVersions: 'caseVersions',
+  caseClaims: 'caseClaims',
   /**
    * The assessment framework, versioned and immutable. `presentationGuides`
    * and `rubrics` were declared beside this and never written to: the guide's

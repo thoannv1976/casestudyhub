@@ -1918,6 +1918,77 @@ test('creating accounts from a list previews first and shows each password once'
   await page.waitForURL('**/change-password');
 });
 
+/**
+ * Groups choosing their own case (SRS Module 07). A lecturer running six
+ * groups through a library spends the first week of term collecting choices
+ * and keeping a spreadsheet so two groups do not take the same case.
+ */
+test('a lecturer opens self-selection and a group takes a case', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.getByLabel('Who chooses').selectOption('groups_choose');
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByText('No group has chosen yet')).toBeVisible();
+
+  // The audience student is in a different group from the presenters, and
+  // their group has taken nothing.
+  await signOut(page);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const picker = page.getByTestId('case-picker');
+  await expect(picker).toContainText(`CASE${RUN}`);
+  await picker.getByRole('button', { name: 'Choose this' }).first().click();
+
+  await expect(picker.getByText("Your group's")).toBeVisible();
+  await expect(page.getByText('Your group has chosen')).toBeVisible();
+});
+
+test('the case another group took is shown as taken, not offered again', async ({ page }) => {
+  // A different student, in a different group, which has chosen nothing yet.
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const taken = page
+    .getByTestId('case-picker')
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` });
+
+  // Named rather than hidden: a group deciding what to study should see where
+  // the case went, not wonder.
+  await expect(taken).toContainText('Taken by');
+  await expect(taken.getByRole('button', { name: 'Choose this' })).toHaveCount(0);
+});
+
+test('the lecturer sees who chose what, and can free it again', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const board = page.getByTestId('claim-board');
+  await expect(board).toContainText(`CASE${RUN}`);
+  await expect(board).toContainText(AUDIENCE.fullName);
+  await expect(board.getByRole('button', { name: 'Release' })).toBeVisible();
+});
+
+test('a student cannot take a case for a class they are not in', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+
+  const response = await page.request.post('/api/classes/not-my-class/case-selection', {
+    data: { caseStudyId: 'whatever' },
+    failOnStatusCode: false,
+  });
+  expect([403, 404]).toContain(response.status());
+});
+
 test('a student is refused the administration pages', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
 

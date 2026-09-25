@@ -181,6 +181,9 @@ export interface ClassSummary {
   semesterId: string;
   language: string;
   joinMode: string;
+  /** Who decides which case a group works on. */
+  caseSelection: 'lecturer_assigns' | 'groups_choose';
+  caseSelectionDeadline?: string;
   status: string;
   studentCount: number;
 }
@@ -194,6 +197,11 @@ function toClassSummary(data: FirebaseFirestore.DocumentData): ClassSummary {
     semesterId: data.semesterId as string,
     language: data.language as string,
     joinMode: data.joinMode as string,
+    // A class created before this field existed assigns its cases, which is
+    // what it has always done.
+    caseSelection:
+      (data.caseSelection as ClassSummary['caseSelection'] | undefined) ?? 'lecturer_assigns',
+    caseSelectionDeadline: data.caseSelectionDeadline as string | undefined,
     status: data.status as string,
     studentCount: (data.studentCount as number | undefined) ?? 0,
   };
