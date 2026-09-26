@@ -15,6 +15,14 @@ import { DEFAULT_AI_MODELS, type AiProviderName, type SystemSettings } from '@ca
  * - A key an administrator typed in is used only while that switch is on. It
  *   is a stored credential, not a deployment decision.
  *
+ * What the environment deliberately does *not* decide any more is the model
+ * name. `AI_MODEL` used to override it, from the days when there was one
+ * vendor; with two, a name left on the service by an earlier deploy would be
+ * sent to whichever vendor an administrator chose - a Gemini name to OpenAI,
+ * which fails with `model_not_found` and looks like a broken key. The model
+ * belongs to the vendor it was written for, so it comes from the settings and
+ * only from there.
+ *
  * Nothing here reads the database; it is a pure function of the settings, the
  * stored credentials and the environment, so the precedence above is covered
  * by unit tests rather than by an emulator.
@@ -73,7 +81,7 @@ export function readAiConfig(
   const provider = settings.aiProvider ?? 'gemini';
 
   if (provider === 'openai') {
-    const model = env.AI_MODEL?.trim() || modelFor(settings, 'openai');
+    const model = modelFor(settings, 'openai');
     const fromEnv = env.OPENAI_API_KEY?.trim();
     if (fromEnv) {
       return { provider, model, transport: 'apiKey', apiKey: fromEnv, fromEnvironment: true };
@@ -86,7 +94,7 @@ export function readAiConfig(
       : null;
   }
 
-  const model = env.AI_MODEL?.trim() || modelFor(settings, 'gemini');
+  const model = modelFor(settings, 'gemini');
   const fromEnv = env.GEMINI_API_KEY?.trim();
   if (fromEnv) {
     return {

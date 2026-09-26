@@ -154,6 +154,9 @@ gcloud run deploy "$SERVICE" \
 # on the day rather than three weeks later.
 echo
 echo "▶ Biến môi trường của bản vừa deploy:"
+echo "    (AI_MODEL, VERTEX_AI_ENABLED, VERTEX_AI_LOCATION là tàn dư của bản cũ."
+echo "     Mã không còn đọc biến nào trong ba biến đó; nhà cung cấp, tên mô hình"
+echo "     và vùng đặt ở Quản trị → Hệ thống.)"
 gcloud run services describe "$SERVICE" --region "$REGION" \
   --format 'value(spec.template.spec.containers[0].env)' | tr ';' '\n' | sed 's/^/    /'
 

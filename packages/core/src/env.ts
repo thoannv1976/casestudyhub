@@ -27,8 +27,7 @@ const serverEnvSchema = z.object({
    * rest of the platform is unaffected.
    */
   GEMINI_API_KEY: z.string().optional(),
-  /** Overrides the model name for the API key route only. */
-  AI_MODEL: z.string().optional(),
+  OPENAI_API_KEY: z.string().optional(),
 });
 
 export type ServerEnv = z.infer<typeof serverEnvSchema>;

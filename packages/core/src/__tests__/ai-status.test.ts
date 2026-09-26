@@ -182,6 +182,34 @@ describe('choosing a vendor', () => {
     ).toBe(false);
   });
 
+  it('does not let a model name left on the service reach the wrong vendor', () => {
+    // A deploy set AI_MODEL=gemini-2.5-flash back when there was one vendor,
+    // and --update-env-vars keeps it there for ever. Honouring it would send a
+    // Gemini name to OpenAI, which fails as `model_not_found` and reads like a
+    // broken key. The model belongs to the vendor it was written for.
+    const env = { AI_MODEL: 'gemini-2.5-flash' };
+
+    expect(
+      configOf(env, { aiEnabled: true, aiProvider: 'openai' }, { openai: 'sk-stored' })?.model,
+    ).toBe('gpt-4.1-mini');
+    expect(configOf({ ...env, GOOGLE_CLOUD_PROJECT: 'p' }, { aiEnabled: true })?.model).toBe(
+      'gemini-2.5-flash',
+    );
+  });
+
+  it('takes the model an administrator typed, not one a deploy left behind', () => {
+    const config = configOf(
+      { AI_MODEL: 'gemini-2.5-flash' },
+      {
+        aiEnabled: true,
+        aiProvider: 'openai',
+        aiModels: { gemini: 'gemini-2.5-flash', openai: 'gpt-4.1' },
+      },
+      { openai: 'sk-stored' },
+    );
+    expect(config?.model).toBe('gpt-4.1');
+  });
+
   it('still lets the environment key turn OpenAI on by itself', () => {
     // Set by whoever deploys, who is already trusted with more than this, and
     // it is how the platform gets tried in ten minutes.

@@ -24,7 +24,6 @@ SERVICE="${SERVICE:-casestudyhub-web}"
 RUNTIME_SA_ID="${RUNTIME_SA_ID:-casestudyhub-runtime}"
 # 'global' phục vụ Gemini ở mọi nơi và ít bị giới hạn theo vùng nhất.
 AI_LOCATION="${AI_LOCATION:-global}"
-AI_MODEL="${AI_MODEL:-gemini-2.5-flash}"
 
 if [[ -z "$PROJECT_ID" ]]; then
   echo "✗ Chưa đặt project. Chạy: gcloud config set project <PROJECT_ID>" >&2
@@ -34,7 +33,7 @@ fi
 echo "════════════════════════════════════════════════════════"
 echo "  Project : $PROJECT_ID"
 echo "  Dịch vụ : $SERVICE ($REGION)"
-echo "  Mô hình : $AI_MODEL @ $AI_LOCATION"
+echo "  Vùng    : $AI_LOCATION (tên mô hình đặt ở Quản trị → Hệ thống)"
 echo "════════════════════════════════════════════════════════"
 echo
 
