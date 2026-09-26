@@ -78,7 +78,13 @@ export function AiProbePanel({ status, settings }: { status: AiStatus; settings:
       <p className="text-muted mt-2 text-sm">{t('aiStatusBody')}</p>
 
       {status.configured ? (
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-3" data-testid="ai-status">
+        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-4" data-testid="ai-status">
+          <div>
+            <dt className="text-muted">{t('aiProviderLabel')}</dt>
+            <dd className="font-medium">
+              {status.provider ? t(`aiProviderName.${status.provider}`) : '—'}
+            </dd>
+          </div>
           <div>
             <dt className="text-muted">{t('aiTransport')}</dt>
             <dd className="font-medium">
@@ -98,9 +104,10 @@ export function AiProbePanel({ status, settings }: { status: AiStatus; settings:
         <p className="mt-4 text-sm">{t('aiOffHint')}</p>
       )}
 
-      {/* An API key is a credential and lives in the environment, so this
-          switch has nothing to offer when one is set. */}
-      {status.transport === 'apiKey' ? null : (
+      {/* A key set by a deploy turns the model on by itself, so a switch
+          beside it would be a switch that does nothing. A key typed in on this
+          page is different: it is used only while the switch is on. */}
+      {status.environmentKey ? null : (
         <div className="mt-4">
           <Button
             variant="ghost"

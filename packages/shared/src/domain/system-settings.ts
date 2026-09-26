@@ -16,6 +16,47 @@ import { z } from 'zod';
 
 export const SYSTEM_SETTINGS_ID = 'platform';
 
+/**
+ * The vendors the platform can be pointed at. Adding a third is a file and an
+ * entry here: everything else in the platform reaches a model through one
+ * interface and never learns which vendor answered.
+ */
+export const AI_PROVIDERS = ['gemini', 'openai'] as const;
+export const aiProviderSchema = z.enum(AI_PROVIDERS);
+export type AiProviderName = z.infer<typeof aiProviderSchema>;
+
+/** What each vendor is pointed at before an administrator changes it. */
+export const DEFAULT_AI_MODELS: Record<AiProviderName, string> = {
+  gemini: 'gemini-2.5-flash',
+  openai: 'gpt-4.1-mini',
+};
+
+/**
+ * Where an API key lives once an administrator types one in.
+ *
+ * A separate document from the settings, in a collection Security Rules close
+ * to every client, so that the settings can be read by the code that needs
+ * them without a credential travelling alongside. Nothing returns this
+ * document over HTTP; the administration page is told only that a key exists
+ * and its last four characters.
+ */
+export const AI_CREDENTIALS_ID = 'aiCredentials';
+
+export const aiCredentialSchema = z.object({
+  /** Kept only so the page can say *which* key is stored, never the key. */
+  hint: z.string().max(8).default(''),
+  updatedAt: z.string().optional(),
+  updatedByUid: z.string().optional(),
+});
+
+/** What the administration page may know about a stored key. */
+export interface AiCredentialState {
+  set: boolean;
+  /** The last four characters, which is what identifies a key to its owner. */
+  hint: string;
+  updatedAt: string | null;
+}
+
 export const systemSettingsSchema = z.object({
   /**
    * Whether a student may create their own account. A faculty closes this
@@ -51,7 +92,34 @@ export const systemSettingsSchema = z.object({
    * different and stays in the environment, because it is a credential.
    */
   aiEnabled: z.boolean().default(false),
-  aiModel: z.string().trim().min(1).max(80).default('gemini-2.5-flash'),
+
+  /**
+   * Which vendor the platform talks to. One per deployment, not one per class:
+   * two classes marked by two different models would not be marked by the same
+   * standard, and a mark has to mean the same thing across a cohort.
+   */
+  aiProvider: aiProviderSchema.default('gemini'),
+
+  /**
+   * How Gemini is reached. Vertex uses the Cloud Run service account and needs
+   * no secret at all; the API key route needs one, and is the quickest way to
+   * try the platform before the Vertex AI API is enabled on a project. OpenAI
+   * has only the one route, so this says nothing about it.
+   */
+  aiGeminiTransport: z.enum(['vertex', 'apiKey']).default('vertex'),
+
+  /**
+   * The model name, per vendor. Kept apart rather than in one field because a
+   * model name belongs to the vendor it was written for: switching vendor with
+   * one shared field would send `gemini-2.5-flash` to OpenAI.
+   */
+  aiModels: z
+    .object({
+      gemini: z.string().trim().min(1).max(80).default(DEFAULT_AI_MODELS.gemini),
+      openai: z.string().trim().min(1).max(80).default(DEFAULT_AI_MODELS.openai),
+    })
+    .default({ gemini: DEFAULT_AI_MODELS.gemini, openai: DEFAULT_AI_MODELS.openai }),
+
   /** `global` serves Gemini everywhere and is the least region-restricted. */
   aiLocation: z.string().trim().min(1).max(40).default('global'),
 });

@@ -1,23 +1,51 @@
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_SYSTEM_SETTINGS } from '@casestudyhub/shared';
-import { readGeminiConfig } from '../ai/vertex';
+import { DEFAULT_SYSTEM_SETTINGS, type SystemSettings } from '@casestudyhub/shared';
+import { readAiConfig, type AiCredentials } from '../ai/config';
 
 /**
- * What the administration page is allowed to say about the model.
+ * Which vendor answers, over which route, and with which credential.
  *
- * The rule with teeth here is that no part of a credential reaches the page.
- * `aiStatus` reads the same configuration the provider does, so the one thing
- * worth proving is that it drops the secret on the way out.
+ * This is pure: the settings, the stored keys and the environment go in, a
+ * configuration comes out. That is what makes the precedence between them
+ * testable at all, and the precedence is what decides whether the model
+ * answers.
+ *
+ * The rule with teeth is that no part of a credential reaches the page, so the
+ * status this file derives is checked for leakage as well.
  */
 
-function statusOf(env: NodeJS.ProcessEnv, settings: Partial<typeof DEFAULT_SYSTEM_SETTINGS> = {}) {
-  const config = readGeminiConfig({ ...DEFAULT_SYSTEM_SETTINGS, ...settings }, env);
-  if (!config) return { configured: false, transport: null, model: null, location: null };
+function configOf(
+  env: NodeJS.ProcessEnv,
+  settings: Partial<SystemSettings> = {},
+  credentials: AiCredentials = {},
+) {
+  return readAiConfig({ ...DEFAULT_SYSTEM_SETTINGS, ...settings }, credentials, env);
+}
+
+/** The same fields `aiStatus` publishes, derived the same way. */
+function statusOf(
+  env: NodeJS.ProcessEnv,
+  settings: Partial<SystemSettings> = {},
+  credentials: AiCredentials = {},
+) {
+  const config = configOf(env, settings, credentials);
+  if (!config) {
+    return {
+      configured: false,
+      provider: null,
+      transport: null,
+      model: null,
+      location: null,
+      environmentKey: false,
+    };
+  }
   return {
     configured: true,
+    provider: config.provider,
     transport: config.transport,
     model: config.model,
-    location: config.location ?? null,
+    location: config.transport === 'vertex' ? config.location : null,
+    environmentKey: config.fromEnvironment,
   };
 }
 
@@ -25,20 +53,27 @@ describe('how the model is configured', () => {
   it('reports nothing configured when nothing is', () => {
     expect(statusOf({})).toEqual({
       configured: false,
+      provider: null,
       transport: null,
       model: null,
       location: null,
+      environmentKey: false,
     });
   });
 
   it('reports the Vertex route, with the region that decides the endpoint', () => {
     const status = statusOf(
       { GOOGLE_CLOUD_PROJECT: 'casestudy1-509414' },
-      { aiEnabled: true, aiModel: 'gemini-2.5-flash', aiLocation: 'asia-southeast1' },
+      {
+        aiEnabled: true,
+        aiModels: { gemini: 'gemini-2.5-flash', openai: 'gpt-4.1-mini' },
+        aiLocation: 'asia-southeast1',
+      },
     );
 
     expect(status).toMatchObject({
       configured: true,
+      provider: 'gemini',
       transport: 'vertex',
       model: 'gemini-2.5-flash',
       location: 'asia-southeast1',
@@ -87,5 +122,96 @@ describe('how the model is configured', () => {
     // Status that disagreed with the provider would send somebody looking in
     // the wrong place.
     expect(status.transport).toBe('apiKey');
+  });
+});
+
+describe('choosing a vendor', () => {
+  it('calls OpenAI with the key an administrator stored', () => {
+    const config = configOf(
+      {},
+      { aiEnabled: true, aiProvider: 'openai' },
+      { openai: 'sk-stored-key' },
+    );
+
+    expect(config).toEqual({
+      provider: 'openai',
+      model: 'gpt-4.1-mini',
+      transport: 'apiKey',
+      apiKey: 'sk-stored-key',
+      fromEnvironment: false,
+    });
+  });
+
+  it('uses each vendor its own model name', () => {
+    const settings = {
+      aiEnabled: true,
+      aiModels: { gemini: 'gemini-2.5-pro', openai: 'gpt-4.1' },
+    } as const;
+
+    expect(configOf({ GOOGLE_CLOUD_PROJECT: 'p' }, { ...settings })?.model).toBe('gemini-2.5-pro');
+    expect(configOf({}, { ...settings, aiProvider: 'openai' }, { openai: 'sk-x' })?.model).toBe(
+      'gpt-4.1',
+    );
+  });
+
+  it('does not reach for the other vendor when the chosen one has no key', () => {
+    // Falling back would mean a class was marked by a model nobody chose.
+    const config = configOf(
+      { GOOGLE_CLOUD_PROJECT: 'p' },
+      { aiEnabled: true, aiProvider: 'openai' },
+      { gemini: 'AIzaSy-key' },
+    );
+    expect(config).toBeNull();
+  });
+
+  it('leaves a stored key unused while the switch is off', () => {
+    expect(
+      configOf({}, { aiEnabled: false, aiProvider: 'openai' }, { openai: 'sk-stored' }),
+    ).toBeNull();
+  });
+
+  it('knows a key it was handed by a deploy from one typed into the page', () => {
+    // The on/off switch is shown or hidden by this, so getting it wrong means
+    // a switch that does nothing or a model nobody can turn off.
+    expect(configOf({ OPENAI_API_KEY: 'sk-env' }, { aiProvider: 'openai' })?.fromEnvironment).toBe(
+      true,
+    );
+    expect(
+      configOf({}, { aiEnabled: true, aiProvider: 'openai' }, { openai: 'sk-stored' })
+        ?.fromEnvironment,
+    ).toBe(false);
+  });
+
+  it('still lets the environment key turn OpenAI on by itself', () => {
+    // Set by whoever deploys, who is already trusted with more than this, and
+    // it is how the platform gets tried in ten minutes.
+    const config = configOf({ OPENAI_API_KEY: 'sk-env' }, { aiProvider: 'openai' });
+    expect(config).toMatchObject({ provider: 'openai', apiKey: 'sk-env' });
+  });
+
+  it('prefers the environment key over the stored one', () => {
+    const config = configOf(
+      { OPENAI_API_KEY: 'sk-env' },
+      { aiEnabled: true, aiProvider: 'openai' },
+      { openai: 'sk-stored' },
+    );
+    expect(config).toMatchObject({ apiKey: 'sk-env' });
+  });
+
+  it('lets Gemini be reached by a stored key instead of Vertex', () => {
+    const config = configOf(
+      { GOOGLE_CLOUD_PROJECT: 'p' },
+      { aiEnabled: true, aiGeminiTransport: 'apiKey' },
+      { gemini: 'AIzaSy-stored' },
+    );
+    expect(config).toMatchObject({ provider: 'gemini', transport: 'apiKey' });
+  });
+
+  it('does not silently use Vertex when the key route was chosen and no key is there', () => {
+    const config = configOf(
+      { GOOGLE_CLOUD_PROJECT: 'p' },
+      { aiEnabled: true, aiGeminiTransport: 'apiKey' },
+    );
+    expect(config).toBeNull();
   });
 });

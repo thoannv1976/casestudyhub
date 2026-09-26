@@ -1,10 +1,16 @@
 import type { Metadata } from 'next';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
-import { aiStatus, getSystemSettings, platformMetrics } from '@casestudyhub/core';
+import {
+  aiCredentialStatus,
+  aiStatus,
+  getSystemSettings,
+  platformMetrics,
+} from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
 import { AiProbePanel } from './ai-probe';
+import { AiProviderForm } from './ai-provider-form';
 import { SystemSettingsForm } from './system-settings-form';
 
 export const dynamic = 'force-dynamic';
@@ -43,10 +49,11 @@ export default async function SystemPage({ params }: { params: Promise<{ locale:
     );
   }
 
-  const [metrics, settings, ai] = await Promise.all([
+  const [metrics, settings, ai, credentials] = await Promise.all([
     platformMetrics(),
     getSystemSettings(),
     aiStatus(),
+    aiCredentialStatus(),
   ]);
 
   const counts = [
@@ -113,6 +120,8 @@ export default async function SystemPage({ params }: { params: Promise<{ locale:
           </div>
         ) : null}
       </Card>
+
+      <AiProviderForm settings={settings} credentials={credentials} />
 
       <AiProbePanel status={ai} settings={settings} />
 

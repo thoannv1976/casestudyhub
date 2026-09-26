@@ -1750,7 +1750,7 @@ test('closing registration closes the form, not just the request', async ({ page
   await page.goto('/en/admin/system');
 
   await page.getByLabel('Students may create their own account').uncheck();
-  await page.getByLabel('Reason').fill('Term has started.');
+  await page.getByTestId('system-settings').getByLabel('Reason').fill('Term has started.');
   await page.getByRole('button', { name: 'Save settings' }).click();
   await expect(page.getByTestId('alert-success')).toBeVisible();
 
@@ -1777,7 +1777,7 @@ test('closing registration closes the form, not just the request', async ({ page
   await signIn(page, ADMIN.email, ADMIN.password);
   await page.goto('/en/admin/system');
   await page.getByLabel('Students may create their own account').check();
-  await page.getByLabel('Reason').fill('Reopening after the check.');
+  await page.getByTestId('system-settings').getByLabel('Reason').fill('Reopening after the check.');
   await page.getByRole('button', { name: 'Save settings' }).click();
   await expect(page.getByTestId('alert-success')).toBeVisible();
 });
@@ -1887,6 +1887,47 @@ test('the system page says the model is not configured, and why that is not an e
   await expect(page.getByText('Not configured', { exact: true })).toBeVisible();
 });
 
+test('an administrator points the platform at OpenAI without a deploy', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/admin/system');
+
+  const form = page.getByTestId('ai-provider');
+  await form.getByLabel('Provider').selectOption('openai');
+  // Each vendor keeps its own model name, so the box follows the vendor.
+  await expect(form.getByLabel('Model name')).toHaveValue('gpt-4.1-mini');
+
+  await form.getByLabel('API key').fill('sk-e2e-test-key-2468');
+  await form.getByLabel('Reason for this change').fill('Trying OpenAI this term.');
+  await form.getByRole('button', { name: 'Save provider' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+
+  await page.reload();
+
+  // The key is stored but never shown: four characters is all the page knows.
+  const saved = page.getByTestId('ai-provider');
+  await expect(saved.getByLabel('Provider')).toHaveValue('openai');
+  await expect(saved).toContainText('…2468');
+  await expect(saved.getByLabel('API key')).toHaveValue('');
+  await expect(await saved.innerText()).not.toContain('sk-e2e');
+
+  // Nor does any route hand it back, which is the rule that matters.
+  const response = await page.request.get('/api/admin/ai');
+  expect(JSON.stringify(await response.json())).not.toContain('sk-e2e');
+
+  // Turned on, the platform now says OpenAI is who would answer.
+  await page.getByRole('button', { name: 'Turn the model on' }).click();
+  await expect(page.getByTestId('ai-status')).toContainText('OpenAI');
+  await expect(page.getByTestId('ai-status')).toContainText('gpt-4.1-mini');
+
+  // Put the deployment back where the rest of the run expects it.
+  await page.getByRole('button', { name: 'Turn the model off' }).click();
+  const back = page.getByTestId('ai-provider');
+  await back.getByLabel('Provider').selectOption('gemini');
+  await back.getByLabel('Reason for this change').fill('Back to Gemini after the check.');
+  await back.getByRole('button', { name: 'Save provider' }).click();
+  await expect(page.getByTestId('alert-success')).toBeVisible();
+});
+
 test('saving the other settings does not turn the model off', async ({ page }) => {
   await signIn(page, ADMIN.email, ADMIN.password);
   await page.goto('/en/admin/system');
@@ -1898,7 +1939,10 @@ test('saving the other settings does not turn the model off', async ({ page }) =
   // shows would turn off whatever it leaves out - which is precisely how the
   // deploy script used to turn off the model.
   await page.getByLabel('Model calls per month').fill('250');
-  await page.getByLabel('Reason').fill('Lowering the budget for the term.');
+  await page
+    .getByTestId('system-settings')
+    .getByLabel('Reason')
+    .fill('Lowering the budget for the term.');
   await page.getByRole('button', { name: 'Save settings' }).click();
   await expect(page.getByTestId('alert-success')).toBeVisible();
 

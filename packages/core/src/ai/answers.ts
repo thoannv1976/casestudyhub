@@ -6,7 +6,7 @@ import { writeAuditLog } from '../audit/audit-log';
 import { AppError } from '../errors';
 import { getCase, readAttachment } from '../cases/cases';
 import { listCaseQuestions } from '../questions/questions';
-import { getAiProvider } from './vertex';
+import { getAiProvider } from './gateway';
 import type { SessionUser } from '../auth/types';
 import type { AiFilePart } from './provider';
 

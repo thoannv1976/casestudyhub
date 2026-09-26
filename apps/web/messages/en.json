@@ -304,7 +304,8 @@
     "submissionIsALink": "That submission is a link, not a file this platform holds.",
     "presentationAlreadyRunning": "The presentation has already opened, so its date can no longer be moved.",
     "groupNameInvalid": "A group name needs between 1 and 120 characters.",
-    "groupNameTaken": "Another group in this class already has that name."
+    "groupNameTaken": "Another group in this class already has that name.",
+    "apiKeyRequired": "Enter an API key, or use \"Delete the stored key\" to remove it."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -998,7 +999,7 @@
     "aiStatusBody": "Every AI feature here is advisory, so \"not configured\" is something the interface reports rather than an error. That makes a genuine failure — a wrong model name, a service account without the role — look exactly the same from the outside. This is where the two are told apart.",
     "aiOn": "Configured",
     "aiOff": "Not configured",
-    "aiOffHint": "Run scripts/enable-ai.sh on the deployment to turn the model on. The platform works without it.",
+    "aiOffHint": "Nothing on this deployment would answer. For Gemini over Vertex AI, run scripts/enable-ai.sh and use the switch below; for OpenAI, or a Gemini API key, enter the key under \"Model provider\" above. The platform works without a model either way.",
     "aiTransport": "Reached by",
     "aiVertex": "Vertex AI, runtime service account",
     "aiApiKey": "API key",
@@ -1013,7 +1014,29 @@
     "aiProbeFailed": "The model was called and the call failed. The reply is below, exactly as it came back.",
     "aiTurnOn": "Turn the model on",
     "aiTurnOff": "Turn the model off",
-    "aiToggleHint": "Takes effect at once, for everybody. Vertex AI needs no secret — only this switch — so no deploy can change it and no deploy can undo it."
+    "aiToggleHint": "Takes effect at once, for everybody. Vertex AI needs no secret — only this switch — so no deploy can change it and no deploy can undo it.",
+    "aiProviderTitle": "Model provider",
+    "aiProviderBody": "Whose model the platform calls, and with which key. One provider for the whole platform rather than one per class: two classes marked by two different models are two different standards.",
+    "aiProviderLabel": "Provider",
+    "aiProviderHint": "Changing this takes effect at once, for every AI feature.",
+    "aiProviderName": {
+      "gemini": "Google Gemini",
+      "openai": "OpenAI"
+    },
+    "aiModelLabel": "Model name",
+    "aiModelHint": "Must match a name in that provider's catalogue. Each provider keeps its own, so switching back and forth loses neither.",
+    "aiTransportLabel": "Gemini is reached by",
+    "aiTransportHint": "Vertex AI uses the Cloud Run service account and needs no secret at all. The API key route needs one and is quicker to try.",
+    "aiLocationHint": "global serves everywhere and is the least region-restricted.",
+    "aiApiKeyLabel": "API key",
+    "aiKeyStored": "A key is stored (…{hint}). Leave empty to keep it.",
+    "aiKeyMissing": "No key stored. Without one the model will not answer.",
+    "aiKeyKeep": "Empty = keep the stored key",
+    "aiKeyClear": "Delete the stored key",
+    "aiKeyCleared": "Key deleted.",
+    "aiProviderSaved": "Saved. Use \"Ask the model\" below to be sure it really answers.",
+    "aiReasonLabel": "Reason for this change",
+    "aiProviderSave": "Save provider"
   },
   "caseSelection": {
     "title": "Choose your group's case study",

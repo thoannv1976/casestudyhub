@@ -309,6 +309,9 @@ describe('platform settings and what the model cost', () => {
     await testEnv.withSecurityRulesDisabled(async (context) => {
       const db = context.firestore();
       await setDoc(doc(db, 'systemSettings', 'platform'), { aiMonthlyCallBudget: 500 });
+      await setDoc(doc(db, 'systemSettings', 'aiCredentials'), {
+        openai: { key: 'sk-stored', hint: 'ored' },
+      });
       await setDoc(doc(db, 'aiUsage', '2026-03'), { period: '2026-03', calls: 3 });
     });
   });
@@ -317,6 +320,16 @@ describe('platform settings and what the model cost', () => {
     await assertFails(getDoc(doc(admin(), 'systemSettings', 'platform')));
     await assertFails(
       updateDoc(doc(admin(), 'systemSettings', 'platform'), { aiMonthlyCallBudget: 99999 }),
+    );
+  });
+
+  it('keeps the stored API keys unreadable, which is what lets them live here', async () => {
+    // The administration page shows four characters of a key and no more. If a
+    // client could read this document, that restraint would be decoration.
+    await assertFails(getDoc(doc(admin(), 'systemSettings', 'aiCredentials')));
+    await assertFails(getDoc(doc(student(), 'systemSettings', 'aiCredentials')));
+    await assertFails(
+      setDoc(doc(admin(), 'systemSettings', 'aiCredentials'), { openai: { key: 'sk-forged' } }),
     );
   });
 

@@ -15,7 +15,7 @@ import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
 import { getCase, readAttachment } from '../cases/cases';
 import { currentVersions, listSubmissions, readSubmissionFile } from '../submissions/submissions';
-import { getAiProvider } from './vertex';
+import { getAiProvider } from './gateway';
 import type { SessionUser } from '../auth/types';
 import type { AiFilePart } from './provider';
 

@@ -16,7 +16,7 @@ const {
   getDb,
   setAiProvider,
   aiIsAvailable,
-  readGeminiConfig,
+  readAiConfig,
   evaluateSubmission,
   getAiAssessment,
   answerQuestionBank,
@@ -228,7 +228,7 @@ describe('a deployment with no model configured', () => {
   it('reports itself as unconfigured rather than breaking', async () => {
     // Nothing sets GEMINI_API_KEY and the switch is off, which is exactly the
     // state a fresh deployment is in.
-    expect(readGeminiConfig(DEFAULT_SYSTEM_SETTINGS, {})).toBeNull();
+    expect(readAiConfig(DEFAULT_SYSTEM_SETTINGS, {}, {})).toBeNull();
     expect(await aiIsAvailable()).toBe(false);
   });
 
@@ -245,10 +245,10 @@ describe('a deployment with no model configured', () => {
     const off = DEFAULT_SYSTEM_SETTINGS;
     const on = { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: true };
 
-    expect(readGeminiConfig(off, { GEMINI_API_KEY: 'k' })?.transport).toBe('apiKey');
+    expect(readAiConfig(off, {}, { GEMINI_API_KEY: 'k' })?.transport).toBe('apiKey');
     // A project id alone is not consent: every Cloud Run deployment has one.
-    expect(readGeminiConfig(off, { GOOGLE_CLOUD_PROJECT: 'p' })).toBeNull();
-    expect(readGeminiConfig(on, { GOOGLE_CLOUD_PROJECT: 'p' })?.transport).toBe('vertex');
+    expect(readAiConfig(off, {}, { GOOGLE_CLOUD_PROJECT: 'p' })).toBeNull();
+    expect(readAiConfig(on, {}, { GOOGLE_CLOUD_PROJECT: 'p' })?.transport).toBe('vertex');
   });
 });
 

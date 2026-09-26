@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AiBudgetSpentError, AiNotConfiguredError } from './provider';
-import { getAiProvider, readGeminiConfig } from './vertex';
-import { getSystemSettings } from '../settings/settings';
+import { currentAiConfig, getAiProvider } from './gateway';
+import type { AiProviderName } from '@casestudyhub/shared';
 
 /**
  * Is the model reachable, and if not, why (SRS Module 03).
@@ -18,25 +18,42 @@ import { getSystemSettings } from '../settings/settings';
 
 export interface AiStatus {
   configured: boolean;
+  /** Which vendor would answer, if one would. */
+  provider: AiProviderName | null;
   /** `vertex` uses the runtime service account; `apiKey` uses a secret. */
   transport: 'vertex' | 'apiKey' | null;
   model: string | null;
   location: string | null;
+  /**
+   * Whether a key in the environment is what configured this. The page hides
+   * its on/off switch when it is: the switch cannot turn off a key a deploy
+   * set, and a switch that does nothing is worse than none.
+   */
+  environmentKey: boolean;
 }
 
 export async function aiStatus(): Promise<AiStatus> {
-  const config = readGeminiConfig(await getSystemSettings());
+  const config = await currentAiConfig();
   if (!config) {
-    return { configured: false, transport: null, model: null, location: null };
+    return {
+      configured: false,
+      provider: null,
+      transport: null,
+      model: null,
+      location: null,
+      environmentKey: false,
+    };
   }
 
-  // The key itself never leaves this function, in any form. Which transport is
-  // in use is enough to tell somebody what to check.
+  // The key itself never leaves this function, in any form. Which vendor and
+  // which route are in use is enough to tell somebody what to check.
   return {
     configured: true,
+    provider: config.provider,
     transport: config.transport,
     model: config.model,
-    location: config.location ?? null,
+    location: config.transport === 'vertex' ? config.location : null,
+    environmentKey: config.fromEnvironment,
   };
 }
 

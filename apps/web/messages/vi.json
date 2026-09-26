@@ -304,7 +304,8 @@
     "submissionIsALink": "Bài nộp đó là một link, không phải file do nền tảng này giữ.",
     "presentationAlreadyRunning": "Buổi thuyết trình đã mở, không đổi lịch được nữa.",
     "groupNameInvalid": "Tên nhóm cần từ 1 đến 120 ký tự.",
-    "groupNameTaken": "Lớp này đã có nhóm mang tên đó."
+    "groupNameTaken": "Lớp này đã có nhóm mang tên đó.",
+    "apiKeyRequired": "Hãy nhập API key, hoặc bấm \"Xóa khóa đang lưu\" nếu muốn bỏ khóa."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -998,7 +999,7 @@
     "aiStatusBody": "Mọi tính năng AI ở đây đều chỉ là tư vấn, nên \"chưa cấu hình\" là một trạng thái giao diện báo chứ không phải lỗi. Điều đó khiến một lỗi thật — sai tên model, service account thiếu quyền — nhìn từ ngoài vào giống hệt. Đây là chỗ phân biệt hai thứ đó.",
     "aiOn": "Đã cấu hình",
     "aiOff": "Chưa cấu hình",
-    "aiOffHint": "Chạy scripts/enable-ai.sh trên bản deploy để bật mô hình. Không có nó nền tảng vẫn chạy.",
+    "aiOffHint": "Bản deploy này chưa có mô hình nào trả lời được. Với Gemini qua Vertex AI, chạy scripts/enable-ai.sh rồi bật công tắc ở dưới; với OpenAI hoặc khóa API Gemini, dán khóa ở khối \"Nhà cung cấp mô hình\" phía trên. Không có mô hình thì nền tảng vẫn chạy.",
     "aiTransport": "Kết nối qua",
     "aiVertex": "Vertex AI, service account của Cloud Run",
     "aiApiKey": "API key",
@@ -1013,7 +1014,29 @@
     "aiProbeFailed": "Đã gọi mô hình và lượt gọi thất bại. Phản hồi nguyên văn ở dưới.",
     "aiTurnOn": "Bật mô hình",
     "aiTurnOff": "Tắt mô hình",
-    "aiToggleHint": "Có hiệu lực ngay, với mọi người. Vertex AI không cần bí mật nào — chỉ cần công tắc này — nên không lần deploy nào đổi được, và cũng không lần deploy nào xoá được."
+    "aiToggleHint": "Có hiệu lực ngay, với mọi người. Vertex AI không cần bí mật nào — chỉ cần công tắc này — nên không lần deploy nào đổi được, và cũng không lần deploy nào xoá được.",
+    "aiProviderTitle": "Nhà cung cấp mô hình",
+    "aiProviderBody": "Chọn nền tảng gọi mô hình của ai, bằng khóa nào. Một nhà cung cấp cho cả hệ thống, không phải mỗi lớp một kiểu: hai lớp chấm bằng hai mô hình khác nhau là hai thước đo khác nhau.",
+    "aiProviderLabel": "Nhà cung cấp",
+    "aiProviderHint": "Đổi nhà cung cấp có hiệu lực ngay, với mọi tính năng AI.",
+    "aiProviderName": {
+      "gemini": "Google Gemini",
+      "openai": "OpenAI"
+    },
+    "aiModelLabel": "Tên model",
+    "aiModelHint": "Phải khớp tên trong danh mục của nhà cung cấp. Mỗi nhà cung cấp giữ tên model riêng, đổi qua lại không mất.",
+    "aiTransportLabel": "Gemini kết nối qua",
+    "aiTransportHint": "Vertex AI dùng service account của Cloud Run nên không cần khóa nào. Đường API key cần khóa, nhanh hơn khi thử.",
+    "aiLocationHint": "global phục vụ mọi nơi và ít bị giới hạn vùng nhất.",
+    "aiApiKeyLabel": "API key",
+    "aiKeyStored": "Đã lưu một khóa (…{hint}). Để trống nếu giữ nguyên.",
+    "aiKeyMissing": "Chưa có khóa nào. Không có khóa thì mô hình không trả lời.",
+    "aiKeyKeep": "Để trống = giữ khóa đang lưu",
+    "aiKeyClear": "Xóa khóa đang lưu",
+    "aiKeyCleared": "Đã xóa khóa.",
+    "aiProviderSaved": "Đã lưu. Bấm \"Thử gọi mô hình\" ở dưới để chắc rằng nó trả lời thật.",
+    "aiReasonLabel": "Lý do thay đổi",
+    "aiProviderSave": "Lưu nhà cung cấp"
   },
   "caseSelection": {
     "title": "Chọn case study cho nhóm",

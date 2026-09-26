@@ -42,7 +42,7 @@ export async function GET(
     await assertCanManageClass(actor, assignment.classId);
 
     return NextResponse.json({
-      available: aiIsAvailable(),
+      available: await aiIsAvailable(),
       assessment: await getAiAssessment(assignmentId),
     });
   } catch (error) {
