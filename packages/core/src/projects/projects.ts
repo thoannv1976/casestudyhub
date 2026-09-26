@@ -122,6 +122,9 @@ export interface SubmissionTarget {
   groupId: string;
   submissionDeadline: string;
   deliverables: Deliverable[];
+  /** The framework version this work froze, which decides how it is marked. */
+  policyId: string;
+  policyVersion: string;
 }
 
 /** The project's target for one group, or null when no project is set. */
@@ -138,6 +141,8 @@ export async function projectTarget(
     groupId,
     submissionDeadline: project.deadline,
     deliverables: await projectDeliverables(project),
+    policyId: project.policyId,
+    policyVersion: project.policyVersion,
   };
 }
 

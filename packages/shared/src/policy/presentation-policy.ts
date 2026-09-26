@@ -4,7 +4,7 @@ import {
   presentationRoleIdSchema,
   presentationRoleSchema,
 } from '../domain/roles';
-import { DEFAULT_RUBRIC, rubricSchema } from '../domain/rubric';
+import { DEFAULT_PROJECT_RUBRIC, DEFAULT_RUBRIC, rubricSchema } from '../domain/rubric';
 
 /**
  * Academic Assessment Policy (SRS 13.2).
@@ -188,6 +188,28 @@ export const presentationPolicySchema = z
     projectDeliverables: z
       .array(deliverableSchema)
       .default(() => [...DEFAULT_PROJECT_DELIVERABLES]),
+
+    /**
+     * The instrument the class group project is marked with. A different one
+     * from `rubric` above on purpose: a six-week venture with a report and a
+     * deck is not twenty minutes in a room, and marking both with one rubric
+     * would mean one of them was being marked with the wrong instrument.
+     */
+    projectRubric: rubricSchema.default(() => DEFAULT_PROJECT_RUBRIC),
+
+    /**
+     * What the two optional pieces of the project are worth, on the same
+     * hundred-point scale (Guide, section 7). Data rather than a constant: a
+     * faculty that does not run the bonus sets them to zero.
+     */
+    projectBonus: z
+      .object({
+        /** A working MVP, not a mock-up. */
+        mvpPoints: z.number().min(0).max(100).default(10),
+        /** A three-to-five minute team video. */
+        videoPoints: z.number().min(0).max(100).default(5),
+      })
+      .default({ mvpPoints: 10, videoPoints: 5 }),
   })
   .refine((p) => Math.abs(p.grading.teamWeight + p.grading.individualWeight - 1) < 1e-9, {
     message: 'teamWeight + individualWeight must equal 1',
@@ -331,6 +353,8 @@ export const DEFAULT_PRESENTATION_POLICY: PresentationPolicy = {
     },
   ],
   projectDeliverables: DEFAULT_PROJECT_DELIVERABLES,
+  projectRubric: DEFAULT_PROJECT_RUBRIC,
+  projectBonus: { mvpPoints: 10, videoPoints: 5 },
 };
 
 /** Validates a policy and returns it typed, throwing on any broken academic rule. */

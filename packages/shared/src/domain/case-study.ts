@@ -161,6 +161,11 @@ export function isLinkSubmission(
 export const gradeSchema = z.object({
   id: z.string().min(1),
   assignmentId: z.string().min(1),
+  /**
+   * Which piece of work this mark is for. Defaulted, so grades published
+   * before the class project existed still read as what they are.
+   */
+  kind: z.enum(['case_study', 'group_project']).default('case_study'),
   groupId: z.string().min(1),
   studentUid: z.string().min(1),
   groupScore: z.number().min(0),

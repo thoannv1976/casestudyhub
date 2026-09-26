@@ -1496,6 +1496,70 @@ test('a student who was quiet sees that, rather than an empty page', async ({ pa
   await expect(page.getByText('Not published yet')).toBeVisible();
 });
 
+test('the lecturer marks the class group project with its own rubric', async ({ page }) => {
+  // The lecturer, not the administrator: drafting and publishing a mark are
+  // deliberately outside an admin's permissions.
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page
+    .getByTestId('project-manager')
+    .getByRole('row')
+    .filter({ hasText: 'Group 1' })
+    .getByRole('link', { name: 'Mark' })
+    .click();
+  await page.waitForURL(/\/project\/.+/);
+
+  // The project's own ten components, not the six of the presentation rubric.
+  const components = {
+    'customer-problem': 10,
+    'market-competitors': 10,
+    'business-model': 15,
+    'journey-solution': 10,
+    'digital-marketing': 10,
+    'ai-application': 15,
+    'data-kpi': 15,
+    'innovation-feasibility': 5,
+    'report-quality': 5,
+    'pitch-teamwork': 5,
+  };
+  // A component of the project rubric that the presentation rubric has no
+  // equivalent of: the wrong instrument would be visible here at once.
+  await expect(page.getByText('Data, KPI & unit economics')).toBeVisible();
+  for (const [id, points] of Object.entries(components)) {
+    await page.locator(`#${id}`).fill(String(points));
+  }
+
+  // Earned outside the rubric: the team video was handed in earlier.
+  await page.locator('#bonusVideo').check();
+  const scores = page.locator('input[name^="score_"]');
+  for (let index = 0; index < (await scores.count()); index += 1) {
+    await scores.nth(index).fill('80');
+  }
+  await page.getByRole('button', { name: 'Save marking' }).click();
+
+  // 100 on the rubric plus 5 of bonus, capped at 100, then weighted 80/20
+  // against an individual 80: 96.
+  await expect(
+    page.getByTestId('grade-preview').getByRole('listitem').filter({ hasText: STUDENT.fullName }),
+  ).toContainText('96');
+
+  await page.getByRole('button', { name: 'Publish to students' }).click();
+  await expect(page.getByText('These grades have been published')).toBeVisible();
+});
+
+test('the student sees the project mark beside their case study mark', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/portfolio');
+
+  // Two marks for two different pieces of work, both on the same card.
+  await expect(page.getByText('69', { exact: true })).toBeVisible();
+  await expect(page.getByText('96', { exact: true })).toBeVisible();
+  await expect(page.getByText('Class group project').first()).toBeVisible();
+});
+
 test('a portfolio is one student\u2019s own, and nobody else\u2019s', async ({ page }) => {
   await signIn(page, AUDIENCE.email, AUDIENCE.password);
   await page.goto('/en/portfolio');

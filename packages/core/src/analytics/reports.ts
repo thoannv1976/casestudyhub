@@ -6,6 +6,7 @@ import {
   lecturerAssessmentSchema,
   participationOf,
   gradeSchema,
+  projectTargetId,
   type CloAttainment,
   type CriterionAverage,
   type Distribution,
@@ -163,6 +164,8 @@ export interface PortfolioEntry {
   groupName: string | null;
   roleIds: string[];
   caseTitle: string | null;
+  /** The class group project's mark, which is separate work from any case. */
+  projectFinalScore: number | null;
   /** Only once published. A draft is not a result. */
   finalScore: number | null;
   groupScore: number | null;
@@ -225,11 +228,21 @@ export async function studentPortfolio(uid: string): Promise<Portfolio> {
     const assignment = assignments.find((candidate) => candidate.groupId === membership?.groupId);
     const caseStudy = assignment ? await getCase(assignment.caseStudyId) : null;
 
-    const grade = gradeDocs.docs
+    const published = gradeDocs.docs
       .map((doc) => gradeSchema.safeParse(doc.data()))
       .filter((parsed) => parsed.success)
-      .map((parsed) => parsed.data)
-      .find((candidate) => candidate.assignmentId === assignment?.id);
+      .map((parsed) => parsed.data);
+
+    const grade = published.find((candidate) => candidate.assignmentId === assignment?.id);
+    // Two marks can exist side by side in one class, for two different pieces
+    // of work. Showing one where the student earned both would be a quiet lie.
+    const projectGrade = membership
+      ? published.find(
+          (candidate) =>
+            candidate.kind === 'group_project' &&
+            candidate.assignmentId === projectTargetId(enrollment.classId, membership.groupId),
+        )
+      : undefined;
 
     entries.push({
       classId: enrollment.classId,
@@ -239,6 +252,7 @@ export async function studentPortfolio(uid: string): Promise<Portfolio> {
       groupName: groups.find((group) => group.id === membership?.groupId)?.groupName ?? null,
       roleIds: membership?.roleIds ?? [],
       caseTitle: caseStudy?.title ?? null,
+      projectFinalScore: projectGrade?.finalScore ?? null,
       finalScore: grade?.finalScore ?? null,
       groupScore: grade?.groupScore ?? null,
       individualScore: grade?.individualScore ?? null,

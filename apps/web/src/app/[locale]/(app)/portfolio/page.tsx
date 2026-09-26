@@ -24,6 +24,7 @@ export default async function PortfolioPage({ params }: { params: Promise<{ loca
   const user = await requireSessionUser();
   const t = await getTranslations('portfolio');
   const tRoles = await getTranslations('roles');
+  const tProject = await getTranslations('project');
 
   const portfolio = await studentPortfolio(user.uid);
   const { totals } = portfolio;
@@ -87,17 +88,31 @@ export default async function PortfolioPage({ params }: { params: Promise<{ loca
                   ) : null}
                 </div>
 
-                {entry.finalScore === null ? (
+                {entry.finalScore === null && entry.projectFinalScore === null ? (
                   <Badge>{t('notPublished')}</Badge>
                 ) : (
-                  <div className="text-right">
-                    <p className="text-2xl font-semibold tabular-nums">{entry.finalScore}</p>
-                    <p className="text-muted text-xs">
-                      {t('breakdown', {
-                        group: entry.groupScore ?? 0,
-                        individual: entry.individualScore ?? 0,
-                      })}
-                    </p>
+                  <div className="flex flex-wrap items-start gap-6 text-right">
+                    {entry.finalScore === null ? null : (
+                      <div>
+                        <p className="text-2xl font-semibold tabular-nums">{entry.finalScore}</p>
+                        <p className="text-muted text-xs">
+                          {t('breakdown', {
+                            group: entry.groupScore ?? 0,
+                            individual: entry.individualScore ?? 0,
+                          })}
+                        </p>
+                      </div>
+                    )}
+                    {/* Two marks, for two different pieces of work. Showing one
+                        where a student earned both would be a quiet lie. */}
+                    {entry.projectFinalScore === null ? null : (
+                      <div>
+                        <p className="text-2xl font-semibold tabular-nums">
+                          {entry.projectFinalScore}
+                        </p>
+                        <p className="text-muted text-xs">{tProject('subject')}</p>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>

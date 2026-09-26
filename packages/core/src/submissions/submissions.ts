@@ -56,6 +56,8 @@ async function submissionTarget(id: string): Promise<SubmissionTarget> {
     groupId: assignment.groupId,
     submissionDeadline: assignment.submissionDeadline,
     deliverables: [...(await policyOfAssignment(assignment)).deliverables],
+    policyId: assignment.policyId,
+    policyVersion: assignment.policyVersion,
   };
 }
 

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { Deliverable } from '@casestudyhub/shared';
-import { useRouter } from '@/i18n/navigation';
+import { Link, useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input } from '@/components/ui/form';
 
 /**
@@ -18,6 +18,8 @@ import { Alert, Button, Field, Input } from '@/components/ui/form';
 export interface ProjectRow {
   groupId: string;
   groupName: string;
+  /** Whether the lecturer has marked this group's project yet. */
+  marked: boolean;
   /** Deliverable id → what the group has handed in, if anything. */
   handedIn: Record<string, { fileName: string; isLate: boolean; versionNumber: number }>;
 }
@@ -125,6 +127,9 @@ export function ProjectManager({
                     {name(deliverable)}
                   </th>
                 ))}
+                <th scope="col" className="px-4 py-3 font-semibold">
+                  <span className="sr-only">{t('grade')}</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -150,6 +155,14 @@ export function ProjectManager({
                       </td>
                     );
                   })}
+                  <td className="px-4 py-3 text-right">
+                    <Link
+                      href={`/teaching/${classId}/project/${row.groupId}`}
+                      className="text-brand-600 dark:text-brand-300 font-medium underline"
+                    >
+                      {row.marked ? t('marked') : t('grade')}
+                    </Link>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -24,6 +24,8 @@ export const NOTIFICATION_KINDS = [
   'question.selected',
   /** Your mark has been published. */
   'grade.published',
+  /** Your mark for the class group project has been published. */
+  'grade.projectPublished',
   /**
    * Derived at read time, never stored: a deliverable is still missing and the
    * deadline is close. Storing it would need a scheduler, and a stored one

@@ -6,8 +6,12 @@ import {
   lecturerAssessmentSchema,
   sumRubricScores,
   type Grade,
+  type GradedWorkKind,
   type IndividualAssessment,
   type LecturerAssessment,
+  type PresentationPolicy,
+  type ProjectBonusAward,
+  type Rubric,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
@@ -15,7 +19,8 @@ import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
 import { getCase } from '../cases/cases';
-import { policyOfAssignmentId } from '../policy/policy-store';
+import { getPolicy, policyOfAssignment } from '../policy/policy-store';
+import { projectTargetOf } from '../projects/projects';
 import { currentVersions, listSubmissions } from '../submissions/submissions';
 import { listMembers } from '../groups/groups';
 import type { SessionUser } from '../auth/types';
@@ -29,6 +34,72 @@ import type { SessionUser } from '../auth/types';
  * A half-published group would mean some students seeing a mark and others
  * being told to wait, with no way to tell which is which.
  */
+
+/**
+ * A piece of work that can be marked, of either kind.
+ *
+ * A class study assignment and the class group project are marked by the same
+ * machinery - one draft, one preview, one transaction that publishes for the
+ * whole group or for nobody - but with different instruments. Resolving them
+ * to one shape here is what keeps that machinery single. Everything below
+ * reads `rubric` and `bonusFor`; none of it branches on the kind except where
+ * the two genuinely differ.
+ */
+interface GradableTarget {
+  id: string;
+  kind: GradedWorkKind;
+  classId: string;
+  groupId: string;
+  caseStudyId?: string;
+  policy: PresentationPolicy;
+  rubric: Rubric;
+  rubricVersion: string;
+  policyId: string;
+  policyVersion: string;
+  /** Points the award is worth under the frozen framework. Zero for a case study. */
+  bonusPoints: (award: ProjectBonusAward | undefined) => number;
+}
+
+async function gradableTarget(id: string): Promise<GradableTarget> {
+  const project = await projectTargetOf(id);
+  if (project) {
+    const policy = await getPolicy(project.policyId, project.policyVersion);
+    return {
+      id: project.id,
+      kind: 'group_project',
+      classId: project.classId,
+      groupId: project.groupId,
+      policy,
+      rubric: policy.projectRubric,
+      rubricVersion: policy.projectRubric.version,
+      policyId: project.policyId,
+      policyVersion: project.policyVersion,
+      bonusPoints: (award) =>
+        (award?.mvp ? policy.projectBonus.mvpPoints : 0) +
+        (award?.video ? policy.projectBonus.videoPoints : 0),
+    };
+  }
+
+  const assignment = await getAssignment(id);
+  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+
+  const policy = await policyOfAssignment(assignment);
+  return {
+    id: assignment.id,
+    kind: 'case_study',
+    classId: assignment.classId,
+    groupId: assignment.groupId,
+    caseStudyId: assignment.caseStudyId,
+    policy,
+    rubric: policy.rubric,
+    rubricVersion: assignment.rubricVersion,
+    policyId: assignment.policyId,
+    policyVersion: assignment.policyVersion,
+    // A case study has no bonus. Returning zero rather than refusing keeps the
+    // one pipeline honest: an award sent for a case study simply buys nothing.
+    bonusPoints: () => 0,
+  };
+}
 
 function parse(data: FirebaseFirestore.DocumentData): LecturerAssessment | null {
   const parsed = lecturerAssessmentSchema.safeParse(data);
@@ -57,6 +128,8 @@ export interface SaveAssessmentInput {
   latePenaltyWaived: boolean;
   latePenaltyWaiverReason?: string;
   individual: Record<string, IndividualAssessment>;
+  /** Only meaningful on the class group project. */
+  bonus?: ProjectBonusAward;
 }
 
 export async function saveLecturerAssessment(
@@ -65,8 +138,7 @@ export async function saveLecturerAssessment(
   assignmentId: string,
   input: SaveAssessmentInput,
 ): Promise<LecturerAssessment> {
-  const assignment = await getAssignment(assignmentId);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  const target = await gradableTarget(assignmentId);
 
   const existing = await getLecturerAssessment(assignmentId);
   // A published grade is a statement to students. Changing it is a new
@@ -75,9 +147,10 @@ export async function saveLecturerAssessment(
     throw new AppError('CONFLICT', 'errors.gradeAlreadyPublished');
   }
 
-  // The version this assignment froze, never today's: a framework changed
-  // after the case was set must not change how the work is marked.
-  const policy = await policyOfAssignmentId(assignmentId);
+  // The version this work froze, never today's: a framework changed after the
+  // case was set, or after the project was set, must not change how the work
+  // is marked.
+  const { policy, rubric } = target;
   let groupScoreRaw: number;
   try {
     groupScoreRaw = sumRubricScores(
@@ -86,6 +159,7 @@ export async function saveLecturerAssessment(
         points,
       })),
       policy,
+      rubric,
     );
   } catch {
     // `sumRubricScores` throws for an unknown criterion or a score above its
@@ -94,7 +168,7 @@ export async function saveLecturerAssessment(
   }
 
   // Every criterion must be marked: a rubric with a gap is not a mark.
-  for (const criterion of policy.rubric.criteria) {
+  for (const criterion of rubric.criteria) {
     if (input.criterionScores[criterion.id] === undefined) {
       throw new AppError('VALIDATION_FAILED', 'errors.criterionScoreRequired', {
         details: { criterionId: criterion.id },
@@ -102,8 +176,8 @@ export async function saveLecturerAssessment(
     }
   }
 
-  const members = (await listMembers(assignment.classId)).filter(
-    (member) => member.groupId === assignment.groupId,
+  const members = (await listMembers(target.classId)).filter(
+    (member) => member.groupId === target.groupId,
   );
   for (const member of members) {
     if (!input.individual[member.studentUid]) {
@@ -116,9 +190,11 @@ export async function saveLecturerAssessment(
   const assessment: LecturerAssessment = {
     id: assignmentId,
     assignmentId,
-    classId: assignment.classId,
-    groupId: assignment.groupId,
-    caseStudyId: assignment.caseStudyId,
+    classId: target.classId,
+    groupId: target.groupId,
+    kind: target.kind,
+    ...(target.caseStudyId ? { caseStudyId: target.caseStudyId } : {}),
+    bonus: input.bonus ?? { mvp: false, video: false },
     criterionScores: input.criterionScores,
     groupScoreRaw,
     ...(input.comment ? { comment: input.comment } : {}),
@@ -127,10 +203,10 @@ export async function saveLecturerAssessment(
       ? { latePenaltyWaiverReason: input.latePenaltyWaiverReason }
       : {}),
     individual: input.individual,
-    rubricId: policy.rubric.id,
-    rubricVersion: assignment.rubricVersion,
-    policyId: assignment.policyId,
-    policyVersion: assignment.policyVersion,
+    rubricId: rubric.id,
+    rubricVersion: target.rubricVersion,
+    policyId: target.policyId,
+    policyVersion: target.policyVersion,
     status: 'draft',
     assessedByUid: actor.uid,
     assessedByName: actorName,
@@ -147,8 +223,8 @@ export async function saveLecturerAssessment(
     actorUid: actor.uid,
     actorRole: actor.role,
     target: `${COLLECTIONS.lecturerAssessments}/${assignmentId}`,
-    classId: assignment.classId,
-    after: { groupScoreRaw },
+    classId: target.classId,
+    after: { groupScoreRaw, kind: target.kind },
   });
 
   return assessment;
@@ -170,7 +246,7 @@ export async function previewGrades(assignmentId: string): Promise<GradePreviewR
   const assessment = await getLecturerAssessment(assignmentId);
   if (!assessment) throw new AppError('NOT_FOUND', 'errors.assessmentNotFound');
 
-  const policy = await policyOfAssignmentId(assignmentId);
+  const target = await gradableTarget(assignmentId);
   const isLate = await groupSubmittedLate(assignmentId);
   const members = (await listMembers(assessment.classId)).filter(
     (member) => member.groupId === assessment.groupId,
@@ -185,6 +261,9 @@ export async function previewGrades(assignmentId: string): Promise<GradePreviewR
       breakdown: computeStudentScore(
         {
           rawScore: assessment.groupScoreRaw,
+          // Earned outside the rubric, and worth whatever the frozen framework
+          // says it is worth - not whatever it is worth today.
+          bonusPoints: target.bonusPoints(assessment.bonus),
           isLate,
           ...(assessment.latePenaltyWaived
             ? {
@@ -201,7 +280,7 @@ export async function previewGrades(assignmentId: string): Promise<GradePreviewR
           didNotPresent: individual?.didNotPresent ?? false,
           failedOwnRoleQuestion: individual?.failedOwnRoleQuestion ?? false,
         },
-        policy,
+        target.policy,
       ),
     };
   });
@@ -226,6 +305,7 @@ export async function publishGrades(actor: SessionUser, assignmentId: string): P
   const grades: Grade[] = rows.map((row) => ({
     id: `${assignmentId}__${row.studentUid}`,
     assignmentId,
+    kind: assessment.kind,
     groupId: assessment.groupId,
     studentUid: row.studentUid,
     groupScore: row.breakdown.groupScoreAfterPenalty,
@@ -256,14 +336,17 @@ export async function publishGrades(actor: SessionUser, assignmentId: string): P
 
   // The reason this module exists, from the student's side: a mark is out and
   // nobody had to be told in person.
-  const assignment = await getAssignment(assignmentId);
-  const caseStudy = assignment ? await getCase(assignment.caseStudyId) : null;
+  const caseStudy = assessment.caseStudyId ? await getCase(assessment.caseStudyId) : null;
   await notify({
     recipientUids: grades.map((grade) => grade.studentUid),
-    kind: 'grade.published',
-    // Named, because a class marks several cases in a term and "your mark is
-    // out" does not say which one.
-    params: { case: caseStudy?.title ?? assignment?.caseStudyId ?? '' },
+    // The class project has no case to name, so it gets its own sentence
+    // rather than one with an empty hole where a case title should be.
+    kind: assessment.kind === 'group_project' ? 'grade.projectPublished' : 'grade.published',
+    ...(assessment.kind === 'group_project'
+      ? {}
+      : // Named, because a class marks several cases in a term and "your mark
+        // is out" does not say which one.
+        { params: { case: caseStudy?.title ?? assessment.caseStudyId ?? '' } }),
     href: `/classes/${assessment.classId}`,
   });
 
@@ -273,7 +356,7 @@ export async function publishGrades(actor: SessionUser, assignmentId: string): P
     actorRole: actor.role,
     target: `${COLLECTIONS.lecturerAssessments}/${assignmentId}`,
     classId: assessment.classId,
-    after: { students: grades.length },
+    after: { students: grades.length, kind: assessment.kind },
   });
 
   return grades;

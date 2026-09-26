@@ -5,6 +5,7 @@ import {
   assertCanManageClass,
   getAssignment,
   getLecturerAssessment,
+  projectTargetOf,
   getUserProfile,
   previewGrades,
   publishGrades,
@@ -14,6 +15,20 @@ import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { respondWithError } from '@/lib/api/respond';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Which class a piece of work belongs to, of either kind. Marking the class
+ * group project goes through this same route: the pipeline behind it is one
+ * pipeline, so the permission check has to be one check too.
+ */
+async function classOfWork(assignmentId: string): Promise<string> {
+  const project = await projectTargetOf(assignmentId);
+  if (project) return project.classId;
+
+  const assignment = await getAssignment(assignmentId);
+  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  return assignment.classId;
+}
 
 /**
  * Saving a mark and publishing it are deliberately separate permissions and
@@ -31,9 +46,7 @@ export async function POST(
 
     const actor = await requirePermission(publishing ? 'grade.publish' : 'grade.draft');
 
-    const assignment = await getAssignment(assignmentId);
-    if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
-    await assertCanManageClass(actor, assignment.classId);
+    await assertCanManageClass(actor, await classOfWork(assignmentId));
 
     if (publishing) {
       const grades = await publishGrades(actor, assignmentId);
@@ -52,6 +65,7 @@ export async function POST(
         latePenaltyWaived: input.latePenaltyWaived,
         latePenaltyWaiverReason: input.latePenaltyWaiverReason,
         individual: input.individual,
+        ...(input.bonus ? { bonus: input.bonus } : {}),
       },
     );
 
@@ -72,9 +86,7 @@ export async function GET(
     const actor = await requirePermission('grade.draft');
     const { assignmentId } = await context.params;
 
-    const assignment = await getAssignment(assignmentId);
-    if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
-    await assertCanManageClass(actor, assignment.classId);
+    await assertCanManageClass(actor, await classOfWork(assignmentId));
 
     const assessment = await getLecturerAssessment(assignmentId);
     return NextResponse.json({

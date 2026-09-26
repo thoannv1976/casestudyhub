@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { roleKeyOf, type LecturerAssessment, type PresentationPolicy } from '@casestudyhub/shared';
+import {
+  roleKeyOf,
+  type LecturerAssessment,
+  type PresentationPolicy,
+  type Rubric,
+} from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
@@ -41,14 +46,28 @@ export function GradeForm({
   members,
   assessment,
   policy,
+  rubric,
+  bonus,
   isLate,
   canPublish,
 }: {
   assignmentId: string;
   members: Member[];
   assessment: LecturerAssessment | null;
-  /** Handed down by the page: the version this assignment froze. */
+  /** Handed down by the page: the version this work froze. */
   policy: PresentationPolicy;
+  /**
+   * The instrument to mark with. A case study uses the presentation rubric;
+   * the class group project uses its own, which is why this is a prop rather
+   * than read off the policy here.
+   */
+  rubric: Rubric;
+  /**
+   * Only the class group project has points outside the rubric. Absent for a
+   * case study, and the tick boxes do not exist rather than sitting there
+   * doing nothing.
+   */
+  bonus?: { mvpPoints: number; videoPoints: number };
   isLate: boolean;
   canPublish: boolean;
 }) {
@@ -74,8 +93,16 @@ export function GradeForm({
     try {
       const body = {
         criterionScores: Object.fromEntries(
-          policy.rubric.criteria.map((criterion) => [criterion.id, Number(form.get(criterion.id))]),
+          rubric.criteria.map((criterion) => [criterion.id, Number(form.get(criterion.id))]),
         ),
+        ...(bonus
+          ? {
+              bonus: {
+                mvp: form.get('bonusMvp') === 'on',
+                video: form.get('bonusVideo') === 'on',
+              },
+            }
+          : {}),
         comment: String(form.get('comment') ?? '') || undefined,
         latePenaltyWaived: form.get('latePenaltyWaived') === 'on',
         latePenaltyWaiverReason: String(form.get('latePenaltyWaiverReason') ?? '') || undefined,
@@ -150,9 +177,9 @@ export function GradeForm({
       <form onSubmit={save} className="space-y-6">
         <fieldset className="space-y-3">
           <legend className="text-sm font-semibold">
-            {t('groupScore', { max: policy.rubric.totalPoints })}
+            {t('groupScore', { max: rubric.totalPoints })}
           </legend>
-          {policy.rubric.criteria.map((criterion) => (
+          {rubric.criteria.map((criterion) => (
             <Field
               key={criterion.id}
               label={`${tRubric(criterion.key.replace(/^rubric\./, ''))} · ${criterion.maxPoints}`}
@@ -183,6 +210,35 @@ export function GradeForm({
             />
           </Field>
         </fieldset>
+
+        {bonus ? (
+          <fieldset className="space-y-3">
+            <legend className="text-sm font-semibold">{t('bonusTitle')}</legend>
+            <p className="text-muted text-sm">{t('bonusHint', { max: policy.grading.maxScore })}</p>
+            <label className="flex items-center gap-2 text-sm">
+              <Input
+                id="bonusMvp"
+                name="bonusMvp"
+                type="checkbox"
+                defaultChecked={assessment?.bonus?.mvp ?? false}
+                className="h-4 w-4"
+              />
+              {t('bonusMvp', { points: bonus.mvpPoints })}
+            </label>
+            <p className="text-muted text-xs">{t('bonusMvpHint')}</p>
+            <label className="flex items-center gap-2 text-sm">
+              <Input
+                id="bonusVideo"
+                name="bonusVideo"
+                type="checkbox"
+                defaultChecked={assessment?.bonus?.video ?? false}
+                className="h-4 w-4"
+              />
+              {t('bonusVideo', { points: bonus.videoPoints })}
+            </label>
+            <p className="text-muted text-xs">{t('bonusVideoHint')}</p>
+          </fieldset>
+        ) : null}
 
         {isLate ? (
           <fieldset className="space-y-3">

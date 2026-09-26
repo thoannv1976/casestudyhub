@@ -118,8 +118,19 @@
       "evidence": "Evidence and figures",
       "critique": "Critique",
       "transferDecision": "Transfer and decision",
-      "delivery": "Delivery and coordination"
-    }
+      "delivery": "Delivery and coordination",
+      "customerProblem": "Customer problem & evidence",
+      "marketCompetitors": "Market & competitor analysis",
+      "businessModel": "E-commerce business model",
+      "journeySolution": "Customer journey & solution design",
+      "digitalMarketing": "Digital marketing strategy",
+      "aiApplication": "AI application & AI critical thinking",
+      "dataKpi": "Data, KPI & unit economics",
+      "innovationFeasibility": "Innovation & feasibility",
+      "reportQuality": "Report quality",
+      "pitchTeamwork": "Pitch + Q&A + teamwork"
+    },
+    "project100": "Class group project rubric (100 points)"
   },
   "deliverables": {
     "slidesPdf": "Presentation slides (PDF)",
@@ -769,7 +780,16 @@
     "yourMark": "Your mark",
     "yourMarkBreakdown": "Group {group} ({team}%) + individual {individual} ({solo}%)",
     "policyVersion": "Framework version {version}",
-    "clockStillRunning": "The clock is still running for this session, so the times below are what has been banked so far."
+    "clockStillRunning": "The clock is still running for this session, so the times below are what has been banked so far.",
+    "bonusTitle": "Bonus points",
+    "bonusHint": "Added to the group score before the {max}-point cap, with the late penalty taken last — so a bonus cannot cancel out handing in late.",
+    "bonusMvp": "Working MVP (+{points})",
+    "bonusMvpHint": "It has to actually work, not be a mock-up, and it has to test a real business hypothesis.",
+    "bonusVideo": "Team video, 3–5 minutes (+{points})",
+    "bonusVideoHint": "The team's startup story, not a recording of the slides being read.",
+    "bonusEarned": "The group earned {earned}; the cap brings it to {capped}.",
+    "projectTitle": "Mark the class group project",
+    "projectSubtitle": "The class group project, marked with its own rubric — not the case study presentation one."
   },
   "ai": {
     "title": "What the model read",
@@ -910,7 +930,8 @@
       "questionSelected": "The presenting group chose your question to answer aloud.",
       "gradePublished": "Your mark for {case} has been published.",
       "submissionDueSoon": "{missing, plural, one {# deliverable is} other {# deliverables are}} still missing for {case}, and the deadline is in {hours, plural, one {# hour} other {# hours}}.",
-      "assignmentRescheduled": "Your group’s presentation has moved to {presentation, date, medium} at {presentation, time, short}. The new submission deadline is {deadline, date, medium} at {deadline, time, short}."
+      "assignmentRescheduled": "Your group’s presentation has moved to {presentation, date, medium} at {presentation, time, short}. The new submission deadline is {deadline, date, medium} at {deadline, time, short}.",
+      "gradeProjectPublished": "Your mark for the class group project has been published."
     }
   },
   "framework": {
@@ -1112,6 +1133,9 @@
     "noGroups": "This class has no groups to hand work in.",
     "group": "Group",
     "missing": "Not handed in",
-    "late": "late"
+    "late": "late",
+    "grade": "Mark",
+    "marked": "Marked",
+    "unmarked": "Not marked"
   }
 }

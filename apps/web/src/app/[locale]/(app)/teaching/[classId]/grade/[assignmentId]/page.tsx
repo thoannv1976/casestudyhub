@@ -216,6 +216,7 @@ export default async function GradePage({
             }))}
             assessment={assessment}
             policy={policy}
+            rubric={policy.rubric}
             isLate={isLate}
             canPublish={user.role === 'lecturer'}
           />

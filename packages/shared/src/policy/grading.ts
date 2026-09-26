@@ -17,6 +17,13 @@ export interface LatePenaltyOverride {
 export interface GroupScoreInput {
   /** Raw rubric total awarded to the group, on the policy's max scale. */
   rawScore: number;
+  /**
+   * Points earned outside the rubric - the group project's working MVP and
+   * team video (Guide, section 7). Added before the scale is capped and
+   * before any late penalty, so a bonus can lift a group to full marks but
+   * cannot cancel out handing in late.
+   */
+  bonusPoints?: number;
   isLate: boolean;
   latePenaltyOverride?: LatePenaltyOverride;
 }
@@ -31,6 +38,10 @@ export interface IndividualScoreInput {
 }
 
 export interface ScoreBreakdown {
+  /** Points from outside the rubric, before the cap. */
+  bonusPointsApplied: number;
+  /** Rubric total plus bonus, before the scale's maximum is applied. */
+  groupScoreBeforeCap: number;
   groupScoreRaw: number;
   latePenaltyApplied: number;
   groupScoreAfterPenalty: number;
@@ -83,7 +94,11 @@ export function computeStudentScore(
 ): ScoreBreakdown {
   const { grading } = policy;
 
-  const groupScoreRaw = clampScore(group.rawScore, grading.maxScore);
+  const bonusPointsApplied = group.bonusPoints ?? 0;
+  // What the group earned before the scale has its say, kept so the lecturer
+  // can see a bonus that the cap swallowed rather than wondering where it went.
+  const groupScoreBeforeCap = group.rawScore + bonusPointsApplied;
+  const groupScoreRaw = clampScore(groupScoreBeforeCap, grading.maxScore);
   const latePenaltyApplied = computeLatePenalty(group, policy);
   const groupScoreAfterPenalty = clampScore(groupScoreRaw - latePenaltyApplied, grading.maxScore);
 
@@ -102,6 +117,8 @@ export function computeStudentScore(
   const weightedIndividual = individualScoreApplied * grading.individualWeight;
 
   return {
+    bonusPointsApplied,
+    groupScoreBeforeCap,
     groupScoreRaw,
     latePenaltyApplied,
     groupScoreAfterPenalty,
@@ -129,14 +146,17 @@ export interface RubricScoreEntry {
 export function sumRubricScores(
   entries: readonly RubricScoreEntry[],
   policy: PresentationPolicy,
+  // Which instrument to mark against. The presentation rubric by default; the
+  // class group project passes its own.
+  rubric: PresentationPolicy['rubric'] = policy.rubric,
 ): number {
-  const byId = new Map(policy.rubric.criteria.map((c) => [c.id, c]));
+  const byId = new Map(rubric.criteria.map((c) => [c.id, c]));
   let total = 0;
   for (const entry of entries) {
     const criterion = byId.get(entry.criterionId);
     if (!criterion) {
       throw new Error(
-        `Unknown rubric criterion "${entry.criterionId}" for rubric ${policy.rubric.id}@${policy.rubric.version}`,
+        `Unknown rubric criterion "${entry.criterionId}" for rubric ${rubric.id}@${rubric.version}`,
       );
     }
     if (entry.points < 0 || entry.points > criterion.maxPoints) {

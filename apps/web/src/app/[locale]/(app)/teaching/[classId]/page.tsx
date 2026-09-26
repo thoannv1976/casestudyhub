@@ -15,6 +15,7 @@ import {
   currentVersions,
   listSubmissions,
   getClassProject,
+  getLecturerAssessment,
   projectDeliverables,
   projectTarget,
   progressOfAssignments,
@@ -105,10 +106,16 @@ export default async function ClassDetailPage({
     ? await Promise.all(
         groups.map(async (group) => {
           const target = await projectTarget(classId, group.id);
-          const current = target ? currentVersions(await listSubmissions(target.id)) : [];
+          const [current, assessment] = target
+            ? await Promise.all([
+                listSubmissions(target.id).then(currentVersions),
+                getLecturerAssessment(target.id),
+              ])
+            : [[], null];
           return {
             groupId: group.id,
             groupName: group.groupName,
+            marked: assessment !== null,
             handedIn: Object.fromEntries(
               current.map((submission) => [
                 submission.deliverableId,

@@ -20,13 +20,33 @@ export const individualAssessmentSchema = z.object({
 });
 export type IndividualAssessment = z.infer<typeof individualAssessmentSchema>;
 
+/** Which piece of work a mark belongs to. */
+export const gradedWorkKindSchema = z.enum(['case_study', 'group_project']);
+export type GradedWorkKind = z.infer<typeof gradedWorkKindSchema>;
+
+/**
+ * The two parts of the class group project that are earned outside the rubric
+ * (Guide, section 7). Recorded as facts - the team shipped an MVP, the team
+ * made a video - rather than as points, so what they are worth stays in the
+ * framework where a faculty can change it.
+ */
+export const projectBonusAwardSchema = z.object({
+  mvp: z.boolean().default(false),
+  video: z.boolean().default(false),
+});
+export type ProjectBonusAward = z.infer<typeof projectBonusAwardSchema>;
+
 export const lecturerAssessmentSchema = z.object({
-  /** One per assignment: the mark for one group's presentation of one case. */
+  /** One per piece of work: a group's case study, or its class project. */
   id: z.string().min(1),
   assignmentId: z.string().min(1),
   classId: z.string().min(1),
   groupId: z.string().min(1),
-  caseStudyId: z.string().min(1),
+  kind: gradedWorkKindSchema.default('case_study'),
+  /** A case study is marked against a case; the class project is not. */
+  caseStudyId: z.string().min(1).optional(),
+  /** Only ever set on a class project. */
+  bonus: projectBonusAwardSchema.default({ mvp: false, video: false }),
   /** Rubric points awarded to the group, keyed by criterion id. */
   criterionScores: z.record(z.string(), z.number().nonnegative()),
   groupScoreRaw: z.number().nonnegative(),
@@ -57,6 +77,7 @@ export const saveLecturerAssessmentSchema = z
     latePenaltyWaived: z.boolean().default(false),
     latePenaltyWaiverReason: z.string().trim().max(1000).optional(),
     individual: z.record(z.string(), individualAssessmentSchema),
+    bonus: projectBonusAwardSchema.optional(),
   })
   .refine(
     (input) => !input.latePenaltyWaived || (input.latePenaltyWaiverReason ?? '').length >= 10,

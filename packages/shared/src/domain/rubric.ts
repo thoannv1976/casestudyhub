@@ -86,6 +86,95 @@ export const DEFAULT_RUBRIC: Rubric = {
   ],
 };
 
+/**
+ * The class group project's rubric (E-commerce 2026 Group Project Guide,
+ * section 8). A hundred points across ten components, which is a different
+ * instrument from the presentation rubric above: it marks a six-week venture
+ * with a report and a pitch deck, not twenty minutes in a room.
+ *
+ * Kept beside it rather than replacing it, because a class runs both.
+ */
+export const DEFAULT_PROJECT_RUBRIC: Rubric = {
+  id: 'rubric-project-100',
+  version: '2026.1',
+  nameKey: 'rubric.project100',
+  totalPoints: 100,
+  criteria: [
+    {
+      id: 'customer-problem',
+      key: 'rubric.criteria.customerProblem',
+      maxPoints: 10,
+      aiAssessable: true,
+      cloIds: ['CLO2'],
+    },
+    {
+      id: 'market-competitors',
+      key: 'rubric.criteria.marketCompetitors',
+      maxPoints: 10,
+      aiAssessable: true,
+      cloIds: ['CLO1', 'CLO2'],
+    },
+    {
+      id: 'business-model',
+      key: 'rubric.criteria.businessModel',
+      maxPoints: 15,
+      aiAssessable: true,
+      cloIds: ['CLO3'],
+    },
+    {
+      id: 'journey-solution',
+      key: 'rubric.criteria.journeySolution',
+      maxPoints: 10,
+      aiAssessable: true,
+      cloIds: ['CLO2', 'CLO3'],
+    },
+    {
+      id: 'digital-marketing',
+      key: 'rubric.criteria.digitalMarketing',
+      maxPoints: 10,
+      aiAssessable: true,
+      cloIds: ['CLO3', 'CLO4'],
+    },
+    {
+      id: 'ai-application',
+      key: 'rubric.criteria.aiApplication',
+      maxPoints: 15,
+      aiAssessable: true,
+      cloIds: ['CLO4', 'CLO6'],
+    },
+    {
+      id: 'data-kpi',
+      key: 'rubric.criteria.dataKpi',
+      maxPoints: 15,
+      aiAssessable: true,
+      cloIds: ['CLO5'],
+    },
+    {
+      id: 'innovation-feasibility',
+      key: 'rubric.criteria.innovationFeasibility',
+      maxPoints: 5,
+      aiAssessable: true,
+      cloIds: ['CLO3'],
+    },
+    {
+      id: 'report-quality',
+      key: 'rubric.criteria.reportQuality',
+      maxPoints: 5,
+      aiAssessable: true,
+      cloIds: ['CLO6'],
+    },
+    {
+      // The one thing a model cannot mark: whether the team stood in front of
+      // a panel and defended its own decisions.
+      id: 'pitch-teamwork',
+      key: 'rubric.criteria.pitchTeamwork',
+      maxPoints: 5,
+      aiAssessable: false,
+      cloIds: ['CLO6'],
+    },
+  ],
+};
+
 /** Points AI may propose at most - the lecturer-only criteria are excluded. */
 export function aiAssessableMaxPoints(rubric: Rubric): number {
   return rubric.criteria.filter((c) => c.aiAssessable).reduce((sum, c) => sum + c.maxPoints, 0);
