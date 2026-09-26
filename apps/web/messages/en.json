@@ -625,7 +625,8 @@
     "reason": "Reason",
     "reasonHint": "At least 10 characters. Recorded with who made the change.",
     "saveDate": "Save new date",
-    "rescheduled": "Presentation moved. The submission deadline moved with it."
+    "rescheduled": "Presentation moved. The submission deadline moved with it.",
+    "lateOne": "late"
   },
   "workspace": {
     "title": "Your group's work",
@@ -789,7 +790,8 @@
     "bonusVideoHint": "The team's startup story, not a recording of the slides being read.",
     "bonusEarned": "The group earned {earned}; the cap brings it to {capped}.",
     "projectTitle": "Mark the class group project",
-    "projectSubtitle": "The class group project, marked with its own rubric — not the case study presentation one."
+    "projectSubtitle": "The class group project, marked with its own rubric — not the case study presentation one.",
+    "handedInTitle": "What the group handed in"
   },
   "ai": {
     "title": "What the model read",

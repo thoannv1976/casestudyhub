@@ -3,7 +3,6 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
   assertCanManageClass,
-  currentVersions,
   getClassProject,
   getLecturerAssessment,
   getPolicy,
@@ -16,8 +15,8 @@ import {
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
-import { Link } from '@/i18n/navigation';
 import { GradeForm } from '../../grade/[assignmentId]/grade-form';
+import { HandedIn } from '../../handed-in';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,8 +45,6 @@ export default async function ProjectGradePage({
   const user = await requireSessionUser();
   const t = await getTranslations('grading');
   const tProject = await getTranslations('project');
-  const tDeliverables = await getTranslations('deliverables');
-  const tWorkspace = await getTranslations('workspace');
   const tError = await getTranslations('errors');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
@@ -82,7 +79,6 @@ export default async function ProjectGradePage({
   if (!group || group.classId !== classId) notFound();
 
   const team = members.filter((member) => member.groupId === groupId);
-  const handedIn = currentVersions(submissions);
 
   return (
     <div className="space-y-8">
@@ -101,43 +97,14 @@ export default async function ProjectGradePage({
       <Card>
         <CardTitle>{tProject('title')}</CardTitle>
         <p className="text-muted mt-2 text-sm">{tProject('grade')}</p>
-        <ul className="mt-4 space-y-2 text-sm">
-          <li>
-            {isLate
-              ? t('evidenceLate', { points: policy.grading.lateSubmissionPenaltyPoints })
-              : t('evidenceOnTime')}
-          </li>
-          {target.deliverables.map((deliverable) => {
-            const current = handedIn.find((row) => row.deliverableId === deliverable.id);
-            const label = tDeliverables(deliverable.key.replace('deliverables.', ''));
-            return (
-              <li key={deliverable.id}>
-                <span className="font-medium">{label}</span>{' '}
-                {current ? (
-                  current.externalUrl ? (
-                    <a
-                      href={current.externalUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-brand-600 dark:text-brand-300 underline"
-                    >
-                      {current.fileName}
-                    </a>
-                  ) : (
-                    <Link
-                      href={`/api/submissions/${current.id}/file`}
-                      className="text-brand-600 dark:text-brand-300 underline"
-                    >
-                      {current.fileName}
-                    </Link>
-                  )
-                ) : (
-                  <span className="text-muted">{tWorkspace('missing')}</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+        <p className="mt-4 text-sm">
+          {isLate
+            ? t('evidenceLate', { points: policy.grading.lateSubmissionPenaltyPoints })
+            : t('evidenceOnTime')}
+        </p>
+        <div className="mt-4">
+          <HandedIn deliverables={target.deliverables} submissions={submissions} />
+        </div>
       </Card>
 
       <Card>

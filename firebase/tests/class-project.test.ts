@@ -24,6 +24,7 @@ const {
   listSubmissions,
   currentVersions,
   createAssignment,
+  listAssignmentsOfGroup,
 } = await import('@casestudyhub/core');
 const { COLLECTIONS, DEFAULT_PRESENTATION_POLICY, projectTargetId } =
   await import('@casestudyhub/shared');
@@ -311,6 +312,57 @@ describe('handing the project in', () => {
     await expect(projectTargetOf(projectTargetId(CLASS_ID, 'PROJ-GHOST'))).rejects.toThrow(
       /groupNotFound/,
     );
+  });
+});
+
+describe('a group given more than one case', () => {
+  it('can hand work in against each of them, kept apart', async () => {
+    // The student page used to show the first assignment of an unordered
+    // list, so the second case had nowhere to be handed in at all.
+    const db = getDb();
+    await db.collection(COLLECTIONS.caseStudies).doc('PROJ-CASE2').set({
+      id: 'PROJ-CASE2',
+      caseCode: 'PROJ02',
+      title: 'Walmart',
+      courseId: 'PROJ-C1',
+      language: 'vi',
+      status: 'published',
+      currentVersionId: 'v1',
+    });
+
+    const second = await createAssignment(lecturer, {
+      classId: CLASS_ID,
+      groupId: GROUP_A,
+      caseStudyId: 'PROJ-CASE2',
+      presentationDate: inDays(20),
+    });
+    const first = await createAssignment(lecturer, {
+      classId: CLASS_ID,
+      groupId: GROUP_A,
+      caseStudyId: CASE_ID,
+      presentationDate: inDays(10),
+    });
+
+    // Soonest presentation first, whatever order the documents were written
+    // in - which is what the page shows them in.
+    const ofGroup = await listAssignmentsOfGroup(GROUP_A);
+    expect(ofGroup.map((row) => row.id)).toEqual([first, second]);
+
+    for (const assignmentId of [first, second]) {
+      await submitDeliverable(inA, GROUP_A, {
+        assignmentId,
+        deliverableId: 'slides-pdf',
+        fileName: 'slides.pdf',
+        contentType: 'application/pdf',
+        body: Buffer.from('%PDF-1.4 slides'),
+      });
+    }
+
+    // Two piles of work, not one: each case keeps its own version counter.
+    expect(await listSubmissions(first)).toHaveLength(1);
+    expect(await listSubmissions(second)).toHaveLength(1);
+
+    await db.collection(COLLECTIONS.caseStudies).doc('PROJ-CASE2').delete();
   });
 });
 

@@ -255,7 +255,6 @@ export function AssignmentManager({
                     }
                   }
                   const latest = [...current.values()];
-                  const late = latest.filter((submission) => submission.isLate).length;
 
                   const isEditing = editing === assignment.id;
                   const row = (
@@ -272,14 +271,31 @@ export function AssignmentManager({
                         {latest.length === 0 ? (
                           <span className="text-muted">{t('nothingYet')}</span>
                         ) : (
-                          <span>
-                            {t('itemCount', { count: latest.length })}
-                            {late > 0 ? (
-                              <span className="ml-2 text-red-600 dark:text-red-400">
-                                {t('lateCount', { count: late })}
-                              </span>
-                            ) : null}
-                          </span>
+                          // Named and openable, not counted. A lecturer asking
+                          // what a group handed in should not have to open
+                          // another screen to find out.
+                          <ul className="space-y-1">
+                            {latest.map((submission) => (
+                              <li key={submission.id}>
+                                <a
+                                  href={
+                                    submission.externalUrl ??
+                                    `/api/submissions/${submission.id}/file`
+                                  }
+                                  target={submission.externalUrl ? '_blank' : undefined}
+                                  rel={submission.externalUrl ? 'noreferrer' : undefined}
+                                  className="text-brand-600 dark:text-brand-300 underline"
+                                >
+                                  {submission.fileName}
+                                </a>
+                                {submission.isLate ? (
+                                  <span className="ml-2 text-xs text-red-600 dark:text-red-400">
+                                    {t('lateOne')}
+                                  </span>
+                                ) : null}
+                              </li>
+                            ))}
+                          </ul>
                         )}
                       </td>
                       <td className="px-4 py-3">

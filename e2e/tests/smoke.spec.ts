@@ -681,9 +681,16 @@ test('the lecturer sees the group has handed something in', async ({ page }) => 
   await page.getByText(CLASS_CODE).click();
   await page.waitForURL(/\/teaching\/.+/);
 
-  await expect(
-    page.getByTestId('assignment-manager').getByRole('row').filter({ hasText: 'Group 1' }),
-  ).toContainText('1 item');
+  // Named and openable, not counted: the lecturer can see which file arrived
+  // without opening another screen.
+  const row = page
+    .getByTestId('assignment-manager')
+    .getByRole('row')
+    .filter({ hasText: 'Group 1' });
+  await expect(row).toContainText('group1-slides-v2.pdf');
+
+  const href = await row.getByRole('link', { name: /group1-slides/ }).getAttribute('href');
+  expect((await page.request.get(href ?? '')).status()).toBe(200);
 });
 
 /**
@@ -1157,6 +1164,33 @@ test('the marking screen lays the evidence out beside the rubric', async ({ page
   await expect(page.getByText('1 score from the class')).toBeVisible();
   // The criterion AI may never score is labelled as the lecturer's own.
   await expect(page.getByText('Judged in the room')).toBeVisible();
+});
+
+test('the lecturer can open the work they are marking', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto(`/en${gradeUrl}`);
+
+  // Marking a report nobody can open is not marking. Everything the group
+  // handed in is listed here, by name.
+  const handedIn = page.getByTestId('handed-in');
+  await expect(handedIn).toContainText('group1-report.pdf');
+  await expect(handedIn).toContainText('Role allocation sheet');
+
+  const href = await handedIn
+    .getByRole('link', { name: /group1-report\.pdf/ })
+    .getAttribute('href');
+  const response = await page.request.get(href ?? '');
+  expect(response.status()).toBe(200);
+  expect(response.headers()['content-type']).toContain('application/pdf');
+  // Through the route handler, never a link that outlives the page.
+  expect(response.headers()['content-disposition']).toContain('attachment');
+});
+
+test('a student from the class still cannot open another group\u2019s report', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  const response = await page.request.get(reportHref, { failOnStatusCode: false });
+  expect(response.status()).toBe(403);
 });
 
 test('marking computes every member\u2019s mark before anything is published', async ({ page }) => {
@@ -2371,4 +2405,76 @@ test('every page declares its language, so a screen reader reads it correctly', 
 test('an anonymous visitor is sent to the sign-in page', async ({ page }) => {
   await page.goto('/en/dashboard');
   await page.waitForURL('**/login');
+});
+
+/**
+ * A group can be given more than one case in a term. The student page used to
+ * show the first of an unordered list, which left the second case with nowhere
+ * to be handed in at all.
+ *
+ * Last in the file on purpose: it gives Group 1 a second case, which every
+ * earlier test that speaks about "the Group 1 row" would otherwise find twice.
+ */
+test('a second case gets its own work area, not a replacement for the first', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/cases');
+
+  await page.locator('#caseCode').fill(`CASE${RUN}B`);
+  await page.locator('#title').fill('Walmart');
+  await page.locator('#company').fill('Walmart Inc.');
+  await page.locator('#cloIds').fill('CLO1');
+  await page.getByRole('button', { name: 'Add case study' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('Case study created');
+
+  const second = page.getByRole('listitem').filter({ hasText: `CASE${RUN}B` });
+  // A case with nothing to read cannot be published, which is the rule the
+  // students benefit from.
+  await second.locator('input[type="file"]').setInputFiles({
+    name: 'walmart-case.pdf',
+    mimeType: 'application/pdf',
+    buffer: TINY_PDF,
+  });
+  await expect(page.getByTestId('alert-success')).toContainText('walmart-case.pdf');
+
+  await second.getByRole('button', { name: 'Publish to students' }).click();
+  await expect(second).toContainText('Published');
+
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const later = new Date(Date.now() + 60 * 24 * 60 * 60 * 1000);
+  await page.locator('#assignGroupId').selectOption({ label: 'Group 1' });
+  await page.locator('#caseStudyId').selectOption({ label: `CASE${RUN}B — Walmart` });
+  await page
+    .locator('#presentationDate')
+    .fill(new Date(later.getTime() - later.getTimezoneOffset() * 60000).toISOString().slice(0, 16));
+  await page.getByRole('button', { name: 'Set this case' }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('Case set');
+
+  await signOut(page);
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  // Two work areas, soonest presentation first, and the older case still holds
+  // everything the group handed in.
+  const areas = page.getByRole('heading', { name: "Your group's work" });
+  await expect(areas).toHaveCount(2);
+  await expect(page.getByText('Amazon').first()).toBeVisible();
+  await expect(page.getByText('Walmart').first()).toBeVisible();
+
+  // And the new one can actually be handed in to, which is the whole point.
+  const areaForWalmart = page
+    .getByRole('listitem')
+    .filter({ hasText: 'Presentation slides' })
+    .last();
+  await areaForWalmart.locator('input[type="file"]').setInputFiles({
+    name: 'walmart-slides.pdf',
+    mimeType: 'application/pdf',
+    buffer: TINY_PDF,
+  });
+  await expect(page.getByTestId('alert-success')).toContainText('version 1');
+  await expect(areaForWalmart).toContainText('walmart-slides.pdf');
 });

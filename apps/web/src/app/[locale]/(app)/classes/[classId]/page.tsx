@@ -87,12 +87,39 @@ export default async function StudentClassPage({
     picker?.cases.some((row) => row.claim && row.claim.groupId === membership?.groupId),
   );
 
-  // A group's work area only exists once the group has a case to work on.
+  /**
+   * A group's work area, one per case it has been given.
+   *
+   * Every case, not the first one: a group can be set more than one in a term,
+   * and showing a single card left the other one with no way to hand anything
+   * in at all.
+   */
   const assignments = membership ? await listAssignmentsOfGroup(membership.groupId) : [];
-  const assignment = assignments[0];
-  const [submissions, caseStudy] = assignment
-    ? await Promise.all([listSubmissions(assignment.id), getCase(assignment.caseStudyId)])
-    : [[], null];
+  const published = await listPublishedGradesOfStudent(user.uid);
+
+  const cards = await Promise.all(
+    assignments.map(async (assignment) => {
+      const [submissions, caseStudy, policy] = await Promise.all([
+        listSubmissions(assignment.id),
+        getCase(assignment.caseStudyId),
+        // The version this assignment froze, so two cases set under two
+        // frameworks each ask for what they actually asked for.
+        policyOfAssignment(assignment),
+      ]);
+      return {
+        assignment,
+        submissions,
+        caseStudy,
+        policy,
+        // The server decides whether the window has closed, so every viewer
+        // sees the same answer whatever their device clock says.
+        overdue: lateAtServerTime(assignment),
+        // A mark exists for a student only once the lecturer published it; a
+        // draft is the lecturer's working note, not a result.
+        grade: published.find((row) => row.assignmentId === assignment.id) ?? null,
+      };
+    }),
+  );
 
   // The class group project is separate work from any case study: every group
   // hands the same one in, in the final week. It appears as soon as the
@@ -101,24 +128,20 @@ export default async function StudentClassPage({
   const projectSubmissions = project ? await listSubmissions(project.id) : [];
   const projectOverdue = project ? lateAtServerTime(project) : false;
 
-  // A mark exists for a student only once the lecturer published it; a draft
-  // is the lecturer's working note, not a result.
-  const grade = assignment
-    ? ((await listPublishedGradesOfStudent(user.uid)).find(
-        (row) => row.assignmentId === assignment.id,
-      ) ?? null)
-    : null;
-
-  // Two different frameworks can be in play on one page, and conflating them
+  // Two different frameworks can be in play for one mark, and conflating them
   // would be a quiet lie: the deliverables a group still owes come from the
   // version their assignment froze, while the weighting behind a published
   // mark is whatever that mark was computed under.
-  const assignmentPolicy = assignment ? await policyOfAssignment(assignment) : null;
-  const gradePolicy = grade ? await getPolicy(grade.policyId, grade.policyVersion) : null;
-
-  // The server decides whether the window has closed, so every viewer of this
-  // page sees the same answer whatever their device clock says.
-  const overdue = assignment ? lateAtServerTime(assignment) : false;
+  const marks = await Promise.all(
+    cards
+      .filter((card) => card.grade !== null)
+      .map(async (card) => ({
+        assignmentId: card.assignment.id,
+        title: card.caseStudy?.title ?? card.assignment.caseStudyId,
+        grade: card.grade,
+        policy: await getPolicy(card.grade!.policyId, card.grade!.policyVersion),
+      })),
+  );
 
   return (
     <div className="space-y-8">
@@ -148,24 +171,24 @@ export default async function StudentClassPage({
         />
       ) : null}
 
-      {assignment ? (
-        <Card>
+      {cards.map((card) => (
+        <Card key={card.assignment.id}>
           <CardTitle>{tWorkspace('title')}</CardTitle>
           <div className="mt-4">
             <GroupWorkspace
-              targetId={assignment.id}
-              deliverables={assignmentPolicy ? [...assignmentPolicy.deliverables] : []}
-              submissions={submissions}
+              targetId={card.assignment.id}
+              deliverables={[...card.policy.deliverables]}
+              submissions={card.submissions}
               subjectLabel={tWorkspace('case')}
-              subject={caseStudy?.title ?? assignment.caseStudyId}
-              presentationDate={assignment.presentationDate}
-              submissionDeadline={assignment.submissionDeadline}
+              subject={card.caseStudy?.title ?? card.assignment.caseStudyId}
+              presentationDate={card.assignment.presentationDate}
+              submissionDeadline={card.assignment.submissionDeadline}
               canSubmit={user.role === 'student'}
-              overdue={overdue}
+              overdue={card.overdue}
             />
           </div>
         </Card>
-      ) : null}
+      ))}
 
       {project ? (
         <Card>
@@ -186,23 +209,24 @@ export default async function StudentClassPage({
         </Card>
       ) : null}
 
-      {grade ? (
-        <Card>
+      {marks.map((mark) => (
+        <Card key={mark.assignmentId}>
           <CardTitle>{tGrading('yourMark')}</CardTitle>
-          <p className="mt-3 text-3xl font-semibold tabular-nums">{grade.finalScore}</p>
+          <p className="text-muted mt-1 text-sm">{mark.title}</p>
+          <p className="mt-3 text-3xl font-semibold tabular-nums">{mark.grade?.finalScore}</p>
           <p className="text-muted mt-2 text-sm">
             {tGrading('yourMarkBreakdown', {
-              group: grade.groupScore,
-              individual: grade.individualScore,
-              team: Math.round((gradePolicy?.grading.teamWeight ?? 0) * 100),
-              solo: Math.round((gradePolicy?.grading.individualWeight ?? 0) * 100),
+              group: mark.grade?.groupScore ?? 0,
+              individual: mark.grade?.individualScore ?? 0,
+              team: Math.round(mark.policy.grading.teamWeight * 100),
+              solo: Math.round(mark.policy.grading.individualWeight * 100),
             })}
           </p>
           <p className="text-muted mt-1 text-xs">
-            {tGrading('policyVersion', { version: grade.policyVersion })}
+            {tGrading('policyVersion', { version: mark.grade?.policyVersion ?? '' })}
           </p>
         </Card>
-      ) : null}
+      ))}
 
       {openSessions.length > 0 ? (
         <Card>

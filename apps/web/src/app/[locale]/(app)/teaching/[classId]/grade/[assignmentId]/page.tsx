@@ -16,6 +16,7 @@ import {
   listPeerReviews,
   listResponders,
   listSessionQuestions,
+  listSubmissions,
   qaCompletion,
 } from '@casestudyhub/core';
 import { summarisePeerReviews } from '@casestudyhub/shared';
@@ -24,6 +25,7 @@ import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
 import { Link } from '@/i18n/navigation';
 import { AiPanel } from './ai-panel';
+import { HandedIn } from '../../handed-in';
 import { GradeForm } from './grade-form';
 
 export const dynamic = 'force-dynamic';
@@ -71,13 +73,14 @@ export default async function GradePage({
   const policy = await policyOfAssignment(assignment);
   const aiAvailable = await aiIsAvailable();
 
-  const [caseStudy, groups, members, assessment, isLate, session] = await Promise.all([
+  const [caseStudy, groups, members, assessment, isLate, session, submissions] = await Promise.all([
     getCase(assignment.caseStudyId),
     listGroups(classId),
     listMembers(classId),
     getLecturerAssessment(assignmentId),
     groupSubmittedLate(assignmentId),
     findSessionForAssignment(assignmentId),
+    listSubmissions(assignmentId),
   ]);
 
   const group = groups.find((candidate) => candidate.id === assignment.groupId);
@@ -184,6 +187,14 @@ export default async function GradePage({
         {clockStillRunning ? (
           <p className="text-muted mt-3 text-sm">{t('clockStillRunning')}</p>
         ) : null}
+
+        {/* The work itself. Marking a report a lecturer cannot open is not
+            marking; the download goes through the route handler that checks
+            who is asking, as every byte in this platform does. */}
+        <h3 className="mt-6 text-sm font-semibold">{t('handedInTitle')}</h3>
+        <div className="mt-3">
+          <HandedIn deliverables={policy.deliverables} submissions={submissions} />
+        </div>
 
         {roleMinutes ? (
           <ul className="mt-4 flex flex-wrap gap-2 text-xs">

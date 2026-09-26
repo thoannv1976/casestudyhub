@@ -625,7 +625,8 @@
     "reason": "Lý do",
     "reasonHint": "Ít nhất 10 ký tự. Lý do được ghi lại cùng người thực hiện.",
     "saveDate": "Lưu ngày mới",
-    "rescheduled": "Đã đổi ngày thuyết trình. Hạn nộp đã dời theo."
+    "rescheduled": "Đã đổi ngày thuyết trình. Hạn nộp đã dời theo.",
+    "lateOne": "nộp muộn"
   },
   "workspace": {
     "title": "Bài làm của nhóm",
@@ -789,7 +790,8 @@
     "bonusVideoHint": "Kể câu chuyện khởi nghiệp của nhóm, không phải quay lại cảnh đọc slide.",
     "bonusEarned": "Nhóm kiếm được {earned} điểm, chặn trần còn {capped}.",
     "projectTitle": "Chấm bài tập lớn",
-    "projectSubtitle": "Bài tập lớn của cả lớp, chấm bằng rubric riêng của nó — không phải rubric thuyết trình case study."
+    "projectSubtitle": "Bài tập lớn của cả lớp, chấm bằng rubric riêng của nó — không phải rubric thuyết trình case study.",
+    "handedInTitle": "Nhóm đã nộp gì"
   },
   "ai": {
     "title": "Mô hình đã đọc được gì",

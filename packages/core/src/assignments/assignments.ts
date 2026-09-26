@@ -137,12 +137,21 @@ export async function listAssignments(classId: string): Promise<Assignment[]> {
   );
 }
 
+/**
+ * Every case set for one group, soonest presentation first.
+ *
+ * Ordered deliberately. A group can be given more than one case in a term, and
+ * an unordered list left the student's page showing whichever document id came
+ * first - which is to say, an arbitrary one of them.
+ */
 export async function listAssignmentsOfGroup(groupId: string): Promise<Assignment[]> {
   const snapshot = await getDb()
     .collection(COLLECTIONS.assignments)
     .where('groupId', '==', groupId)
     .get();
-  return parseAssignments(snapshot.docs);
+  return parseAssignments(snapshot.docs).sort((a, b) =>
+    a.presentationDate.localeCompare(b.presentationDate),
+  );
 }
 
 export async function getAssignment(assignmentId: string): Promise<Assignment | null> {
