@@ -16,6 +16,7 @@ export * from './groups/groups';
 export * from './case-selection/case-selection';
 export * from './cases/cases';
 export * from './assignments/assignments';
+export * from './projects/projects';
 export * from './submissions/submissions';
 export * from './sessions/sessions';
 export * from './questions/questions';

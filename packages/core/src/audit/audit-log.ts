@@ -33,6 +33,8 @@ export const AUDIT_ACTIONS = [
   'assignment.created',
   'assignment.deadline_changed',
   'assignment.rescheduled',
+  'project.scheduled',
+  'project.deadline_changed',
   'submission.created',
   'class.lecturer_added',
   'ai.assessment_requested',

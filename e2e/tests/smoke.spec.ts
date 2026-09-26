@@ -294,7 +294,7 @@ test('a student joins a group', async ({ page }) => {
     .getByRole('button', { name: 'Join this group' })
     .click();
 
-  await expect(page.getByText('Your group')).toBeVisible();
+  await expect(page.getByText('Your group', { exact: true })).toBeVisible();
   await expect(page.getByText(STUDENT.fullName)).toBeVisible();
 });
 
@@ -328,7 +328,7 @@ test('three more students fill the group to the four the framework requires', as
       .filter({ hasText: 'Group 1' })
       .getByRole('button', { name: 'Join this group' })
       .click();
-    await expect(page.getByText('Your group')).toBeVisible();
+    await expect(page.getByText('Your group', { exact: true })).toBeVisible();
 
     await signOut(page);
   }
@@ -477,7 +477,9 @@ test('a lecturer sets the case for the group', async ({ page }) => {
   await page.getByRole('button', { name: 'Set this case' }).click();
 
   await expect(page.getByTestId('alert-success')).toContainText('Case set');
-  await expect(page.getByRole('row').filter({ hasText: 'Group 1' })).toContainText('Nothing yet');
+  await expect(
+    page.getByTestId('assignment-manager').getByRole('row').filter({ hasText: 'Group 1' }),
+  ).toContainText('Nothing yet');
 });
 
 test('the lecturer moves the presentation after the case was set', async ({ page }) => {
@@ -486,7 +488,10 @@ test('the lecturer moves the presentation after the case was set', async ({ page
   await page.getByText(CLASS_CODE).click();
   await page.waitForURL(/\/teaching\/.+/);
 
-  const row = page.getByRole('row').filter({ hasText: 'Group 1' });
+  const row = page
+    .getByTestId('assignment-manager')
+    .getByRole('row')
+    .filter({ hasText: 'Group 1' });
   const deadlineBefore = await row.getByRole('cell').nth(3).innerText();
 
   await row.getByRole('button', { name: 'Change date' }).click();
@@ -498,8 +503,9 @@ test('the lecturer moves the presentation after the case was set', async ({ page
     .toISOString()
     .slice(0, 16);
 
-  await page.getByLabel('New presentation date and time').fill(localValue);
-  await page.getByLabel('Reason').fill('The lecture room is unavailable that week');
+  const editor = page.getByTestId('assignment-manager');
+  await editor.getByLabel('New presentation date and time').fill(localValue);
+  await editor.getByLabel('Reason').fill('The lecture room is unavailable that week');
   await page.getByRole('button', { name: 'Save new date' }).click();
 
   await expect(page.getByTestId('alert-success')).toContainText('Presentation moved');
@@ -536,6 +542,64 @@ test('the lecturer renames a group', async ({ page }) => {
   await page.getByRole('button', { name: 'Save name' }).click();
 
   await expect(page.getByRole('heading', { name: 'Group 2' })).toBeVisible();
+});
+
+test('the lecturer sets the class group project for the final week', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const manager = page.getByTestId('project-manager');
+  await expect(manager).toContainText('No deadline set yet');
+
+  const due = new Date(Date.now() + 42 * 24 * 60 * 60 * 1000);
+  const localValue = new Date(due.getTime() - due.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+
+  await manager.getByLabel('Project deadline').fill(localValue);
+  await manager.getByLabel('Reason').fill('Final week of the course, as announced.');
+  await manager.getByRole('button', { name: 'Set the deadline' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('Project deadline set');
+  // Every group owes the same three things, and none of them yet.
+  const row = page.getByTestId('project-manager').getByRole('row').filter({ hasText: 'Group 1' });
+  await expect(row).toContainText('Not handed in');
+});
+
+test('the group hands in the project video as a link', async ({ page }) => {
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  // Its own card, separate from the case study workspace above it: different
+  // work, different deadline.
+  const video = page.getByRole('listitem').filter({ hasText: 'Team video' });
+  await expect(video).toContainText('Not handed in');
+
+  await video.getByRole('textbox').fill('https://youtu.be/e2e-project-video');
+  await video.getByRole('button', { name: 'Submit link' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('version 1');
+  await expect(video).toContainText('youtu.be');
+
+  // The case study deliverables are untouched by it.
+  await expect(page.getByRole('listitem').filter({ hasText: 'Presentation slides' })).toBeVisible();
+});
+
+test('the lecturer sees which group handed the project in', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const row = page.getByTestId('project-manager').getByRole('row').filter({ hasText: 'Group 1' });
+  await expect(row).toContainText('youtu.be');
+  // The other two are still owed, and the table says so rather than staying
+  // blank.
+  await expect(row).toContainText('Not handed in');
 });
 
 test('the group sees what it owes and hands in the slides', async ({ page }) => {
@@ -617,7 +681,9 @@ test('the lecturer sees the group has handed something in', async ({ page }) => 
   await page.getByText(CLASS_CODE).click();
   await page.waitForURL(/\/teaching\/.+/);
 
-  await expect(page.getByRole('row').filter({ hasText: 'Group 1' })).toContainText('1 item');
+  await expect(
+    page.getByTestId('assignment-manager').getByRole('row').filter({ hasText: 'Group 1' }),
+  ).toContainText('1 item');
 });
 
 /**
@@ -660,7 +726,7 @@ test('the student in the audience joins the class and a different group', async 
     .filter({ hasText: 'Group 2' })
     .getByRole('button', { name: 'Join this group' })
     .click();
-  await expect(page.getByText('Your group')).toBeVisible();
+  await expect(page.getByText('Your group', { exact: true })).toBeVisible();
 });
 
 test('before the session starts the slides belong to the group alone', async ({ page }) => {

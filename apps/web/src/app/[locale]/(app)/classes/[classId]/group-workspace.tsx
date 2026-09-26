@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { Assignment, Deliverable, Submission } from '@casestudyhub/shared';
+import type { Deliverable, Submission } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
@@ -12,19 +12,31 @@ import { Badge } from '@/components/ui/card';
  * handed in, and the whole version history. The history is shown rather than
  * hidden because a lecturer and a group both need to see what was in place at
  * the deadline, not only the newest file.
+ *
+ * Used for both kinds of work a group owes - a case study assignment and the
+ * class group project - because from here they are the same thing: a deadline
+ * and a list of what is still missing. Only the case study has a presentation
+ * date, so that line appears only when there is one.
  */
 export function GroupWorkspace({
-  assignment,
+  targetId,
   deliverables,
   submissions,
-  caseTitle,
+  subjectLabel,
+  subject,
+  presentationDate,
+  submissionDeadline,
   canSubmit,
   overdue,
 }: {
-  assignment: Assignment;
+  /** The assignment, or the class project's target for this group. */
+  targetId: string;
   deliverables: Deliverable[];
   submissions: Submission[];
-  caseTitle: string;
+  subjectLabel: string;
+  subject: string;
+  presentationDate?: string | null;
+  submissionDeadline: string;
   canSubmit: boolean;
   /**
    * Decided on the server. Whether the deadline has passed must never depend
@@ -43,7 +55,7 @@ export function GroupWorkspace({
   const [busy, setBusy] = useState(false);
   const inputs = useRef<Record<string, HTMLInputElement | null>>({});
 
-  const deadline = new Date(assignment.submissionDeadline);
+  const deadline = new Date(submissionDeadline);
 
   /**
    * A link and a file take the same road: one endpoint, one version counter,
@@ -57,7 +69,7 @@ export function GroupWorkspace({
     try {
       body.set('deliverableId', deliverableId);
 
-      const response = await fetch(`/api/assignments/${assignment.id}/submissions`, {
+      const response = await fetch(`/api/assignments/${targetId}/submissions`, {
         method: 'POST',
         body,
       });
@@ -113,13 +125,15 @@ export function GroupWorkspace({
 
       <dl className="grid gap-3 text-sm sm:grid-cols-3">
         <div>
-          <dt className="text-muted">{t('case')}</dt>
-          <dd className="font-medium">{caseTitle}</dd>
+          <dt className="text-muted">{subjectLabel}</dt>
+          <dd className="font-medium">{subject}</dd>
         </div>
-        <div>
-          <dt className="text-muted">{t('presentation')}</dt>
-          <dd className="font-medium">{new Date(assignment.presentationDate).toLocaleString()}</dd>
-        </div>
+        {presentationDate ? (
+          <div>
+            <dt className="text-muted">{t('presentation')}</dt>
+            <dd className="font-medium">{new Date(presentationDate).toLocaleString()}</dd>
+          </div>
+        ) : null}
         <div>
           <dt className="text-muted">{t('deadline')}</dt>
           <dd className={`font-medium ${overdue ? 'text-red-600 dark:text-red-400' : ''}`}>

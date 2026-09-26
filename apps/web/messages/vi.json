@@ -128,7 +128,10 @@
     "referenceList": "Danh mục tài liệu tham khảo",
     "aiUsageDisclosure": "Phiếu khai báo sử dụng AI",
     "caseAnalysisReport": "Báo cáo phân tích tình huống",
-    "presentationVideo": "Video thuyết trình (link)"
+    "presentationVideo": "Video thuyết trình (link)",
+    "projectPitchDeck": "Pitch deck (12–15 slide, PDF hoặc PPTX)",
+    "projectReport": "Báo cáo dự án (20–30 trang)",
+    "projectVideo": "Video của nhóm (3–5 phút, dán link)"
   },
   "slides": {
     "cover": "Trang bìa: tên case, tên nhóm, thành viên và vai trò",
@@ -305,7 +308,8 @@
     "presentationAlreadyRunning": "Buổi thuyết trình đã mở, không đổi lịch được nữa.",
     "groupNameInvalid": "Tên nhóm cần từ 1 đến 120 ký tự.",
     "groupNameTaken": "Lớp này đã có nhóm mang tên đó.",
-    "apiKeyRequired": "Hãy nhập API key, hoặc bấm \"Xóa khóa đang lưu\" nếu muốn bỏ khóa."
+    "apiKeyRequired": "Hãy nhập API key, hoặc bấm \"Xóa khóa đang lưu\" nếu muốn bỏ khóa.",
+    "projectNotSet": "Lớp này chưa đặt bài tập lớn."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -1089,5 +1093,25 @@
     "scorerGroup": "Nhóm của họ",
     "total": "Tổng",
     "comment": "Nhận xét"
+  },
+  "project": {
+    "title": "Bài tập lớn của lớp",
+    "lecturerHint": "Một bài tập lớn cho cả lớp, mọi nhóm nộp cùng một hạn — tách hẳn với các case study giao trong kỳ. Hạn thường rơi vào tuần cuối học phần.",
+    "studentHint": "Bài tập lớn của cả lớp, nộp vào hạn dưới đây. Đây là việc riêng, không phải case study nhóm bạn đang chuẩn bị thuyết trình.",
+    "subjectLabel": "Bài tập",
+    "subject": "Bài tập lớn của lớp",
+    "deadlineLabel": "Hạn nộp bài tập lớn",
+    "deadlineHint": "Một hạn cho cả lớp. Bài nộp sau mốc này bị đánh dấu muộn, theo đồng hồ máy chủ.",
+    "reason": "Lý do",
+    "reasonHint": "Ít nhất 10 ký tự. Được ghi lại cùng người thực hiện.",
+    "schedule": "Đặt hạn nộp",
+    "saveDeadline": "Lưu hạn mới",
+    "scheduled": "Đã đặt hạn nộp bài tập lớn. Các nhóm thấy ngay ở trang lớp.",
+    "deadlineMoved": "Đã đổi hạn nộp bài tập lớn.",
+    "notSetYet": "Chưa đặt hạn nộp, nên bài tập lớn chưa hiện với sinh viên.",
+    "noGroups": "Lớp chưa có nhóm nào để nộp bài.",
+    "group": "Nhóm",
+    "missing": "Chưa nộp",
+    "late": "nộp muộn"
   }
 }

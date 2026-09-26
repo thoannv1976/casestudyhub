@@ -12,7 +12,11 @@ import {
   listRoster,
   listSessions,
   listClaims,
+  currentVersions,
   listSubmissions,
+  getClassProject,
+  projectDeliverables,
+  projectTarget,
   progressOfAssignments,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -20,6 +24,7 @@ import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Link } from '@/i18n/navigation';
 import { Alert } from '@/components/ui/form';
 import { AssignmentManager } from './assignment-manager';
+import { ProjectManager, type ProjectRow } from './project-manager';
 import { CaseSelectionBoard } from './case-selection-board';
 import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
@@ -53,6 +58,7 @@ export default async function ClassDetailPage({
   const tTeaching = await getTranslations('teaching');
   const tSession = await getTranslations('session');
   const tError = await getTranslations('errors');
+  const tProject = await getTranslations('project');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
     return <Alert tone="error">{tError('forbidden')}</Alert>;
@@ -89,6 +95,34 @@ export default async function ClassDetailPage({
   // Worked out on the server: it needs the policy each assignment froze, the
   // draft marks and the published grades, none of which the browser may read.
   const progressByAssignment = await progressOfAssignments(assignments);
+
+  // The class group project: one deadline for everybody, and what each group
+  // has handed in against it. Read per group because the submissions are
+  // stored per group, exactly as they are for a case study.
+  const project = await getClassProject(classId);
+  const projectItems = project ? await projectDeliverables(project) : [];
+  const projectRows: ProjectRow[] = project
+    ? await Promise.all(
+        groups.map(async (group) => {
+          const target = await projectTarget(classId, group.id);
+          const current = target ? currentVersions(await listSubmissions(target.id)) : [];
+          return {
+            groupId: group.id,
+            groupName: group.groupName,
+            handedIn: Object.fromEntries(
+              current.map((submission) => [
+                submission.deliverableId,
+                {
+                  fileName: submission.fileName,
+                  isLate: submission.isLate,
+                  versionNumber: submission.versionNumber,
+                },
+              ]),
+            ),
+          };
+        }),
+      )
+    : [];
 
   const joined = roster.filter((row) => row.studentUid && row.status === 'active').length;
   const expected = roster.filter((row) => row.status !== 'removed').length;
@@ -175,6 +209,19 @@ export default async function ClassDetailPage({
           scheduled: Boolean(claim.assignmentId),
         }))}
       />
+
+      <Card>
+        <CardTitle>{tProject('title')}</CardTitle>
+        <p className="text-muted mt-2 text-sm">{tProject('lecturerHint')}</p>
+        <div className="mt-4">
+          <ProjectManager
+            classId={classId}
+            deadline={project?.deadline ?? null}
+            deliverables={projectItems}
+            rows={projectRows}
+          />
+        </div>
+      </Card>
 
       <Card>
         <CardTitle>{tAssignments('title')}</CardTitle>

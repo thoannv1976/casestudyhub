@@ -139,6 +139,13 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // The class group project. Read through the server like everything else
+    // this app renders, so it is closed here rather than opened for a client
+    // that has no reason to query it directly.
+    match /classProjects/{classId} {
+      allow read, write: if false;
+    }
+
     match /submissions/{submissionId} {
       // A group's work is private to that group and the staff marking it.
       // Reading is done server-side, where membership can be checked; the

@@ -16,6 +16,7 @@ import {
   listSessions,
   listSubmissions,
   policyOfAssignment,
+  projectTarget,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -51,6 +52,7 @@ export default async function StudentClassPage({
   const tWorkspace = await getTranslations('workspace');
   const tSession = await getTranslations('session');
   const tGrading = await getTranslations('grading');
+  const tProject = await getTranslations('project');
   const tError = await getTranslations('errors');
 
   const details = await getClassById(classId);
@@ -91,6 +93,13 @@ export default async function StudentClassPage({
   const [submissions, caseStudy] = assignment
     ? await Promise.all([listSubmissions(assignment.id), getCase(assignment.caseStudyId)])
     : [[], null];
+
+  // The class group project is separate work from any case study: every group
+  // hands the same one in, in the final week. It appears as soon as the
+  // lecturer has set a deadline, whether or not the group has a case yet.
+  const project = membership ? await projectTarget(classId, membership.groupId) : null;
+  const projectSubmissions = project ? await listSubmissions(project.id) : [];
+  const projectOverdue = project ? lateAtServerTime(project) : false;
 
   // A mark exists for a student only once the lecturer published it; a draft
   // is the lecturer's working note, not a result.
@@ -144,12 +153,34 @@ export default async function StudentClassPage({
           <CardTitle>{tWorkspace('title')}</CardTitle>
           <div className="mt-4">
             <GroupWorkspace
-              assignment={assignment}
+              targetId={assignment.id}
               deliverables={assignmentPolicy ? [...assignmentPolicy.deliverables] : []}
               submissions={submissions}
-              caseTitle={caseStudy?.title ?? assignment.caseStudyId}
+              subjectLabel={tWorkspace('case')}
+              subject={caseStudy?.title ?? assignment.caseStudyId}
+              presentationDate={assignment.presentationDate}
+              submissionDeadline={assignment.submissionDeadline}
               canSubmit={user.role === 'student'}
               overdue={overdue}
+            />
+          </div>
+        </Card>
+      ) : null}
+
+      {project ? (
+        <Card>
+          <CardTitle>{tProject('title')}</CardTitle>
+          <p className="text-muted mt-2 text-sm">{tProject('studentHint')}</p>
+          <div className="mt-4">
+            <GroupWorkspace
+              targetId={project.id}
+              deliverables={project.deliverables}
+              submissions={projectSubmissions}
+              subjectLabel={tProject('subjectLabel')}
+              subject={tProject('subject')}
+              submissionDeadline={project.submissionDeadline}
+              canSubmit={user.role === 'student'}
+              overdue={projectOverdue}
             />
           </div>
         </Card>

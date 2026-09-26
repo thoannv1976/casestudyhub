@@ -5,30 +5,50 @@ import {
   classMayViewSubmission,
   findMembership,
   getAssignment,
+  projectTargetOf,
   type SessionUser,
 } from '@casestudyhub/core';
-import type { Assignment, Submission } from '@casestudyhub/shared';
+import type { Submission } from '@casestudyhub/shared';
+
+/** The little an access check needs, of either kind of work. */
+export interface AccessibleWork {
+  id: string;
+  classId: string;
+  groupId: string;
+}
+
+async function accessibleWork(id: string): Promise<AccessibleWork> {
+  const project = await projectTargetOf(id);
+  if (project) return { id: project.id, classId: project.classId, groupId: project.groupId };
+
+  const assignment = await getAssignment(id);
+  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  return { id: assignment.id, classId: assignment.classId, groupId: assignment.groupId };
+}
 
 /**
- * Who may see an assignment and the work submitted against it: the members of
- * the group it was set for, and the staff running the class. Checked on the
+ * Who may see a piece of work and what was submitted against it: the members
+ * of the group it belongs to, and the staff running the class. Checked on the
  * server for every request, because a group's submissions are private to that
  * group (SRS 20).
+ *
+ * Takes either a case study assignment or the class group project. The two are
+ * different pieces of work, but who may open them is the same question, and
+ * asking it twice in two places is how the two answers drift apart.
  */
 export async function assertCanAccessAssignment(
   caller: SessionUser,
   assignmentId: string,
-): Promise<Assignment> {
-  const assignment = await getAssignment(assignmentId);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+): Promise<AccessibleWork> {
+  const work = await accessibleWork(assignmentId);
 
-  if (caller.role === 'admin' || caller.role === 'lecturer') return assignment;
+  if (caller.role === 'admin' || caller.role === 'lecturer') return work;
 
-  const membership = await findMembership(assignment.classId, caller.uid);
-  if (!membership || membership.groupId !== assignment.groupId) {
+  const membership = await findMembership(work.classId, caller.uid);
+  if (!membership || membership.groupId !== work.groupId) {
     throw new AppError('FORBIDDEN', 'errors.notYourAssignment');
   }
-  return assignment;
+  return work;
 }
 
 /**

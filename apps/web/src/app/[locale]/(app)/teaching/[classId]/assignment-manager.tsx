@@ -147,7 +147,7 @@ export function AssignmentManager({
     cases.find((study) => study.id === caseId)?.title ?? caseId;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-testid="assignment-manager">
       {errorKey ? <Alert tone="error">{tError(errorKey)}</Alert> : null}
       {notice ? <Alert tone="success">{notice}</Alert> : null}
 

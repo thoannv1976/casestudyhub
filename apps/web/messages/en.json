@@ -128,7 +128,10 @@
     "referenceList": "Reference list",
     "aiUsageDisclosure": "AI usage disclosure",
     "caseAnalysisReport": "Case analysis report",
-    "presentationVideo": "Presentation video (link)"
+    "presentationVideo": "Presentation video (link)",
+    "projectPitchDeck": "Pitch deck (12–15 slides, PDF or PPTX)",
+    "projectReport": "Project report (20–30 pages)",
+    "projectVideo": "Team video (3–5 minutes, as a link)"
   },
   "slides": {
     "cover": "Cover: case, team, members and roles",
@@ -305,7 +308,8 @@
     "presentationAlreadyRunning": "The presentation has already opened, so its date can no longer be moved.",
     "groupNameInvalid": "A group name needs between 1 and 120 characters.",
     "groupNameTaken": "Another group in this class already has that name.",
-    "apiKeyRequired": "Enter an API key, or use \"Delete the stored key\" to remove it."
+    "apiKeyRequired": "Enter an API key, or use \"Delete the stored key\" to remove it.",
+    "projectNotSet": "No group project has been set for this class."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -1089,5 +1093,25 @@
     "scorerGroup": "Their group",
     "total": "Total",
     "comment": "Comment"
+  },
+  "project": {
+    "title": "Class group project",
+    "lecturerHint": "One project for the whole class, with one deadline for every group — separate from the case studies set during the term. In practice the deadline falls in the final week.",
+    "studentHint": "The class group project, due at the deadline below. This is separate work from the case study your group is preparing to present.",
+    "subjectLabel": "Assignment",
+    "subject": "Class group project",
+    "deadlineLabel": "Project deadline",
+    "deadlineHint": "One deadline for the whole class. Anything handed in after it is marked late, by the server clock.",
+    "reason": "Reason",
+    "reasonHint": "At least 10 characters. Recorded with who made the change.",
+    "schedule": "Set the deadline",
+    "saveDeadline": "Save new deadline",
+    "scheduled": "Project deadline set. Groups can see it on the class page at once.",
+    "deadlineMoved": "Project deadline moved.",
+    "notSetYet": "No deadline set yet, so the project is not visible to students.",
+    "noGroups": "This class has no groups to hand work in.",
+    "group": "Group",
+    "missing": "Not handed in",
+    "late": "late"
   }
 }

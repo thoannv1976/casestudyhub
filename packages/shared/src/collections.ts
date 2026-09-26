@@ -23,6 +23,8 @@ export const COLLECTIONS = {
    */
   policies: 'policies',
   assignments: 'assignments',
+  /** One group project per class, so the class id is the document id. */
+  classProjects: 'classProjects',
   submissions: 'submissions',
   presentationSessions: 'presentationSessions',
   questions: 'questions',

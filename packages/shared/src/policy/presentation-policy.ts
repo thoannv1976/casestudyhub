@@ -28,6 +28,52 @@ export const deliverableSchema = z.object({
 });
 export type Deliverable = z.infer<typeof deliverableSchema>;
 
+/**
+ * What a group hands in for the class group project, from the E-commerce 2026
+ * Group Project Guide: a pitch deck, a written report and a link to the team's
+ * video.
+ *
+ * Deliberately not the case study checklist above. The two are different
+ * pieces of work with different deadlines, and merging them would mean a group
+ * that had handed in its case study slides looked as if it had started the
+ * project.
+ *
+ * A defaulted field rather than a new framework version: no published mark was
+ * ever computed from a project deliverable, because until now there were none.
+ * Adding them changes nothing a stored version already decided, and every
+ * class - including the ones already stamped with version 1.0 - gets them
+ * without being migrated onto a framework its marks did not use.
+ */
+export const DEFAULT_PROJECT_DELIVERABLES: Deliverable[] = [
+  {
+    // PDF or the PowerPoint file itself. PDF is worth asking for: a .pptx is a
+    // file this platform can store but neither the model nor the class viewer
+    // can read, and the interface says so rather than failing quietly.
+    id: 'project-pitch-deck',
+    key: 'deliverables.projectPitchDeck',
+    formats: ['PDF', 'PPTX'],
+    required: true,
+    maxFileSizeMb: 100,
+  },
+  {
+    id: 'project-report',
+    key: 'deliverables.projectReport',
+    formats: ['PDF', 'DOCX'],
+    required: true,
+    maxFileSizeMb: 50,
+  },
+  {
+    // Recorded on a phone and put on YouTube. Asking a group to push a
+    // gigabyte through this platform as well would be asking for the same work
+    // twice, so this one is satisfied by a link.
+    id: 'project-video',
+    key: 'deliverables.projectVideo',
+    formats: ['LINK'],
+    required: true,
+    maxFileSizeMb: 0,
+  },
+];
+
 export const slideSkeletonEntrySchema = z.object({
   slide: z.number().int().positive(),
   key: z.string().min(1),
@@ -134,6 +180,14 @@ export const presentationPolicySchema = z
     rubric: rubricSchema,
     slideSkeleton: z.array(slideSkeletonEntrySchema),
     deliverables: z.array(deliverableSchema),
+    /**
+     * The class group project's deliverables. Defaulted, so a framework
+     * version stored before this existed still parses - and still asks for the
+     * three things the course guide asks for.
+     */
+    projectDeliverables: z
+      .array(deliverableSchema)
+      .default(() => [...DEFAULT_PROJECT_DELIVERABLES]),
   })
   .refine((p) => Math.abs(p.grading.teamWeight + p.grading.individualWeight - 1) < 1e-9, {
     message: 'teamWeight + individualWeight must equal 1',
@@ -276,6 +330,7 @@ export const DEFAULT_PRESENTATION_POLICY: PresentationPolicy = {
       maxFileSizeMb: 50,
     },
   ],
+  projectDeliverables: DEFAULT_PROJECT_DELIVERABLES,
 };
 
 /** Validates a policy and returns it typed, throwing on any broken academic rule. */

@@ -305,6 +305,11 @@ export function missingDeliverables(
  * Whether a submission arriving now would be late, decided by the server's
  * clock. A student's device clock never takes part (SRS Module 08).
  */
-export function lateAtServerTime(assignment: Assignment, now = Timestamp.now()): boolean {
-  return isSubmissionLate(now.toMillis(), Date.parse(assignment.submissionDeadline));
+export function lateAtServerTime(
+  // Anything with a deadline: a case study assignment, or the class group
+  // project, which has one and nothing else this needs.
+  work: Pick<Assignment, 'submissionDeadline'>,
+  now = Timestamp.now(),
+): boolean {
+  return isSubmissionLate(now.toMillis(), Date.parse(work.submissionDeadline));
 }

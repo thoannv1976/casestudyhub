@@ -7,7 +7,6 @@ import {
   hostOfLink,
   validateLink,
   validateUpload,
-  type Assignment,
   type Submission,
 } from '@casestudyhub/shared';
 import { getAdminStorage, getDb } from '../firebase/admin';
@@ -16,6 +15,7 @@ import { writeAuditLog } from '../audit/audit-log';
 import { policyOfAssignment } from '../policy/policy-store';
 import { AppError } from '../errors';
 import { getAssignment, lateAtServerTime } from '../assignments/assignments';
+import { projectTargetOf, type SubmissionTarget } from '../projects/projects';
 import type { SessionUser } from '../auth/types';
 
 /**
@@ -32,6 +32,31 @@ export interface SubmitInput {
   fileName: string;
   contentType: string;
   body: Buffer;
+}
+
+/**
+ * What a piece of work is being handed in against.
+ *
+ * Two kinds of thing can be: a case study assignment, and the class group
+ * project. They differ in everything a lecturer cares about and in nothing
+ * this module cares about - a deadline, a group, and a list of what is owed -
+ * so they are resolved to one shape here and the rest of the file never asks
+ * which it got.
+ */
+async function submissionTarget(id: string): Promise<SubmissionTarget> {
+  const project = await projectTargetOf(id);
+  if (project) return project;
+
+  const assignment = await getAssignment(id);
+  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+
+  return {
+    id: assignment.id,
+    classId: assignment.classId,
+    groupId: assignment.groupId,
+    submissionDeadline: assignment.submissionDeadline,
+    deliverables: [...(await policyOfAssignment(assignment)).deliverables],
+  };
 }
 
 interface VersionSlot {
@@ -51,14 +76,14 @@ interface VersionSlot {
  */
 async function nextVersion(
   tx: FirebaseFirestore.Transaction,
-  assignment: Assignment,
+  target: SubmissionTarget,
   deliverableId: string,
 ): Promise<VersionSlot> {
   const db = getDb();
   const previous = await tx.get(
     db
       .collection(COLLECTIONS.submissions)
-      .where('assignmentId', '==', assignment.id)
+      .where('assignmentId', '==', target.id)
       .where('deliverableId', '==', deliverableId)
       .orderBy('versionNumber', 'desc')
       .limit(1),
@@ -69,7 +94,7 @@ async function nextVersion(
   return {
     versionNumber: ((latest?.get('versionNumber') as number | undefined) ?? 0) + 1,
     submittedAt: submittedAt.toDate().toISOString(),
-    isLate: lateAtServerTime(assignment, submittedAt),
+    isLate: lateAtServerTime(target, submittedAt),
     ref: db.collection(COLLECTIONS.submissions).doc(),
     previous: latest?.ref ?? null,
   };
@@ -87,12 +112,10 @@ export async function submitLink(
   groupId: string,
   input: { assignmentId: string; deliverableId: string; url: string },
 ): Promise<Submission> {
-  const assignment = await getAssignment(input.assignmentId);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
-  if (assignment.groupId !== groupId) throw new AppError('FORBIDDEN', 'errors.notYourAssignment');
+  const target = await submissionTarget(input.assignmentId);
+  if (target.groupId !== groupId) throw new AppError('FORBIDDEN', 'errors.notYourAssignment');
 
-  const policy = await policyOfAssignment(assignment);
-  const deliverable = policy.deliverables.find((item) => item.id === input.deliverableId);
+  const deliverable = target.deliverables.find((item) => item.id === input.deliverableId);
   if (!deliverable) throw new AppError('NOT_FOUND', 'errors.deliverableNotFound');
 
   const url = input.url.trim();
@@ -101,7 +124,7 @@ export async function submitLink(
 
   const db = getDb();
   const submission = await db.runTransaction(async (tx) => {
-    const slot = await nextVersion(tx, assignment, input.deliverableId);
+    const slot = await nextVersion(tx, target, input.deliverableId);
 
     const record = {
       id: slot.ref.id,
@@ -130,7 +153,7 @@ export async function submitLink(
     actorUid: actor.uid,
     actorRole: actor.role,
     target: `${COLLECTIONS.submissions}/${submission.id}`,
-    classId: assignment.classId,
+    classId: target.classId,
     after: {
       deliverableId: input.deliverableId,
       versionNumber: submission.versionNumber,
@@ -148,12 +171,10 @@ export async function submitDeliverable(
   groupId: string,
   input: SubmitInput,
 ): Promise<Submission> {
-  const assignment = await getAssignment(input.assignmentId);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
-  if (assignment.groupId !== groupId) throw new AppError('FORBIDDEN', 'errors.notYourAssignment');
+  const target = await submissionTarget(input.assignmentId);
+  if (target.groupId !== groupId) throw new AppError('FORBIDDEN', 'errors.notYourAssignment');
 
-  const policy = await policyOfAssignment(assignment);
-  const deliverable = policy.deliverables.find((candidate) => candidate.id === input.deliverableId);
+  const deliverable = target.deliverables.find((candidate) => candidate.id === input.deliverableId);
   if (!deliverable) throw new AppError('NOT_FOUND', 'errors.deliverableNotFound');
 
   const problem = validateUpload(
@@ -183,7 +204,7 @@ export async function submitDeliverable(
     const latest = previous.docs[0];
     const versionNumber = ((latest?.get('versionNumber') as number | undefined) ?? 0) + 1;
     const submittedAt = Timestamp.now();
-    const isLate = lateAtServerTime(assignment, submittedAt);
+    const isLate = lateAtServerTime(target, submittedAt);
 
     const ref = db.collection(COLLECTIONS.submissions).doc();
     const record = {
@@ -225,7 +246,7 @@ export async function submitDeliverable(
     actorUid: actor.uid,
     actorRole: actor.role,
     target: `${COLLECTIONS.submissions}/${submission.id}`,
-    classId: assignment.classId,
+    classId: target.classId,
     after: {
       deliverableId: input.deliverableId,
       versionNumber: submission.versionNumber,
