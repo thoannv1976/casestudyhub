@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import {
   PROGRESS_FILTERS,
@@ -19,6 +19,19 @@ import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
  * Setting a case for a group, and the progress table of SRS 4.2: who has
  * handed in what, and which of it arrived late.
  */
+/**
+ * `datetime-local` wants a local wall-clock string, not an ISO instant. Slicing
+ * the ISO string would show the lecturer UTC and silently move every date by
+ * seven hours.
+ */
+function toLocalInput(iso: string): string {
+  const date = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
+    date.getHours(),
+  )}:${pad(date.getMinutes())}`;
+}
+
 /** An assignment the server could not classify is shown, never hidden. */
 const EMPTY_PROGRESS: AssignmentProgress = {
   state: 'awaiting',
@@ -61,6 +74,8 @@ export function AssignmentManager({
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Which row has its date open for editing, if any. */
+  const [editing, setEditing] = useState<string | null>(null);
 
   const published = cases.filter((study) => study.status === 'published');
 
@@ -86,6 +101,40 @@ export function AssignmentManager({
         return;
       }
       setNotice(t('assigned'));
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /**
+   * Moves a presentation that has already been set. The submission deadline
+   * moves with it, worked out on the server from the framework version this
+   * assignment froze - which is why nothing here tries to compute one.
+   */
+  async function reschedule(assignmentId: string, event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setErrorKey(null);
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/classes/${classId}/assignments`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assignmentId,
+          presentationDate: new Date(String(form.get('newPresentationDate') ?? '')).toISOString(),
+          reason: String(form.get('reason') ?? ''),
+        }),
+      });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => null);
+        setErrorKey(payload?.error?.messageKey ?? 'errors.unexpected');
+        return;
+      }
+      setEditing(null);
+      setNotice(t('rescheduled'));
       router.refresh();
     } finally {
       setBusy(false);
@@ -168,7 +217,7 @@ export function AssignmentManager({
           </div>
 
           <div className="surface-card overflow-x-auto rounded-xl">
-            <table className="w-full min-w-[40rem] text-left text-sm">
+            <table className="w-full min-w-[52rem] text-left text-sm">
               <thead>
                 <tr className="border-b border-[var(--border-subtle)]">
                   <th scope="col" className="px-4 py-3 font-semibold">
@@ -178,6 +227,9 @@ export function AssignmentManager({
                     {t('case')}
                   </th>
                   <th scope="col" className="px-4 py-3 font-semibold">
+                    {t('presentationDate')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
                     {t('deadline')}
                   </th>
                   <th scope="col" className="px-4 py-3 font-semibold">
@@ -185,6 +237,9 @@ export function AssignmentManager({
                   </th>
                   <th scope="col" className="px-4 py-3 font-semibold">
                     {tProgress('columnLabel')}
+                  </th>
+                  <th scope="col" className="px-4 py-3 font-semibold">
+                    <span className="sr-only">{t('changeDate')}</span>
                   </th>
                 </tr>
               </thead>
@@ -202,10 +257,14 @@ export function AssignmentManager({
                   const latest = [...current.values()];
                   const late = latest.filter((submission) => submission.isLate).length;
 
-                  return (
+                  const isEditing = editing === assignment.id;
+                  const row = (
                     <tr key={assignment.id} className="border-b border-[var(--border-subtle)]">
                       <td className="px-4 py-3">{nameOfGroup(assignment.groupId)}</td>
                       <td className="px-4 py-3">{nameOfCase(assignment.caseStudyId)}</td>
+                      <td className="px-4 py-3">
+                        {new Date(assignment.presentationDate).toLocaleString()}
+                      </td>
                       <td className="px-4 py-3">
                         {new Date(assignment.submissionDeadline).toLocaleString()}
                       </td>
@@ -234,7 +293,70 @@ export function AssignmentManager({
                           {tProgress(progress.state)}
                         </span>
                       </td>
+                      <td className="px-4 py-3 text-right">
+                        <Button
+                          variant="ghost"
+                          disabled={busy}
+                          onClick={() => setEditing(isEditing ? null : assignment.id)}
+                        >
+                          {isEditing ? t('cancel') : t('changeDate')}
+                        </Button>
+                      </td>
                     </tr>
+                  );
+
+                  const editor = isEditing ? (
+                    <tr
+                      key={`${assignment.id}__edit`}
+                      className="border-b border-[var(--border-subtle)]"
+                    >
+                      <td colSpan={7} className="px-4 py-4">
+                        <form
+                          onSubmit={(event) => void reschedule(assignment.id, event)}
+                          className="space-y-3"
+                        >
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <Field
+                              label={t('newPresentationDate')}
+                              htmlFor={`newPresentationDate__${assignment.id}`}
+                              hint={t('deadlineFollows')}
+                            >
+                              <Input
+                                id={`newPresentationDate__${assignment.id}`}
+                                name="newPresentationDate"
+                                type="datetime-local"
+                                defaultValue={toLocalInput(assignment.presentationDate)}
+                                required
+                              />
+                            </Field>
+                            <Field
+                              label={t('reason')}
+                              htmlFor={`reason__${assignment.id}`}
+                              hint={t('reasonHint')}
+                            >
+                              <Input
+                                id={`reason__${assignment.id}`}
+                                name="reason"
+                                minLength={10}
+                                required
+                              />
+                            </Field>
+                          </div>
+                          <Button type="submit" disabled={busy}>
+                            {t('saveDate')}
+                          </Button>
+                        </form>
+                      </td>
+                    </tr>
+                  ) : null;
+
+                  return editor ? (
+                    <Fragment key={assignment.id}>
+                      {row}
+                      {editor}
+                    </Fragment>
+                  ) : (
+                    row
                   );
                 })}
               </tbody>

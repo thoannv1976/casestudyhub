@@ -10,7 +10,7 @@ import {
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { groupMemberUids, notify } from '../notifications/notifications';
-import { policyOfClass } from '../policy/policy-store';
+import { policyOfAssignment, policyOfClass } from '../policy/policy-store';
 import { linkClaimToAssignment } from '../case-selection/case-selection';
 import { AppError } from '../errors';
 import type { SessionUser } from '../auth/types';
@@ -158,12 +158,17 @@ export async function getAssignment(assignmentId: string): Promise<Assignment | 
  */
 export async function extendDeadline(
   actor: SessionUser,
+  classId: string,
   assignmentId: string,
   newDeadlineIso: string,
   reason: string,
 ): Promise<void> {
   const assignment = await getAssignment(assignmentId);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  // Scoped to the class the caller was cleared for. Without this, permission
+  // over one class would reach every assignment id in the system.
+  if (!assignment || assignment.classId !== classId) {
+    throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  }
 
   const newMs = Date.parse(newDeadlineIso);
   if (Number.isNaN(newMs)) throw new AppError('VALIDATION_FAILED', 'errors.dateInvalid');
@@ -186,6 +191,103 @@ export async function extendDeadline(
     after: { submissionDeadline: new Date(newMs).toISOString() },
     reason,
   });
+}
+
+/**
+ * Moves a presentation that has already been set to a new date.
+ *
+ * The submission deadline is recomputed rather than carried over, from the
+ * policy version this assignment froze and not from whatever the class runs
+ * under today: the two dates are one decision, and "24 hours before the
+ * session" has to stay true of the framework this group's work is marked by.
+ *
+ * What it deliberately does not do is revisit the submissions already handed
+ * in. Their `isLate` flag is a fact about the moment they arrived; recomputing
+ * it here would turn work that was on time into work that was late because of
+ * a decision taken afterwards. A group that needs relief from a deadline gets
+ * it through `extendDeadline`, with its own reason.
+ */
+export async function reschedulePresentation(
+  actor: SessionUser,
+  classId: string,
+  assignmentId: string,
+  newPresentationDateIso: string,
+  reason: string,
+): Promise<{ presentationDate: string; submissionDeadline: string }> {
+  const assignment = await getAssignment(assignmentId);
+  // Scoped to the class the caller was cleared for, as above.
+  if (!assignment || assignment.classId !== classId) {
+    throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  }
+  if (reason.trim().length < 10) throw new AppError('VALIDATION_FAILED', 'errors.reasonTooShort');
+
+  const presentationMs = Date.parse(newPresentationDateIso);
+  if (Number.isNaN(presentationMs)) {
+    throw new AppError('VALIDATION_FAILED', 'errors.dateInvalid');
+  }
+  if (presentationMs <= Date.now()) {
+    throw new AppError('VALIDATION_FAILED', 'errors.presentationInPast');
+  }
+
+  const db = getDb();
+  const [sessions, grades] = await Promise.all([
+    db
+      .collection(COLLECTIONS.presentationSessions)
+      .where('assignmentId', '==', assignmentId)
+      .limit(1)
+      .get(),
+    db.collection(COLLECTIONS.grades).where('assignmentId', '==', assignmentId).limit(1).get(),
+  ]);
+
+  // Marks are out. The deadline they were computed against - late penalty and
+  // all - is part of a published result, so moving it now would change the
+  // basis of a mark after the fact.
+  if (!grades.empty) throw new AppError('CONFLICT', 'errors.gradeAlreadyPublished');
+
+  // The room has opened. Whatever the calendar says, this presentation is
+  // happening or has happened, and a date for it is no longer a plan.
+  const session = sessions.docs[0];
+  if (session && session.get('status') !== 'scheduled') {
+    throw new AppError('CONFLICT', 'errors.presentationAlreadyRunning');
+  }
+
+  const policy = await policyOfAssignment(assignment);
+  const presentationDate = new Date(presentationMs).toISOString();
+  const submissionDeadline = new Date(submissionDeadlineFor(presentationMs, policy)).toISOString();
+  if (presentationDate === assignment.presentationDate) {
+    throw new AppError('VALIDATION_FAILED', 'errors.nothingToUpdate');
+  }
+
+  await db.collection(COLLECTIONS.assignments).doc(assignmentId).update({
+    presentationDate,
+    submissionDeadline,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+
+  // The group planned around the old date, so they are told about the new one
+  // in the same breath - including the deadline, which moved with it.
+  await notify({
+    recipientUids: await groupMemberUids(assignment.classId, assignment.groupId),
+    kind: 'assignment.rescheduled',
+    params: { presentation: presentationDate, deadline: submissionDeadline },
+    href: `/classes/${assignment.classId}`,
+  });
+
+  await writeAuditLog({
+    action: 'assignment.rescheduled',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.assignments}/${assignmentId}`,
+    classId: assignment.classId,
+    before: {
+      presentationDate: assignment.presentationDate,
+      submissionDeadline: assignment.submissionDeadline,
+    },
+    after: { presentationDate, submissionDeadline },
+    reason,
+  });
+
+  return { presentationDate, submissionDeadline };
 }
 
 /** The deliverables a group still owes, from the policy the assignment froze. */

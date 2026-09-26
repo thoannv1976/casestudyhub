@@ -16,6 +16,8 @@ import { z } from 'zod';
 export const NOTIFICATION_KINDS = [
   /** A case was set for your group, with a deadline. */
   'assignment.created',
+  /** The lecturer moved the presentation, which moves the deadline with it. */
+  'assignment.rescheduled',
   /** The lecturer let you into a class you asked to join. */
   'enrollment.approved',
   /** The presenting group chose your question to answer aloud. */

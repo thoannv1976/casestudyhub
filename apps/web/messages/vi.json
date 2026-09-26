@@ -301,7 +301,10 @@
     "deliverableIsNotALink": "Sản phẩm này là file, không phải link.",
     "linkNotHttps": "Hãy dán địa chỉ https đầy đủ, bắt đầu bằng https://",
     "linkTooLong": "Địa chỉ đó quá dài để là link tới một video.",
-    "submissionIsALink": "Bài nộp đó là một link, không phải file do nền tảng này giữ."
+    "submissionIsALink": "Bài nộp đó là một link, không phải file do nền tảng này giữ.",
+    "presentationAlreadyRunning": "Buổi thuyết trình đã mở, không đổi lịch được nữa.",
+    "groupNameInvalid": "Tên nhóm cần từ 1 đến 120 ký tự.",
+    "groupNameTaken": "Lớp này đã có nhóm mang tên đó."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -533,7 +536,12 @@
     "join": "Tham gia nhóm này",
     "full": "Đã đủ",
     "yourGroup": "Nhóm của bạn",
-    "removeMember": "Loại {name} khỏi nhóm"
+    "removeMember": "Loại {name} khỏi nhóm",
+    "rename": "Đổi tên",
+    "cancel": "Thôi",
+    "groupName": "Tên nhóm",
+    "saveName": "Lưu tên",
+    "renamed": "Đã đổi tên nhóm thành {name}."
   },
   "cases": {
     "title": "Thư viện Case Study",
@@ -593,7 +601,15 @@
     "handedIn": "Đã nộp",
     "nothingYet": "Chưa có gì",
     "itemCount": "{count} mục",
-    "lateCount": "{count} nộp muộn"
+    "lateCount": "{count} nộp muộn",
+    "changeDate": "Đổi ngày",
+    "cancel": "Thôi",
+    "newPresentationDate": "Ngày giờ thuyết trình mới",
+    "deadlineFollows": "Hạn nộp tự dời theo, tính từ khung mà phân công này đã chốt.",
+    "reason": "Lý do",
+    "reasonHint": "Ít nhất 10 ký tự. Lý do được ghi lại cùng người thực hiện.",
+    "saveDate": "Lưu ngày mới",
+    "rescheduled": "Đã đổi ngày thuyết trình. Hạn nộp đã dời theo."
   },
   "workspace": {
     "title": "Bài làm của nhóm",
@@ -888,7 +904,8 @@
       "enrollmentApproved": "Bạn đã được duyệt vào lớp {className}.",
       "questionSelected": "Nhóm thuyết trình đã chọn câu hỏi của bạn để trả lời trực tiếp.",
       "gradePublished": "Điểm của bạn cho {case} đã được công bố.",
-      "submissionDueSoon": "Còn thiếu {missing} sản phẩm cho {case}, và hạn nộp chỉ còn {hours} giờ."
+      "submissionDueSoon": "Còn thiếu {missing} sản phẩm cho {case}, và hạn nộp chỉ còn {hours} giờ.",
+      "assignmentRescheduled": "Buổi thuyết trình của nhóm bạn đã dời sang {presentation, time, short} ngày {presentation, date, medium}. Hạn nộp mới là {deadline, time, short} ngày {deadline, date, medium}."
     }
   },
   "framework": {

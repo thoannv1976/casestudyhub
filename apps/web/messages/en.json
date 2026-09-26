@@ -301,7 +301,10 @@
     "deliverableIsNotALink": "This deliverable is a file, not a link.",
     "linkNotHttps": "Give a full https address, starting with https://",
     "linkTooLong": "That address is too long to be a link to a video.",
-    "submissionIsALink": "That submission is a link, not a file this platform holds."
+    "submissionIsALink": "That submission is a link, not a file this platform holds.",
+    "presentationAlreadyRunning": "The presentation has already opened, so its date can no longer be moved.",
+    "groupNameInvalid": "A group name needs between 1 and 120 characters.",
+    "groupNameTaken": "Another group in this class already has that name."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -533,7 +536,12 @@
     "join": "Join this group",
     "full": "Full",
     "yourGroup": "Your group",
-    "removeMember": "Remove {name} from this group"
+    "removeMember": "Remove {name} from this group",
+    "rename": "Rename",
+    "cancel": "Cancel",
+    "groupName": "Group name",
+    "saveName": "Save name",
+    "renamed": "Group renamed to {name}."
   },
   "cases": {
     "title": "Case study library",
@@ -593,7 +601,15 @@
     "handedIn": "Handed in",
     "nothingYet": "Nothing yet",
     "itemCount": "{count} item(s)",
-    "lateCount": "{count} late"
+    "lateCount": "{count} late",
+    "changeDate": "Change date",
+    "cancel": "Cancel",
+    "newPresentationDate": "New presentation date and time",
+    "deadlineFollows": "The submission deadline moves with it, from the framework this assignment froze.",
+    "reason": "Reason",
+    "reasonHint": "At least 10 characters. Recorded with who made the change.",
+    "saveDate": "Save new date",
+    "rescheduled": "Presentation moved. The submission deadline moved with it."
   },
   "workspace": {
     "title": "Your group's work",
@@ -888,7 +904,8 @@
       "enrollmentApproved": "You have been admitted to {className}.",
       "questionSelected": "The presenting group chose your question to answer aloud.",
       "gradePublished": "Your mark for {case} has been published.",
-      "submissionDueSoon": "{missing, plural, one {# deliverable is} other {# deliverables are}} still missing for {case}, and the deadline is in {hours, plural, one {# hour} other {# hours}}."
+      "submissionDueSoon": "{missing, plural, one {# deliverable is} other {# deliverables are}} still missing for {case}, and the deadline is in {hours, plural, one {# hour} other {# hours}}.",
+      "assignmentRescheduled": "Your group’s presentation has moved to {presentation, date, medium} at {presentation, time, short}. The new submission deadline is {deadline, date, medium} at {deadline, time, short}."
     }
   },
   "framework": {

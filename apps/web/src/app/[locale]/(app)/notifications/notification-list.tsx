@@ -18,7 +18,7 @@ import { Link } from '@/i18n/navigation';
  * what survives a database. ICU needs a Date to format one in the reader's
  * language, so they are turned back here rather than at every call site.
  */
-const DATE_PARAMS = new Set(['deadline']);
+const DATE_PARAMS = new Set(['deadline', 'presentation']);
 
 function valuesFor(notification: AppNotification): Record<string, string | number | Date> {
   return Object.fromEntries(

@@ -6,6 +6,7 @@ import {
   createAssignment,
   extendDeadline,
   listAssignments,
+  reschedulePresentation,
 } from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -60,7 +61,14 @@ export async function POST(
   }
 }
 
-/** Extends a deadline. Recorded with who did it and why. */
+/**
+ * Changes a date on an assignment that has already been set. Either the
+ * presentation itself - which moves the submission deadline with it, derived
+ * from the policy the assignment froze - or the deadline alone, when a group
+ * is being given relief without the session moving.
+ *
+ * Both are recorded with who did it and why.
+ */
 export async function PATCH(
   request: NextRequest,
   context: { params: Promise<{ classId: string }> },
@@ -72,14 +80,30 @@ export async function PATCH(
 
     const body = (await request.json()) as {
       assignmentId?: string;
+      presentationDate?: string;
       submissionDeadline?: string;
       reason?: string;
     };
-    if (!body.assignmentId || !body.submissionDeadline || !body.reason?.trim()) {
+    if (!body.assignmentId || !body.reason?.trim()) {
       throw new AppError('VALIDATION_FAILED', 'errors.reasonRequired');
     }
 
-    await extendDeadline(actor, body.assignmentId, body.submissionDeadline, body.reason);
+    if (body.presentationDate) {
+      const moved = await reschedulePresentation(
+        actor,
+        classId,
+        body.assignmentId,
+        body.presentationDate,
+        body.reason,
+      );
+      return NextResponse.json(moved);
+    }
+
+    if (!body.submissionDeadline) {
+      throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
+    }
+
+    await extendDeadline(actor, classId, body.assignmentId, body.submissionDeadline, body.reason);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return respondWithError(error);

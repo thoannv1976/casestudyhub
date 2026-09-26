@@ -347,6 +347,64 @@ export async function distributeRandomly(
   return { placed, unplaced: pool.length - placed };
 }
 
+/**
+ * Renames a group (SRS 7.2). Lecturers name groups after the case, the topic
+ * or the team, and "Group 3" stops being useful the moment there are twenty.
+ *
+ * `groupCode` is left alone: that is what the group is, and what every
+ * assignment, claim and mark was recorded against. The name is what people
+ * read.
+ *
+ * The clash check is a courtesy, not a structural constraint - two lecturers
+ * renaming two groups to the same thing in the same instant would both pass.
+ * Unlike a membership or a claim, two groups sharing a display name breaks
+ * nothing, it only reads badly, so it is not worth a transaction.
+ */
+export async function renameGroup(
+  actor: SessionUser,
+  classId: string,
+  groupId: string,
+  newName: string,
+): Promise<string> {
+  const groupName = newName.trim();
+  if (groupName.length === 0 || groupName.length > 120) {
+    throw new AppError('VALIDATION_FAILED', 'errors.groupNameInvalid');
+  }
+
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.groups).doc(groupId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists || snapshot.get('classId') !== classId) {
+    throw new AppError('NOT_FOUND', 'errors.groupNotFound');
+  }
+
+  const before = (snapshot.get('groupName') as string | undefined) ?? '';
+  if (before === groupName) throw new AppError('VALIDATION_FAILED', 'errors.nothingToUpdate');
+
+  const siblings = await db.collection(COLLECTIONS.groups).where('classId', '==', classId).get();
+  const taken = siblings.docs.some(
+    (doc) =>
+      doc.id !== groupId &&
+      ((doc.get('groupName') as string | undefined) ?? '').trim().toLowerCase() ===
+        groupName.toLowerCase(),
+  );
+  if (taken) throw new AppError('CONFLICT', 'errors.groupNameTaken');
+
+  await ref.update({ groupName, updatedAt: FieldValue.serverTimestamp() });
+
+  await writeAuditLog({
+    action: 'group.renamed',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.groups}/${groupId}`,
+    classId,
+    before: { groupName: before },
+    after: { groupName },
+  });
+
+  return groupName;
+}
+
 export async function setGroupLocked(
   actor: SessionUser,
   classId: string,

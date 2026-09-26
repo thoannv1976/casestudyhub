@@ -480,6 +480,64 @@ test('a lecturer sets the case for the group', async ({ page }) => {
   await expect(page.getByRole('row').filter({ hasText: 'Group 1' })).toContainText('Nothing yet');
 });
 
+test('the lecturer moves the presentation after the case was set', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const row = page.getByRole('row').filter({ hasText: 'Group 1' });
+  const deadlineBefore = await row.getByRole('cell').nth(3).innerText();
+
+  await row.getByRole('button', { name: 'Change date' }).click();
+
+  // Further out, not nearer: the group hands work in later in this story and
+  // must not be made late by a date the lecturer moved.
+  const moved = new Date(Date.now() + 21 * 24 * 60 * 60 * 1000);
+  const localValue = new Date(moved.getTime() - moved.getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+
+  await page.getByLabel('New presentation date and time').fill(localValue);
+  await page.getByLabel('Reason').fill('The lecture room is unavailable that week');
+  await page.getByRole('button', { name: 'Save new date' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('Presentation moved');
+  // The deadline is derived, so the proof that it moved is that the cell the
+  // lecturer never typed into is no longer what it was.
+  await expect(row.getByRole('cell').nth(3)).not.toHaveText(deadlineBefore);
+});
+
+test('the lecturer renames a group', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Group 2' })
+    .getByRole('button', { name: 'Rename' })
+    .click();
+  await page.getByLabel('Group name').fill('Nhom Ban le');
+  await page.getByRole('button', { name: 'Save name' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('renamed');
+  await expect(page.getByRole('heading', { name: 'Nhom Ban le' })).toBeVisible();
+
+  // Put it back, so the rest of this story still knows the group by the name
+  // it was created with.
+  await page
+    .getByRole('listitem')
+    .filter({ hasText: 'Nhom Ban le' })
+    .getByRole('button', { name: 'Rename' })
+    .click();
+  await page.getByLabel('Group name').fill('Group 2');
+  await page.getByRole('button', { name: 'Save name' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Group 2' })).toBeVisible();
+});
+
 test('the group sees what it owes and hands in the slides', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
   await page.goto('/en/classes');

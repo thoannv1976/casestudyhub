@@ -22,6 +22,8 @@ export function GroupManager({
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  /** Which group has its name open for editing, if any. */
+  const [renaming, setRenaming] = useState<string | null>(null);
 
   async function call(url: string, body: Record<string, unknown>, method = 'POST') {
     setBusy(true);
@@ -59,6 +61,24 @@ export function GroupManager({
           ? t('createdAndPlaced', { created: result.created, placed: result.placed })
           : t('created', { count: result.created }),
       );
+    }
+  }
+
+  /**
+   * Renames a group. `groupCode` stays as it is - that is what assignments and
+   * marks were recorded against; the name is only what people read.
+   */
+  async function rename(groupId: string, event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const result = await call(
+      `/api/groups/${groupId}`,
+      { classId, groupName: String(form.get('groupName') ?? '') },
+      'PATCH',
+    );
+    if (result) {
+      setRenaming(null);
+      setNotice(t('renamed', { name: result.groupName as string }));
     }
   }
 
@@ -121,8 +141,38 @@ export function GroupManager({
                       {groupMembers.length}/{group.maxMembers} · {group.groupCode}
                     </p>
                   </div>
-                  {group.locked ? <Badge>{t('locked')}</Badge> : null}
+                  <span className="flex items-center gap-2">
+                    {group.locked ? <Badge>{t('locked')}</Badge> : null}
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => setRenaming(renaming === group.id ? null : group.id)}
+                      className="text-muted hover:text-brand-600 text-xs font-medium disabled:opacity-40"
+                    >
+                      {renaming === group.id ? t('cancel') : t('rename')}
+                    </button>
+                  </span>
                 </div>
+
+                {renaming === group.id ? (
+                  <form
+                    onSubmit={(event) => void rename(group.id, event)}
+                    className="mt-3 flex flex-wrap items-end gap-2"
+                  >
+                    <Field label={t('groupName')} htmlFor={`groupName__${group.id}`}>
+                      <Input
+                        id={`groupName__${group.id}`}
+                        name="groupName"
+                        defaultValue={group.groupName}
+                        maxLength={120}
+                        required
+                      />
+                    </Field>
+                    <Button type="submit" disabled={busy}>
+                      {t('saveName')}
+                    </Button>
+                  </form>
+                ) : null}
 
                 <ul className="mt-3 space-y-1 text-sm">
                   {groupMembers.length === 0 ? (
