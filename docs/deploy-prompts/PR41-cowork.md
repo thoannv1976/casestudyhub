@@ -49,8 +49,8 @@ Dự án GCP `casestudy1-509414`, vùng `asia-southeast1`.
 **Sau khi deploy, mở app và kiểm 5 việc mới của PR41** (đăng nhập bằng tài khoản
 tôi đã có, đừng tạo tài khoản mới):
 
-1. Vào lớp với tư cách **giảng viên** → thẻ **Bài tập lớn của lớp**: có ô *Số
-   nhóm được thuyết trình* và *Hạn xung phong* không.
+1. Vào lớp với tư cách **giảng viên** → thẻ **Bài tập lớn của lớp**: có ô _Số
+   nhóm được thuyết trình_ và _Hạn xung phong_ không.
 2. Vào lớp với tư cách **sinh viên**: có thẻ **Xung phong thuyết trình bài tập
    lớn** không, và khi giảng viên chưa mở chỗ thì nó có nói "Giảng viên chưa mở
    phần này" không.
@@ -59,7 +59,7 @@ tôi đã có, đừng tạo tài khoản mới):
 4. Trang chủ (dashboard) vẫn mở được bình thường — đây là chỗ PR41 sửa một lỗi
    làm sập trang khi có buổi thuyết trình bài tập lớn đang chạy.
 5. Nếu tiện, nhờ một nhóm xung phong rồi mở buổi: cột **Thuyết trình** phải hiện
-   *Số 1*, và có link **Câu hỏi** dẫn tới bảng tổng hợp câu hỏi.
+   _Số 1_, và có link **Câu hỏi** dẫn tới bảng tổng hợp câu hỏi.
 
 Chỗ nào không chạy: chép nguyên văn màn hình / thông báo lỗi, đừng sửa.
 
