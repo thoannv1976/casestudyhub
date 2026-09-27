@@ -1064,7 +1064,8 @@
     "aiKeyCleared": "Key deleted.",
     "aiProviderSaved": "Saved. Use \"Ask the model\" below to be sure it really answers.",
     "aiReasonLabel": "Reason for this change",
-    "aiProviderSave": "Save provider"
+    "aiProviderSave": "Save provider",
+    "aiProviderSavedOff": "Key and provider saved — but the model is still OFF. Use \"Turn the model on\" below, then \"Ask the model\"."
   },
   "caseSelection": {
     "title": "Choose your group's case study",

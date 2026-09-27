@@ -104,7 +104,10 @@ export function AiProviderForm({
         return;
       }
 
-      setNotice(t('aiProviderSaved'));
+      // Storing a key does not turn the model on - the switch below does, and
+      // it is a separate deliberate act. Saying so here saves an administrator
+      // from pressing "Ask the model" and being told nothing is configured.
+      setNotice(t(settings.aiEnabled ? 'aiProviderSaved' : 'aiProviderSavedOff'));
       router.refresh();
     } finally {
       setBusy(false);

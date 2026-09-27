@@ -1064,7 +1064,8 @@
     "aiKeyCleared": "Đã xóa khóa.",
     "aiProviderSaved": "Đã lưu. Bấm \"Thử gọi mô hình\" ở dưới để chắc rằng nó trả lời thật.",
     "aiReasonLabel": "Lý do thay đổi",
-    "aiProviderSave": "Lưu nhà cung cấp"
+    "aiProviderSave": "Lưu nhà cung cấp",
+    "aiProviderSavedOff": "Đã lưu khóa và nhà cung cấp — nhưng mô hình đang TẮT. Bấm \"Bật mô hình\" ở khối dưới, rồi \"Thử gọi mô hình\"."
   },
   "caseSelection": {
     "title": "Chọn case study cho nhóm",

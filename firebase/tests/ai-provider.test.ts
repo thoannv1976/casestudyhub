@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 /**
  * Choosing a vendor and storing its key, against the real database.
@@ -22,6 +22,8 @@ const {
   currentAiConfig,
   aiStatus,
   setAiProvider,
+  getAiProvider,
+  probeAi,
 } = await import('@casestudyhub/core');
 const { AI_CREDENTIALS_ID, COLLECTIONS, DEFAULT_SYSTEM_SETTINGS, SYSTEM_SETTINGS_ID } =
   await import('@casestudyhub/shared');
@@ -40,6 +42,10 @@ async function wipe() {
   await db.collection(COLLECTIONS.systemSettings).doc(AI_CREDENTIALS_ID).delete();
   const logs = await db.collection(COLLECTIONS.auditLogs).where('actorUid', '==', admin.uid).get();
   await Promise.all(logs.docs.map((doc) => doc.ref.delete()));
+  // Cleared between tests too: a month's call count that survives the previous
+  // test is the previous test's answer.
+  const usage = await db.collection(COLLECTIONS.aiUsage).get();
+  await Promise.all(usage.docs.map((doc) => doc.ref.delete()));
   setAiProvider(null);
 }
 
@@ -204,5 +210,141 @@ describe('the vendor the platform ends up calling', () => {
       transport: 'vertex',
       model: 'gemini-2.5-flash',
     });
+  });
+});
+
+describe('the whole way from the administration page to the vendor', () => {
+  /**
+   * The link nothing else covers: a key an administrator typed in reaching the
+   * HTTP request, with the model they chose, over the vendor's own endpoint.
+   *
+   * `fetch` is replaced, so nothing here leaves the machine. Everything before
+   * it is real - the key is read out of Firestore, the settings decide the
+   * vendor, and the call goes through the gateway that counts the month's
+   * budget, exactly as a lecturer pressing the button would.
+   */
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  function captureFetch(calls: { url: string; init: RequestInit }[], body: unknown) {
+    return vi.fn(async (url: string, init: RequestInit) => {
+      calls.push({ url: String(url), init });
+      return new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
+    });
+  }
+
+  const OPENAI_ANSWER = {
+    choices: [{ message: { content: JSON.stringify({ answer: 'ready' }) }, finish_reason: 'stop' }],
+    usage: { prompt_tokens: 9, completion_tokens: 2 },
+  };
+
+  it('sends the stored OpenAI key, and the model the administrator chose', async () => {
+    await saveAiCredential(admin, 'openai', OPENAI_KEY);
+    await saveSystemSettings(
+      admin,
+      {
+        ...DEFAULT_SYSTEM_SETTINGS,
+        aiEnabled: true,
+        aiProvider: 'openai',
+        aiModels: { gemini: 'gemini-2.5-flash', openai: 'gpt-4.1' },
+      },
+      REASON,
+    );
+
+    const calls: { url: string; init: RequestInit }[] = [];
+    vi.stubGlobal('fetch', captureFetch(calls, OPENAI_ANSWER));
+
+    const probe = await probeAi();
+    expect(probe.ok).toBe(true);
+
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.url).toBe('https://api.openai.com/v1/chat/completions');
+    expect((calls[0]?.init.headers as Record<string, string>).Authorization).toBe(
+      `Bearer ${OPENAI_KEY}`,
+    );
+    expect(JSON.parse(String(calls[0]?.init.body)).model).toBe('gpt-4.1');
+  });
+
+  it('counts the call against the month, as any other call would', async () => {
+    await saveAiCredential(admin, 'openai', OPENAI_KEY);
+    await saveSystemSettings(
+      admin,
+      { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: true, aiProvider: 'openai' },
+      REASON,
+    );
+
+    vi.stubGlobal('fetch', captureFetch([], OPENAI_ANSWER));
+    await probeAi();
+
+    const usage = await getDb()
+      .collection(COLLECTIONS.aiUsage)
+      .doc(new Date().toISOString().slice(0, 7))
+      .get();
+    expect(usage.get('calls')).toBe(1);
+  });
+
+  it('sends a stored Gemini key to Google, in Google’s own header', async () => {
+    await saveAiCredential(admin, 'gemini', 'AIzaSy-stored-key');
+    await saveSystemSettings(
+      admin,
+      {
+        ...DEFAULT_SYSTEM_SETTINGS,
+        aiEnabled: true,
+        aiProvider: 'gemini',
+        aiGeminiTransport: 'apiKey',
+      },
+      REASON,
+    );
+
+    const calls: { url: string; init: RequestInit }[] = [];
+    vi.stubGlobal(
+      'fetch',
+      captureFetch(calls, {
+        candidates: [{ content: { parts: [{ text: JSON.stringify({ answer: 'ready' }) }] } }],
+        usageMetadata: { promptTokenCount: 9, candidatesTokenCount: 2 },
+      }),
+    );
+
+    const probe = await probeAi();
+    expect(probe.ok).toBe(true);
+    expect(calls[0]?.url).toContain('generativelanguage.googleapis.com');
+    expect(calls[0]?.url).toContain('gemini-2.5-flash');
+    expect((calls[0]?.init.headers as Record<string, string>)['x-goog-api-key']).toBe(
+      'AIzaSy-stored-key',
+    );
+  });
+
+  it('refuses to call anything when the key was cleared', async () => {
+    await saveAiCredential(admin, 'openai', OPENAI_KEY);
+    await saveSystemSettings(
+      admin,
+      { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: true, aiProvider: 'openai' },
+      REASON,
+    );
+    await saveAiCredential(admin, 'openai', null);
+
+    const calls: { url: string; init: RequestInit }[] = [];
+    vi.stubGlobal('fetch', captureFetch(calls, OPENAI_ANSWER));
+
+    await expect(getAiProvider()).rejects.toThrow(/No AI model is configured/);
+    // And nothing was attempted: a missing key is not a failed call.
+    expect(calls).toEqual([]);
+  });
+
+  it('reports the vendor as not configured while the switch is off', async () => {
+    // The key is stored and still unused: the switch is what turns it on.
+    await saveAiCredential(admin, 'openai', OPENAI_KEY);
+    await saveSystemSettings(
+      admin,
+      { ...DEFAULT_SYSTEM_SETTINGS, aiEnabled: false, aiProvider: 'openai' },
+      REASON,
+    );
+
+    const probe = await probeAi();
+    expect(probe).toMatchObject({ ok: false, reason: 'notConfigured' });
   });
 });

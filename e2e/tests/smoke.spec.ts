@@ -2123,7 +2123,9 @@ test('an administrator points the platform at OpenAI without a deploy', async ({
   await form.getByLabel('API key').fill('sk-e2e-test-key-2468');
   await form.getByLabel('Reason for this change').fill('Trying OpenAI this term.');
   await form.getByRole('button', { name: 'Save provider' }).click();
-  await expect(page.getByTestId('alert-success')).toBeVisible();
+  // Saving a key is not the same act as turning the model on, and the notice
+  // says so rather than leaving the next click to fail.
+  await expect(page.getByTestId('alert-success')).toContainText('still OFF');
 
   await page.reload();
 
