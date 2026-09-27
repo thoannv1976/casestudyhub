@@ -3,8 +3,10 @@ import {
   COLLECTIONS,
   MAX_SELECTED_QUESTIONS,
   anonymiseForReuse,
+  askerTally,
   classQuestionSchema,
   type AskQuestionRequest,
+  type AskerTally,
   type ClassQuestion,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
@@ -12,7 +14,8 @@ import { writeAuditLog } from '../audit/audit-log';
 import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
 import { getSession } from '../sessions/sessions';
-import { findMembership } from '../groups/groups';
+import { listRoster } from '../academic/enrollment';
+import { findMembership, listMembers } from '../groups/groups';
 import type { SessionUser } from '../auth/types';
 
 /**
@@ -67,7 +70,10 @@ export async function askQuestion(
 
   const record = {
     id: ref.id,
-    caseStudyId: session.caseStudyId,
+    kind: session.kind,
+    // Only a case study has a bank for later cohorts to inherit; a project's
+    // questions belong to that group's presentation and nowhere else.
+    ...(session.caseStudyId ? { caseStudyId: session.caseStudyId } : {}),
     sessionId,
     classId: session.classId,
     groupId: session.groupId,
@@ -316,6 +322,64 @@ export function qaCompletion(
     membersWithoutAnswer,
     everyMemberAnswered: membersWithoutAnswer.length === 0 && groupMemberUids.length > 0,
     enoughClassQuestions: questions.length >= minClassQuestions,
+  };
+}
+
+/**
+ * Who in the class has asked their question for one presentation, and who has
+ * not (SRS Module 10.3).
+ *
+ * The names of the ones who have not are the point. A count tells a lecturer
+ * that four people are missing; the names let them say four names out loud
+ * while the room is still in front of them.
+ *
+ * The presenting group is left out: they answer questions, they do not ask
+ * them, and counting them as silent would make the tally something the lecturer
+ * reads out wrongly.
+ */
+export interface AskerRow {
+  studentUid: string;
+  studentId: string;
+  fullName: string;
+  asked: boolean;
+}
+
+export interface SessionAskers extends AskerTally {
+  rows: AskerRow[];
+}
+
+export async function sessionAskers(sessionId: string): Promise<SessionAskers> {
+  const session = await getSession(sessionId);
+  if (!session) throw new AppError('NOT_FOUND', 'errors.sessionNotFound');
+
+  const [roster, members, questions] = await Promise.all([
+    listRoster(session.classId),
+    listMembers(session.classId),
+    listSessionQuestions(sessionId),
+  ]);
+
+  const active = roster.filter((row) => row.status === 'active' && row.studentUid);
+  const tally = askerTally({
+    classUids: active.map((row) => row.studentUid as string),
+    presenterUids: members
+      .filter((member) => member.groupId === session.groupId)
+      .map((member) => member.studentUid),
+    askerUids: questions.map((question) => question.askedByUid),
+  });
+
+  const asked = new Set(tally.askedUids);
+  const expected = new Set([...tally.askedUids, ...tally.missingUids]);
+
+  return {
+    ...tally,
+    rows: active
+      .filter((row) => expected.has(row.studentUid as string))
+      .map((row) => ({
+        studentUid: row.studentUid as string,
+        studentId: row.studentId,
+        fullName: row.fullName,
+        asked: asked.has(row.studentUid as string),
+      })),
   };
 }
 

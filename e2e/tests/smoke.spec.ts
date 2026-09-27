@@ -61,6 +61,8 @@ const AUDIENCE = {
 let slidesHref = '';
 let reportHref = '';
 let sessionUrl = '';
+/** The project presentation's room, opened for the group that volunteered. */
+let projectSessionUrl = '';
 let gradeUrl = '';
 
 /**
@@ -1661,6 +1663,193 @@ test('a portfolio is one student\u2019s own, and nobody else\u2019s', async ({ p
   // The presenting group's mark belongs to them, not to the audience.
   await expect(page.getByText(STUDENT.fullName)).toHaveCount(0);
   await expect(page.getByText('69', { exact: true })).toHaveCount(0);
+});
+
+/**
+ * Volunteering to present the class group project (SRS Module 10, applied to
+ * the project). A group puts its hand up, the lecturer opens the room for it,
+ * and every student in the class who is not presenting owes one question.
+ *
+ * Group 2 presents here, not Group 1: Group 1 is four of the five students in
+ * this class, and a tally of who still owes a question is only worth testing
+ * when more than one person does.
+ */
+
+test('a group sees that volunteering has not been opened yet', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const card = page.getByTestId('volunteer-card');
+  await expect(card).toContainText('The lecturer has not opened this yet');
+  // Not offered, rather than offered and refused on pressing.
+  await expect(card.getByRole('button', { name: 'My group volunteers' })).toHaveCount(0);
+});
+
+test('the lecturer opens two places for groups to present the project', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const manager = page.getByTestId('project-manager');
+  await manager.locator('#slots').fill('2');
+  await manager.getByRole('button', { name: 'Save places' }).click();
+
+  await expect(page.getByText('Places saved.')).toBeVisible();
+  await expect(manager).toContainText('0 of 2 places taken.');
+});
+
+test('a group puts its hand up, on the phone the class actually uses', async ({ page }) => {
+  await page.setViewportSize(PHONE);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const card = page.getByTestId('volunteer-card');
+  await expect(card).toContainText('2 of 2 places left.');
+  await card.getByRole('button', { name: 'My group volunteers' }).click();
+
+  // Which place they took, not merely that it worked: the number is what the
+  // group plans around.
+  await expect(card).toContainText('Your group has volunteered, presenting 1.');
+  await expect(card).toContainText('1. Group 2');
+  await expect(card.getByRole('button', { name: 'My group volunteers' })).toHaveCount(0);
+  await expectFitsThePhone(page);
+});
+
+test('the lecturer sees which group volunteered, and for which place', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const manager = page.getByTestId('project-manager');
+  await expect(manager).toContainText('1 of 2 places taken.');
+
+  const row = manager.getByRole('row').filter({ hasText: 'Group 2' });
+  await expect(row).toContainText('Number 1');
+  // Group 1 never volunteered, and the table says so rather than leaving a gap.
+  await expect(manager.getByRole('row').filter({ hasText: 'Group 1' })).toContainText(
+    'Not volunteered',
+  );
+
+  // Places cannot be cut below the hands already up.
+  await manager.locator('#slots').fill('0');
+  await manager.getByRole('button', { name: 'Save places' }).click();
+  await expect(page.getByTestId('alert-error')).toContainText(
+    'It cannot go below the number of groups that already volunteered',
+  );
+});
+
+test('the lecturer opens the room for the group that volunteered', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page
+    .getByTestId('project-manager')
+    .getByRole('row')
+    .filter({ hasText: 'Group 2' })
+    .getByRole('button', { name: 'Open the room' })
+    .click();
+
+  await page.waitForURL(/\/sessions\/.+/);
+  projectSessionUrl = new URL(page.url()).pathname.replace(/^\/[a-z]{2}(?=\/)/, '');
+  expect(projectSessionUrl).toMatch(/^\/sessions\/.+/);
+  expect(projectSessionUrl).not.toBe(sessionUrl);
+
+  // The room has no case behind it, so it is named after what is presented.
+  await expect(page.getByRole('heading', { name: 'Class group project' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pause' })).toBeVisible();
+});
+
+test('two students in the audience each ask their one question', async ({ page }) => {
+  await signIn(page, STUDENT.email, LECTURER_SET_STUDENT_PASSWORD ?? STUDENT.password);
+  await page.goto(`/en${projectSessionUrl}`);
+
+  await page.locator('#text').fill('How does the pricing hold up if acquisition cost doubles?');
+  await page.locator('#category').selectOption('evidence');
+  await page.getByRole('button', { name: 'Send question' }).click();
+  await expect(page.getByText('1 question', { exact: true })).toBeVisible();
+
+  // The next student is a different person on a different screen; signing in
+  // over a live session would land on the dashboard, not the login form.
+  await signOut(page);
+  await signIn(page, SEEDED_STUDENTS[0]!.email, SEEDED_STUDENTS[0]!.password);
+  await page.goto(`/en${projectSessionUrl}`);
+  await page.locator('#text').fill('Which KPI tells you the launch worked in the first month?');
+  await page.locator('#category').selectOption('clarification');
+  await page.getByRole('button', { name: 'Send question' }).click();
+  await expect(page.getByText('2 questions', { exact: true })).toBeVisible();
+});
+
+test('the presenting group is not asked to question itself, project or not', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  const response = await page.request.post(`/api${projectSessionUrl}/questions`, {
+    data: {
+      action: 'ask',
+      category: 'clarification',
+      text: 'A question the presenting group asked itself.',
+    },
+  });
+  expect(response.status()).toBe(422);
+});
+
+test('the board names the students who still owe a question', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page
+    .getByTestId('project-manager')
+    .getByRole('row')
+    .filter({ hasText: 'Group 2' })
+    .getByRole('link', { name: 'Questions' })
+    .click();
+  await page.waitForURL(/\/questions$/);
+
+  // Five students in the class, one of them presenting: four owe a question
+  // and two have asked.
+  const tally = page.getByTestId('asker-tally');
+  await expect(tally).toContainText('2 of 4 students have asked a question.');
+  await expect(tally).toContainText('Still to ask:');
+  await expect(tally).toContainText(SEEDED_STUDENTS[1]!.fullName);
+  await expect(tally).toContainText(SEEDED_STUDENTS[2]!.fullName);
+  // The two who asked are not on the list of those who have not.
+  await expect(tally).not.toContainText(STUDENT.fullName);
+  // The presenter is left out altogether: they answer questions, they do not
+  // owe one.
+  await expect(tally).not.toContainText(AUDIENCE.fullName);
+
+  // Both questions, with who asked them - staff see the names whatever the
+  // class sees.
+  await expect(page.getByText('How does the pricing hold up')).toBeVisible();
+  await expect(page.getByText('Which KPI tells you the launch worked')).toBeVisible();
+  await expect(page.getByText(SEEDED_STUDENTS[0]!.fullName).first()).toBeVisible();
+
+  // The model's two offers are here and say why they cannot run, rather than
+  // not existing: no model is configured on this deployment.
+  await expect(page.getByText('No AI model is configured')).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: 'Ask the model to group the questions' }),
+  ).toHaveCount(0);
+});
+
+test('a student cannot ask the model to group the class\u2019s questions', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+
+  // Answering and grouping a wall of questions is the lecturer's, and the
+  // request is refused rather than the button merely being absent.
+  const response = await page.request.post(`/api${projectSessionUrl}/questions-ai`, {
+    data: { action: 'cluster' },
+  });
+  expect(response.status()).toBe(403);
 });
 
 test('the tutor is offered to students and the suggester to staff', async ({ page }) => {

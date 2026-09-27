@@ -16,6 +16,8 @@ import {
   listSubmissions,
   getClassProject,
   getLecturerAssessment,
+  findSessionForAssignment,
+  listProjectVolunteers,
   projectDeliverables,
   projectTarget,
   progressOfAssignments,
@@ -103,20 +105,25 @@ export default async function ClassDetailPage({
   // stored per group, exactly as they are for a case study.
   const project = await getClassProject(classId);
   const projectItems = project ? await projectDeliverables(project) : [];
+  const volunteers = project ? await listProjectVolunteers(classId) : [];
   const projectRows: ProjectRow[] = project
     ? await Promise.all(
         groups.map(async (group) => {
           const target = await projectTarget(classId, group.id);
-          const [current, assessment] = target
+          const [current, assessment, session] = target
             ? await Promise.all([
                 listSubmissions(target.id).then(currentVersions),
                 getLecturerAssessment(target.id),
+                findSessionForAssignment(target.id),
               ])
-            : [[], null];
+            : [[], null, null];
           return {
             groupId: group.id,
             groupName: group.groupName,
             marked: assessment !== null,
+            slot: volunteers.find((row) => row.groupId === group.id)?.slot ?? null,
+            sessionId: session?.id ?? null,
+            targetId: target?.id ?? '',
             handedIn: Object.fromEntries(
               current.map((submission) => [
                 submission.deliverableId,
@@ -233,6 +240,8 @@ export default async function ClassDetailPage({
             deadline={project?.deadline ?? null}
             deliverables={projectItems}
             rows={projectRows}
+            slots={project?.presentationSlots ?? 0}
+            volunteerCount={volunteers.length}
           />
         </div>
       </Card>

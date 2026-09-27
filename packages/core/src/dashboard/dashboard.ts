@@ -42,7 +42,9 @@ export interface DashboardSession {
   classId: string;
   className: string;
   groupName: string;
+  /** Empty for the class group project, which has no case to name. */
   caseTitle: string;
+  kind: 'case_study' | 'group_project';
 }
 
 export interface Dashboard {
@@ -99,8 +101,13 @@ async function classesOfStudent(uid: string): Promise<ClassContext[]> {
 }
 
 /** Titles are read once per class rather than once per assignment. */
-async function caseTitles(caseIds: readonly string[]): Promise<Map<string, string>> {
-  const unique = [...new Set(caseIds)];
+async function caseTitles(
+  caseIds: readonly (string | undefined)[],
+): Promise<Map<string, string>> {
+  // A class group project session carries no case id, and asking Firestore for
+  // a document called `undefined` throws rather than coming back empty - which
+  // took down the whole dashboard for everybody in the class.
+  const unique = [...new Set(caseIds.filter((id): id is string => Boolean(id)))];
   if (unique.length === 0) return new Map();
 
   const db = getDb();
@@ -207,7 +214,7 @@ export async function dashboardFor(user: SessionUser, now = Date.now()): Promise
     // otherwise be told a presentation is running with no idea of what.
     const titles = await caseTitles([
       ...mine.map((assignment) => assignment.caseStudyId),
-      ...sessions.docs.map((doc) => doc.get('caseStudyId') as string),
+      ...sessions.docs.map((doc) => doc.get('caseStudyId') as string | undefined),
     ]);
 
     for (const session of sessions.docs) {
@@ -217,6 +224,10 @@ export async function dashboardFor(user: SessionUser, now = Date.now()): Promise
         className: context.className,
         groupName: groups.get(session.get('groupId') as string) ?? '',
         caseTitle: titles.get(session.get('caseStudyId') as string) ?? '',
+        // The project room has no case behind it, so the reader is told what
+        // is being presented instead of being handed a blank link.
+        kind:
+          (session.get('kind') as string) === 'group_project' ? 'group_project' : 'case_study',
       });
     }
 

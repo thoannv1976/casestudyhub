@@ -196,7 +196,14 @@ export const presentationSessionSchema = z.object({
   classId: z.string().min(1),
   assignmentId: z.string().min(1),
   groupId: z.string().min(1),
-  caseStudyId: z.string().min(1),
+  /**
+   * Which piece of work is being presented. Defaulted, so sessions recorded
+   * before the class group project could be presented still read as what they
+   * were.
+   */
+  kind: z.enum(['case_study', 'group_project']).default('case_study'),
+  /** A case study is presented against a case; the group project is not. */
+  caseStudyId: z.string().min(1).optional(),
   status: sessionStatusSchema,
   /** Which of the six roles is speaking now, if any. */
   currentRoleId: z.string().nullable().default(null),

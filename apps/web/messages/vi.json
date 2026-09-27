@@ -320,7 +320,16 @@
     "groupNameInvalid": "Tên nhóm cần từ 1 đến 120 ký tự.",
     "groupNameTaken": "Lớp này đã có nhóm mang tên đó.",
     "apiKeyRequired": "Hãy nhập API key, hoặc bấm \"Xóa khóa đang lưu\" nếu muốn bỏ khóa.",
-    "projectNotSet": "Lớp này chưa đặt bài tập lớn."
+    "projectNotSet": "Lớp này chưa đặt bài tập lớn.",
+    "slotsInvalid": "Số suất thuyết trình phải từ 0 đến 20.",
+    "slotsBelowVolunteers": "Không hạ được số suất xuống dưới số nhóm đã xung phong.",
+    "alreadyVolunteered": "Nhóm bạn đã xung phong rồi.",
+    "presentationSlotsFull": "Đã đủ nhóm thuyết trình.",
+    "volunteeringClosed": "Đã hết hạn đăng ký thuyết trình.",
+    "volunteeringNotOpen": "Giảng viên chưa mở đăng ký thuyết trình.",
+    "notVolunteered": "Nhóm này chưa xung phong thuyết trình.",
+    "onlyGroupMembersVolunteer": "Chỉ thành viên trong nhóm mới xung phong được cho nhóm.",
+    "tooFewQuestionsToCluster": "Cần ít nhất 3 câu hỏi mới gom theo chủ đề được."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -1140,7 +1149,21 @@
     "late": "nộp muộn",
     "grade": "Chấm điểm",
     "marked": "Đã chấm",
-    "unmarked": "Chưa chấm"
+    "unmarked": "Chưa chấm",
+    "slotsLabel": "Số nhóm được thuyết trình",
+    "slotsHint": "Đặt 0 để chưa mở đăng ký. Không hạ được xuống dưới số nhóm đã xung phong.",
+    "volunteerDeadlineLabel": "Hạn đăng ký (không bắt buộc)",
+    "volunteerDeadlineHint": "Để trống thì đăng ký mở tới khi đủ suất.",
+    "saveSlots": "Lưu số suất",
+    "slotsSaved": "Đã lưu số suất thuyết trình.",
+    "volunteerCount": "Đã có {taken}/{slots} nhóm xung phong.",
+    "volunteerWithdrawn": "Đã rút nhóm khỏi danh sách thuyết trình.",
+    "presenting": "Thuyết trình",
+    "notVolunteered": "Chưa xung phong",
+    "slotNumber": "Thứ {slot}",
+    "startSession": "Mở buổi",
+    "withdraw": "Rút",
+    "openQuestions": "Câu hỏi"
   },
   "overview": {
     "title": "Bảng tổng hợp",
@@ -1178,5 +1201,37 @@
       "draft": "Đang nháp",
       "published": "Đã công bố"
     }
+  },
+  "volunteer": {
+    "title": "Xung phong thuyết trình bài tập lớn",
+    "hint": "Nhóm nào xung phong trước được trước. Xung phong rồi thì giảng viên mở buổi cho nhóm, và cả lớp đặt câu hỏi cho nhóm trong buổi đó.",
+    "slotsLeft": "Còn {left} suất trên {slots}.",
+    "volunteer": "Nhóm tôi xung phong",
+    "yourGroupIsPresenting": "Nhóm bạn đã xung phong, thuyết trình thứ {slot}.",
+    "closed": {
+      "notOpened": "Giảng viên chưa mở đăng ký.",
+      "full": "Đã đủ nhóm.",
+      "deadline": "Đã hết hạn đăng ký."
+    }
+  },
+  "questionBoard": {
+    "title": "Câu hỏi của lớp",
+    "askersTitle": "Ai đã đặt câu hỏi",
+    "askersCount": "{asked}/{expected} sinh viên đã đặt câu hỏi.",
+    "everyoneAsked": "Cả lớp đã đặt câu hỏi.",
+    "stillOwing": "Chưa đặt câu hỏi:",
+    "cluster": "Nhờ AI gom câu hỏi theo chủ đề",
+    "answerPending": "Nhờ AI trả lời các câu còn treo",
+    "clustered": "Đã gom câu hỏi theo chủ đề.",
+    "clusteredBy": "Do {model} gom, lúc {when}. Bấm lại để gom lại.",
+    "answered": "AI đã trả lời {count} câu, trong đó {ungrounded} câu tài liệu không nói.",
+    "unclustered": "{count} câu mô hình không xếp vào chủ đề nào — vẫn nằm trong danh sách dưới.",
+    "allTitle": "Toàn bộ câu hỏi",
+    "none": "Chưa có câu hỏi nào.",
+    "upvotes": "{count} lượt bình chọn",
+    "answeredAloud": "Đã trả lời trực tiếp",
+    "answeredByModel": "Trả lời bởi {model}",
+    "answeredByStudent": "Trả lời bởi {name}",
+    "notInSources": "tài liệu của nhóm không nói điều này"
   }
 }

@@ -5,7 +5,9 @@ import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { AppError } from '../errors';
 import { getCase, readAttachment } from '../cases/cases';
-import { listCaseQuestions } from '../questions/questions';
+import { listCaseQuestions, listSessionQuestions } from '../questions/questions';
+import { getSession } from '../sessions/sessions';
+import { gatherEvaluationSources } from './evaluation';
 import { getAiProvider } from './gateway';
 import type { SessionUser } from '../auth/types';
 import type { AiFilePart } from './provider';
@@ -100,13 +102,26 @@ export function questionsAwaitingAnswer(questions: readonly ClassQuestion[]): Cl
   return questions.filter((question) => question.status !== 'answered' && !question.answerText);
 }
 
-export async function answerQuestionBank(
+/**
+ * The writing half, shared by the two things worth answering: a case study's
+ * whole bank, and one presentation's questions.
+ *
+ * Kept as one implementation because the part that can go wrong - matching an
+ * answer back to the question it was for, never overwriting what a student said
+ * aloud, committing a batch that half failed - is the same either way.
+ */
+async function answerAll(
   actor: SessionUser,
-  caseStudyId: string,
-  options: { limit?: number } = {},
+  input: {
+    all: readonly ClassQuestion[];
+    files: AiFilePart[];
+    limit?: number;
+    auditTarget: string;
+    classId?: string;
+  },
 ): Promise<AnswerBankResult> {
-  const all = await listCaseQuestions(caseStudyId);
-  const pending = questionsAwaitingAnswer(all).slice(0, options.limit ?? all.length);
+  const all = input.all;
+  const pending = questionsAwaitingAnswer(all).slice(0, input.limit ?? all.length);
 
   if (pending.length === 0) {
     return {
@@ -120,7 +135,7 @@ export async function answerQuestionBank(
     };
   }
 
-  const files = await caseMaterial(caseStudyId);
+  const files = input.files;
   if (files.length === 0) throw new AppError('POLICY_VIOLATION', 'errors.nothingToEvaluate');
 
   const provider = await getAiProvider();
@@ -186,7 +201,8 @@ export async function answerQuestionBank(
     action: 'ai.answers_generated',
     actorUid: actor.uid,
     actorRole: actor.role,
-    target: `${COLLECTIONS.caseStudies}/${caseStudyId}`,
+    target: input.auditTarget,
+    ...(input.classId ? { classId: input.classId } : {}),
     after: { answered, ungrounded, promptTokens, outputTokens },
   });
 
@@ -199,4 +215,45 @@ export async function answerQuestionBank(
     promptTokens,
     outputTokens,
   };
+}
+
+/** Everything a class has ever asked about one case study. */
+export async function answerQuestionBank(
+  actor: SessionUser,
+  caseStudyId: string,
+  options: { limit?: number } = {},
+): Promise<AnswerBankResult> {
+  return answerAll(actor, {
+    all: await listCaseQuestions(caseStudyId),
+    files: await caseMaterial(caseStudyId),
+    limit: options.limit,
+    auditTarget: `${COLLECTIONS.caseStudies}/${caseStudyId}`,
+  });
+}
+
+/**
+ * The questions of one presentation, answered from what that group handed in.
+ *
+ * This is the class group project's version of the bank. A project belongs to
+ * one group, so there is nothing for a later cohort to inherit and nothing to
+ * answer it from except the group's own deck and report - which is exactly what
+ * `gatherEvaluationSources` collects for the marking screen.
+ */
+export async function answerSessionQuestions(
+  actor: SessionUser,
+  sessionId: string,
+  options: { limit?: number } = {},
+): Promise<AnswerBankResult> {
+  const session = await getSession(sessionId);
+  if (!session) throw new AppError('NOT_FOUND', 'errors.sessionNotFound');
+
+  const sources = await gatherEvaluationSources(session.assignmentId);
+
+  return answerAll(actor, {
+    all: await listSessionQuestions(sessionId),
+    files: sources.files,
+    limit: options.limit,
+    auditTarget: `${COLLECTIONS.presentationSessions}/${sessionId}`,
+    classId: session.classId,
+  });
 }

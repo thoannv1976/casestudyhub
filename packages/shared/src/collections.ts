@@ -25,10 +25,14 @@ export const COLLECTIONS = {
   assignments: 'assignments',
   /** One group project per class, so the class id is the document id. */
   classProjects: 'classProjects',
+  /** Groups that put their hand up to present the class project. */
+  projectVolunteers: 'projectVolunteers',
   submissions: 'submissions',
   presentationSessions: 'presentationSessions',
   questions: 'questions',
   questionVotes: 'questionVotes',
+  /** The model's grouping of one presentation's questions into themes. */
+  questionClusters: 'questionClusters',
   questionResponses: 'questionResponses',
   peerReviews: 'peerReviews',
   aiAssessments: 'aiAssessments',

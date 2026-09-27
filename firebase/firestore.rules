@@ -146,6 +146,19 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Who volunteered to present the project. Written inside a transaction that
+    // counts the places left, so a client that could write here could take a
+    // place that does not exist.
+    match /projectVolunteers/{volunteerId} {
+      allow read, write: if false;
+    }
+
+    // The model's grouping of a question wall into themes. Advisory, and read
+    // by staff through the server.
+    match /questionClusters/{sessionId} {
+      allow read, write: if false;
+    }
+
     match /submissions/{submissionId} {
       // A group's work is private to that group and the staff marking it.
       // Reading is done server-side, where membership can be checked; the

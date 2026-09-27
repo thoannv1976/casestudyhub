@@ -29,6 +29,7 @@ export * from './ai/openai';
 export * from './ai/gateway';
 export * from './ai/evaluation';
 export * from './ai/answers';
+export * from './ai/question-clusters';
 export * from './ai/tutor';
 export * from './dashboard/dashboard';
 export * from './dashboard/class-overview';

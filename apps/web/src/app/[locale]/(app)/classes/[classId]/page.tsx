@@ -17,6 +17,7 @@ import {
   listSubmissions,
   policyOfAssignment,
   projectTarget,
+  volunteering,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -25,6 +26,7 @@ import { CasePicker } from './case-picker';
 import { Alert } from '@/components/ui/form';
 import { GroupPicker } from './group-picker';
 import { GroupWorkspace } from './group-workspace';
+import { VolunteerCard } from './volunteer-card';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +55,7 @@ export default async function StudentClassPage({
   const tSession = await getTranslations('session');
   const tGrading = await getTranslations('grading');
   const tProject = await getTranslations('project');
+  const tVolunteer = await getTranslations('volunteer');
   const tError = await getTranslations('errors');
 
   const details = await getClassById(classId);
@@ -125,6 +128,12 @@ export default async function StudentClassPage({
   // hands the same one in, in the final week. It appears as soon as the
   // lecturer has set a deadline, whether or not the group has a case yet.
   const project = membership ? await projectTarget(classId, membership.groupId) : null;
+
+  // Volunteering to present is open to a group whether or not it has handed
+  // anything in yet. The window is decided on the server, so every student in
+  // the class sees the same answer whatever their device clock says.
+  const floor = await volunteering(classId);
+  const ownVolunteer = floor.volunteers.find((row) => row.groupId === membership?.groupId) ?? null;
   const projectSubmissions = project ? await listSubmissions(project.id) : [];
   const projectOverdue = project ? lateAtServerTime(project) : false;
 
@@ -189,6 +198,24 @@ export default async function StudentClassPage({
           </div>
         </Card>
       ))}
+
+      {floor.project ? (
+        <Card>
+          <CardTitle>{tVolunteer('title')}</CardTitle>
+          <div className="mt-4">
+            <VolunteerCard
+              classId={classId}
+              slots={floor.project.presentationSlots}
+              taken={floor.volunteers.length}
+              ownGroupVolunteered={ownVolunteer !== null}
+              ownSlot={ownVolunteer?.slot ?? null}
+              canVolunteer={floor.open && user.role === 'student' && Boolean(membership?.groupId)}
+              closedBecause={floor.closedBecause}
+              volunteers={floor.volunteers.map((row) => groupNameOf(row.groupId))}
+            />
+          </div>
+        </Card>
+      ) : null}
 
       {project ? (
         <Card>

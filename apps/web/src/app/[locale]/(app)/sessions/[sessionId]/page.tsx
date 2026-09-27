@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
-  CLASS_VISIBLE_DELIVERABLE_ID,
+  CLASS_VISIBLE_DELIVERABLE_IDS,
   assertCanViewClass,
   currentVersions,
   findMembership,
@@ -20,6 +20,7 @@ import {
   qaCompletion,
   policyOfAssignment,
   policyOfClass,
+  projectTargetOf,
   votesOf,
 } from '@casestudyhub/core';
 import { redactForViewer, roleKeyOf, summarisePeerReviews } from '@casestudyhub/shared';
@@ -38,7 +39,7 @@ export async function generateMetadata({
   const { sessionId } = await params;
   const session = await getSession(sessionId);
   if (!session) return { title: 'Session' };
-  const caseStudy = await getCase(session.caseStudyId);
+  const caseStudy = session.caseStudyId ? await getCase(session.caseStudyId) : null;
   return { title: caseStudy?.title ?? 'Session' };
 }
 
@@ -65,6 +66,7 @@ export default async function SessionPage({
   const tRubric = await getTranslations('rubric');
   const tRoles = await getTranslations('roles');
   const tError = await getTranslations('errors');
+  const tProject = await getTranslations('project');
 
   const session = await getSession(sessionId);
   if (!session) notFound();
@@ -81,7 +83,7 @@ export default async function SessionPage({
     await Promise.all([
       getClassById(session.classId),
       getAssignment(session.assignmentId),
-      getCase(session.caseStudyId),
+      session.caseStudyId ? getCase(session.caseStudyId) : Promise.resolve(null),
       listGroups(session.classId),
       listMembers(session.classId),
       findMembership(session.classId, user.uid),
@@ -91,20 +93,27 @@ export default async function SessionPage({
 
   // Everything in the room reads from one framework: the clock's limits, the
   // rubric the class scores against, the Q&A checklist. It is the version the
-  // assignment froze, so opening an old session still shows its own rules.
+  // work froze, so opening an old session still shows its own rules - which
+  // for the class group project is the version recorded on the project, not
+  // whatever the class runs under today.
+  const project = assignment ? null : await projectTargetOf(session.assignmentId);
   const policy = assignment
     ? await policyOfAssignment(assignment)
-    : await policyOfClass(session.classId);
+    : project
+      ? await policyOfAssignment(project)
+      : await policyOfClass(session.classId);
 
   const group = groups.find((candidate) => candidate.id === session.groupId);
   const presenters = members.filter((member) => member.groupId === session.groupId);
   const isPresenter = membership?.groupId === session.groupId;
 
-  // The slide deck is the one thing the rest of the class may open, and only
-  // once the session has started (see `classMayViewSubmission`).
-  const submissions = assignment ? currentVersions(await listSubmissions(assignment.id)) : [];
+  // The deck is the one thing the rest of the class may open, and only once
+  // the session has started (see `classMayViewSubmission`). Read against the
+  // session's own target rather than an assignment: the class group project
+  // has no assignment row, and its pitch deck is what the room shows.
+  const submissions = currentVersions(await listSubmissions(session.assignmentId));
   const slides = submissions.find(
-    (submission) => submission.deliverableId === CLASS_VISIBLE_DELIVERABLE_ID,
+    (submission) => submission.deliverableId === CLASS_VISIBLE_DELIVERABLE_IDS[session.kind],
   );
 
   // A student reads back only their own score; the distribution is the
@@ -246,7 +255,9 @@ export default async function SessionPage({
         ownUid={user.uid}
         isStaff={isStaff}
         isStudent={user.role === 'student'}
-        title={caseStudy?.title ?? session.caseStudyId}
+        // A project has no case to name, so the room is named after what is
+        // being presented.
+        title={caseStudy?.title ?? tProject('subject')}
         subtitle={`${group?.groupName ?? session.groupId}${details ? ` · ${details.className}` : ''}`}
         initial={{
           session,

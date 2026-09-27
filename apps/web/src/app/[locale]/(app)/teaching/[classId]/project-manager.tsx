@@ -20,6 +20,12 @@ export interface ProjectRow {
   groupName: string;
   /** Whether the lecturer has marked this group's project yet. */
   marked: boolean;
+  /** Which place in the queue this group volunteered for, if it did. */
+  slot: number | null;
+  /** The open session for this group's presentation, if there is one. */
+  sessionId: string | null;
+  /** What submissions, marks and the session are all recorded against. */
+  targetId: string;
   /** Deliverable id → what the group has handed in, if anything. */
   handedIn: Record<string, { fileName: string; isLate: boolean; versionNumber: number }>;
 }
@@ -37,12 +43,17 @@ export function ProjectManager({
   deadline,
   deliverables,
   rows,
+  slots,
+  volunteerCount,
 }: {
   classId: string;
   /** Null until the lecturer has set one; the project does not exist before. */
   deadline: string | null;
   deliverables: Deliverable[];
   rows: ProjectRow[];
+  /** How many groups may present. Zero means the floor is not open yet. */
+  slots: number;
+  volunteerCount: number;
 }) {
   const t = useTranslations('project');
   const tDeliverables = useTranslations('deliverables');
@@ -52,6 +63,82 @@ export function ProjectManager({
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  /** How many groups may present, and by when they must put a hand up. */
+  async function saveSlots(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    setErrorKey(null);
+    setNotice(null);
+    try {
+      const deadlineValue = String(form.get('volunteerDeadline') ?? '');
+      const response = await fetch(`/api/classes/${classId}/project`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          slots: Number(form.get('slots')),
+          ...(deadlineValue ? { volunteerDeadline: new Date(deadlineValue).toISOString() } : {}),
+        }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: { messageKey?: string };
+        } | null;
+        setErrorKey(payload?.error?.messageKey ?? 'errors.unexpected');
+        return;
+      }
+      setNotice(t('slotsSaved'));
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  /** Opens the room. The same endpoint a case study presentation uses. */
+  async function startSession(targetId: string) {
+    setBusy(true);
+    setErrorKey(null);
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/assignments/${targetId}/session`, { method: 'POST' });
+      const payload = (await response.json().catch(() => null)) as {
+        session?: { id: string };
+        error?: { messageKey?: string };
+      } | null;
+      if (!response.ok || !payload?.session) {
+        setErrorKey(payload?.error?.messageKey ?? 'errors.unexpected');
+        return;
+      }
+      router.push(`/sessions/${payload.session.id}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function withdraw(groupId: string) {
+    setBusy(true);
+    setErrorKey(null);
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/classes/${classId}/project`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'withdraw', groupId }),
+      });
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          error?: { messageKey?: string };
+        } | null;
+        setErrorKey(payload?.error?.messageKey ?? 'errors.unexpected');
+        return;
+      }
+      setNotice(t('volunteerWithdrawn'));
+      router.refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -110,6 +197,37 @@ export function ProjectManager({
         </Button>
       </form>
 
+      {deadline === null ? null : (
+        <form onSubmit={saveSlots} className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field label={t('slotsLabel')} htmlFor="slots" hint={t('slotsHint')}>
+              <Input
+                id="slots"
+                name="slots"
+                type="number"
+                min={0}
+                max={20}
+                defaultValue={slots}
+                required
+              />
+            </Field>
+            <Field
+              label={t('volunteerDeadlineLabel')}
+              htmlFor="volunteerDeadline"
+              hint={t('volunteerDeadlineHint')}
+            >
+              <Input id="volunteerDeadline" name="volunteerDeadline" type="datetime-local" />
+            </Field>
+          </div>
+          <Button type="submit" disabled={busy}>
+            {t('saveSlots')}
+          </Button>
+          <p className="text-muted text-sm">
+            {t('volunteerCount', { taken: volunteerCount, slots })}
+          </p>
+        </form>
+      )}
+
       {deadline === null ? (
         <p className="text-muted text-sm">{t('notSetYet')}</p>
       ) : rows.length === 0 ? (
@@ -127,6 +245,9 @@ export function ProjectManager({
                     {name(deliverable)}
                   </th>
                 ))}
+                <th scope="col" className="px-4 py-3 font-semibold">
+                  {t('presenting')}
+                </th>
                 <th scope="col" className="px-4 py-3 font-semibold">
                   <span className="sr-only">{t('grade')}</span>
                 </th>
@@ -155,6 +276,42 @@ export function ProjectManager({
                       </td>
                     );
                   })}
+                  <td className="px-4 py-3">
+                    {row.slot === null ? (
+                      <span className="text-muted">{t('notVolunteered')}</span>
+                    ) : (
+                      <span className="flex flex-wrap items-center gap-2">
+                        <span>{t('slotNumber', { slot: row.slot })}</span>
+                        {row.sessionId ? (
+                          <Link
+                            href={`/teaching/${classId}/project/${row.groupId}/questions`}
+                            className="text-brand-600 dark:text-brand-300 underline"
+                          >
+                            {t('openQuestions')}
+                          </Link>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void startSession(row.targetId)}
+                              className="text-brand-600 dark:text-brand-300 text-xs underline disabled:opacity-40"
+                            >
+                              {t('startSession')}
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => void withdraw(row.groupId)}
+                              className="text-muted text-xs underline hover:text-red-600 disabled:opacity-40"
+                            >
+                              {t('withdraw')}
+                            </button>
+                          </>
+                        )}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-right">
                     <Link
                       href={`/teaching/${classId}/project/${row.groupId}`}

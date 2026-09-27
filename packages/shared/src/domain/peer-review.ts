@@ -15,7 +15,8 @@ export const peerReviewSchema = z.object({
   id: z.string().min(1),
   sessionId: z.string().min(1),
   classId: z.string().min(1),
-  caseStudyId: z.string().min(1),
+  /** Absent when the class scored a group project rather than a case study. */
+  caseStudyId: z.string().min(1).optional(),
   /** The group being scored. */
   groupId: z.string().min(1),
   reviewerUid: z.string().min(1),

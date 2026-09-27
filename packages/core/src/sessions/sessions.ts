@@ -7,9 +7,10 @@ import {
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
-import { policyOfAssignment } from '../policy/policy-store';
+import { getPolicy, policyOfAssignment } from '../policy/policy-store';
 import { AppError } from '../errors';
 import { getAssignment } from '../assignments/assignments';
+import { projectTargetOf } from '../projects/projects';
 import type { SessionUser } from '../auth/types';
 
 /**
@@ -56,16 +57,30 @@ export async function findSessionForAssignment(
 }
 
 /**
- * Opens the room for a group's presentation. One session per assignment: a
- * second one would split the questions and the peer scores of one presentation
- * across two records.
+ * Opens the room for a group's presentation - of a case study, or of the class
+ * group project. One session per piece of work: a second one would split the
+ * questions and the peer scores of one presentation across two records.
+ *
+ * The room itself does not care which it is. The clock, the question wall, the
+ * upvotes and the peer scores are the same machinery, which is why the project
+ * gets them for the price of letting a session exist without a case.
  */
 export async function startSession(
   actor: SessionUser,
   assignmentId: string,
 ): Promise<PresentationSession> {
-  const assignment = await getAssignment(assignmentId);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+  const project = await projectTargetOf(assignmentId);
+  const assignment = project ? null : await getAssignment(assignmentId);
+  if (!project && !assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
+
+  const work = project
+    ? { classId: project.classId, groupId: project.groupId, kind: 'group_project' as const }
+    : {
+        classId: assignment!.classId,
+        groupId: assignment!.groupId,
+        kind: 'case_study' as const,
+        caseStudyId: assignment!.caseStudyId,
+      };
 
   const existing = await findSessionForAssignment(assignmentId);
   if (existing) {
@@ -77,14 +92,18 @@ export async function startSession(
 
   const db = getDb();
   const ref = db.collection(COLLECTIONS.presentationSessions).doc();
-  const firstRole = (await policyOfAssignment(assignment)).roles[0]?.id ?? 'R1';
+  const policy = project
+    ? await getPolicy(project.policyId, project.policyVersion)
+    : await policyOfAssignment(assignment!);
+  const firstRole = policy.roles[0]?.id ?? 'R1';
 
   const session = {
     id: ref.id,
-    classId: assignment.classId,
+    classId: work.classId,
     assignmentId,
-    groupId: assignment.groupId,
-    caseStudyId: assignment.caseStudyId,
+    groupId: work.groupId,
+    kind: work.kind,
+    ...('caseStudyId' in work && work.caseStudyId ? { caseStudyId: work.caseStudyId } : {}),
     status: 'live' as const,
     currentRoleId: firstRole,
     runningSinceMs: Timestamp.now().toMillis(),
@@ -105,8 +124,8 @@ export async function startSession(
     actorUid: actor.uid,
     actorRole: actor.role,
     target: `${COLLECTIONS.presentationSessions}/${ref.id}`,
-    classId: assignment.classId,
-    after: { groupId: assignment.groupId },
+    classId: work.classId,
+    after: { groupId: work.groupId, kind: work.kind },
   });
 
   return session;
@@ -242,14 +261,23 @@ export async function setWindow(
  */
 export const CLASS_VISIBLE_DELIVERABLE_ID = 'slides-pdf';
 
+/** The one document the class may open, by what is being presented. */
+export const CLASS_VISIBLE_DELIVERABLE_IDS: Record<string, string> = {
+  case_study: CLASS_VISIBLE_DELIVERABLE_ID,
+  group_project: 'project-pitch-deck',
+};
+
 export async function classMayViewSubmission(submission: {
   assignmentId: string;
   deliverableId: string;
 }): Promise<{ allowed: boolean; classId?: string }> {
-  if (submission.deliverableId !== CLASS_VISIBLE_DELIVERABLE_ID) return { allowed: false };
-
   const session = await findSessionForAssignment(submission.assignmentId);
   if (!session) return { allowed: false };
+  // The deck of whatever is being presented - the slides of a case study, the
+  // pitch deck of the project. One document, and only that one.
+  if (submission.deliverableId !== CLASS_VISIBLE_DELIVERABLE_IDS[session.kind]) {
+    return { allowed: false };
+  }
   if (session.status === 'scheduled') return { allowed: false };
 
   return { allowed: true, classId: session.classId };

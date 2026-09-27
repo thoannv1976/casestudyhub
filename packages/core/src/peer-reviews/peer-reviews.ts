@@ -65,7 +65,7 @@ export async function submitPeerReview(
     id: peerReviewId(sessionId, reviewer.uid),
     sessionId,
     classId: session.classId,
-    caseStudyId: session.caseStudyId,
+    ...(session.caseStudyId ? { caseStudyId: session.caseStudyId } : {}),
     groupId: session.groupId,
     reviewerUid: reviewer.uid,
     reviewerName: profile.fullName,

@@ -7,6 +7,7 @@ const min = DEFAULT_PRESENTATION_POLICY.qa.minClassQuestions;
 function question(overrides: Partial<ClassQuestion> = {}): ClassQuestion {
   return {
     id: 'PS1__x',
+    kind: 'case_study' as const,
     caseStudyId: 'CS1',
     sessionId: 'PS1',
     classId: 'C1',

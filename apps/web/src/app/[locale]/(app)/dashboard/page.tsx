@@ -48,6 +48,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const user = await requireSessionUser();
   const t = await getTranslations('dashboard');
   const tProgress = await getTranslations('progress');
+  const tProject = await getTranslations('project');
 
   const [profile, board] = await Promise.all([getUserProfile(user.uid), dashboardFor(user)]);
   const isStaff = user.role === 'admin' || user.role === 'lecturer';
@@ -71,7 +72,9 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   href={`/sessions/${session.sessionId}`}
                   className="text-brand-600 dark:text-brand-300 font-medium underline"
                 >
-                  {session.caseTitle}
+                  {session.kind === 'group_project'
+                    ? tProject('subject')
+                    : session.caseTitle}
                 </Link>
                 <span className="text-muted ml-2">
                   {session.groupName} · {session.className}

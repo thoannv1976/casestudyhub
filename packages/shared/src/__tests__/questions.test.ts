@@ -13,6 +13,7 @@ import {
 function question(overrides: Partial<ClassQuestion> = {}): ClassQuestion {
   return {
     id: 'PS1__uidB',
+    kind: 'case_study',
     caseStudyId: 'CS1',
     sessionId: 'PS1',
     classId: 'C1',
@@ -98,6 +99,7 @@ describe('the clock', () => {
       classId: 'C1',
       assignmentId: 'A1',
       groupId: 'G1',
+      kind: 'case_study',
       caseStudyId: 'CS1',
       status: 'live',
       currentRoleId: 'R2',

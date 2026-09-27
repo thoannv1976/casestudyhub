@@ -29,8 +29,21 @@ export type QuestionStatus = z.infer<typeof questionStatusSchema>;
 
 export const classQuestionSchema = z.object({
   id: z.string().min(1),
-  /** The key that makes the bank outlive the session. */
-  caseStudyId: z.string().min(1),
+  /**
+   * Which piece of work was being presented when this was asked. Defaulted, so
+   * questions asked before the class group project existed still read as what
+   * they are.
+   */
+  kind: z.enum(['case_study', 'group_project']).default('case_study'),
+  /**
+   * The key that makes the bank outlive the session - a case study accumulates
+   * the questions of every cohort that studies it.
+   *
+   * Absent for the class group project: a project belongs to one group in one
+   * class, so there is no bank for a later cohort to inherit, and its questions
+   * must not leak into a case study's.
+   */
+  caseStudyId: z.string().min(1).optional(),
   sessionId: z.string().min(1),
   classId: z.string().min(1),
   /** The group being asked. */
@@ -122,4 +135,68 @@ export function redactForViewer(
   if (question.askedByUid === viewer.uid) return question;
   if (!question.anonymousToClass) return { ...question, askedByStudentId: 'hidden' };
   return anonymiseForReuse(question);
+}
+
+/**
+ * The model's reading of a question wall, grouped into themes.
+ *
+ * A class of sixty asks sixty questions and half of them are the same question
+ * in different words. Grouping them is what turns a wall into an agenda the
+ * group can answer in ten minutes.
+ *
+ * The theme titles are written by the model, in the language the questions were
+ * asked in, and stored as written. That is deliberate and it is not the thing
+ * the bilingual rule forbids: a title here is *content*, of the same kind as a
+ * student's question or a course learning outcome's name. Every label around it
+ * - the headings, the counts, the buttons - stays a message key.
+ */
+export const questionClusterSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+  questionIds: z.array(z.string().min(1)).min(1),
+});
+export type QuestionCluster = z.infer<typeof questionClusterSchema>;
+
+export const questionClusterSetSchema = z.object({
+  /** One per session, so the session id is the document id. */
+  sessionId: z.string().min(1),
+  classId: z.string().min(1),
+  clusters: z.array(questionClusterSchema).max(10),
+  /** Questions the model did not place anywhere, kept rather than hidden. */
+  unclustered: z.array(z.string().min(1)).default([]),
+  model: z.string().min(1),
+  createdAt: z.string().min(1),
+  requestedByUid: z.string().min(1),
+});
+export type QuestionClusterSet = z.infer<typeof questionClusterSetSchema>;
+
+/**
+ * Brings the model's grouping back inside the questions that actually exist.
+ *
+ * A model asked to group forty questions will now and then return an id it
+ * invented, place one question in two themes, or quietly drop three. None of
+ * that reaches the lecturer's screen: unknown ids are dropped, a question is
+ * kept in the first theme that claims it, and whatever was left out is listed
+ * as left out rather than disappearing.
+ */
+export function reconcileClusters(
+  proposed: readonly { title: string; questionIds: readonly string[] }[],
+  questionIds: readonly string[],
+): { clusters: QuestionCluster[]; unclustered: string[] } {
+  const known = new Set(questionIds);
+  const placed = new Set<string>();
+  const clusters: QuestionCluster[] = [];
+
+  for (const cluster of proposed) {
+    const title = cluster.title.trim().slice(0, 120);
+    const ids = cluster.questionIds.filter((id) => known.has(id) && !placed.has(id));
+    if (title.length === 0 || ids.length === 0) continue;
+
+    for (const id of ids) placed.add(id);
+    clusters.push({ title, questionIds: ids });
+  }
+
+  return {
+    clusters: clusters.slice(0, 10),
+    unclustered: questionIds.filter((id) => !placed.has(id)),
+  };
 }

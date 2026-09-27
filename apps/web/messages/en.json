@@ -320,7 +320,16 @@
     "groupNameInvalid": "A group name needs between 1 and 120 characters.",
     "groupNameTaken": "Another group in this class already has that name.",
     "apiKeyRequired": "Enter an API key, or use \"Delete the stored key\" to remove it.",
-    "projectNotSet": "No group project has been set for this class."
+    "projectNotSet": "No group project has been set for this class.",
+    "slotsInvalid": "The number of presenting places must be between 0 and 20.",
+    "slotsBelowVolunteers": "It cannot go below the number of groups that already volunteered.",
+    "alreadyVolunteered": "Your group has already volunteered.",
+    "presentationSlotsFull": "All presenting places are taken.",
+    "volunteeringClosed": "Volunteering has closed.",
+    "volunteeringNotOpen": "The lecturer has not opened volunteering yet.",
+    "notVolunteered": "This group has not volunteered to present.",
+    "onlyGroupMembersVolunteer": "Only a member of the group may volunteer for it.",
+    "tooFewQuestionsToCluster": "At least three questions are needed before grouping them means anything."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -1140,7 +1149,21 @@
     "late": "late",
     "grade": "Mark",
     "marked": "Marked",
-    "unmarked": "Not marked"
+    "unmarked": "Not marked",
+    "slotsLabel": "Groups that may present",
+    "slotsHint": "Zero keeps volunteering closed. It cannot go below the number of groups that already volunteered.",
+    "volunteerDeadlineLabel": "Volunteering closes (optional)",
+    "volunteerDeadlineHint": "Left empty, volunteering stays open until the places are taken.",
+    "saveSlots": "Save places",
+    "slotsSaved": "Places saved.",
+    "volunteerCount": "{taken} of {slots} places taken.",
+    "volunteerWithdrawn": "Group taken off the presenting list.",
+    "presenting": "Presenting",
+    "notVolunteered": "Not volunteered",
+    "slotNumber": "Number {slot}",
+    "startSession": "Open the room",
+    "withdraw": "Withdraw",
+    "openQuestions": "Questions"
   },
   "overview": {
     "title": "Class overview",
@@ -1178,5 +1201,37 @@
       "draft": "Draft",
       "published": "Published"
     }
+  },
+  "volunteer": {
+    "title": "Volunteer to present the group project",
+    "hint": "First come, first served. Once a group volunteers, the lecturer opens the room for it and the class asks it questions in that session.",
+    "slotsLeft": "{left} of {slots} places left.",
+    "volunteer": "My group volunteers",
+    "yourGroupIsPresenting": "Your group has volunteered, presenting {slot}.",
+    "closed": {
+      "notOpened": "The lecturer has not opened this yet.",
+      "full": "All places are taken.",
+      "deadline": "Volunteering has closed."
+    }
+  },
+  "questionBoard": {
+    "title": "What the class asked",
+    "askersTitle": "Who has asked",
+    "askersCount": "{asked} of {expected} students have asked a question.",
+    "everyoneAsked": "Everybody has asked a question.",
+    "stillOwing": "Still to ask:",
+    "cluster": "Ask the model to group the questions",
+    "answerPending": "Ask the model to answer what is left",
+    "clustered": "Questions grouped into themes.",
+    "clusteredBy": "Grouped by {model} at {when}. Press again to group them afresh.",
+    "answered": "The model answered {count}, of which {ungrounded} are not in the documents.",
+    "unclustered": "{count} questions the model placed in no theme — they are still listed below.",
+    "allTitle": "Every question",
+    "none": "No questions yet.",
+    "upvotes": "{count} upvotes",
+    "answeredAloud": "Answered aloud",
+    "answeredByModel": "Answered by {model}",
+    "answeredByStudent": "Answered by {name}",
+    "notInSources": "not in the group's documents"
   }
 }
