@@ -43,9 +43,15 @@ export type AiCriterionVerdict = z.infer<typeof aiCriterionVerdictSchema>;
 export const aiAssessmentSchema = z.object({
   id: z.string().min(1),
   assignmentId: z.string().min(1),
+  /**
+   * Which piece of work was read. Defaulted, so a reading stored before the
+   * class group project existed still says what it is.
+   */
+  kind: z.enum(['case_study', 'group_project']).default('case_study'),
   classId: z.string().min(1),
   groupId: z.string().min(1),
-  caseStudyId: z.string().min(1),
+  /** A case study is read against its case; the class project has none. */
+  caseStudyId: z.string().min(1).optional(),
   criteria: z.array(aiCriterionVerdictSchema),
   /** Out of the AI-assessable points only, never out of the full rubric. */
   suggestedTotal: z.number().nonnegative(),

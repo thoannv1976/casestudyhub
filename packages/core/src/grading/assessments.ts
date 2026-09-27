@@ -6,21 +6,16 @@ import {
   lecturerAssessmentSchema,
   sumRubricScores,
   type Grade,
-  type GradedWorkKind,
   type IndividualAssessment,
   type LecturerAssessment,
-  type PresentationPolicy,
   type ProjectBonusAward,
-  type Rubric,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { notify } from '../notifications/notifications';
 import { AppError } from '../errors';
-import { getAssignment } from '../assignments/assignments';
+import { gradableTarget } from './target';
 import { getCase } from '../cases/cases';
-import { getPolicy, policyOfAssignment } from '../policy/policy-store';
-import { projectTargetOf } from '../projects/projects';
 import { currentVersions, listSubmissions } from '../submissions/submissions';
 import { listMembers } from '../groups/groups';
 import type { SessionUser } from '../auth/types';
@@ -34,72 +29,6 @@ import type { SessionUser } from '../auth/types';
  * A half-published group would mean some students seeing a mark and others
  * being told to wait, with no way to tell which is which.
  */
-
-/**
- * A piece of work that can be marked, of either kind.
- *
- * A class study assignment and the class group project are marked by the same
- * machinery - one draft, one preview, one transaction that publishes for the
- * whole group or for nobody - but with different instruments. Resolving them
- * to one shape here is what keeps that machinery single. Everything below
- * reads `rubric` and `bonusFor`; none of it branches on the kind except where
- * the two genuinely differ.
- */
-interface GradableTarget {
-  id: string;
-  kind: GradedWorkKind;
-  classId: string;
-  groupId: string;
-  caseStudyId?: string;
-  policy: PresentationPolicy;
-  rubric: Rubric;
-  rubricVersion: string;
-  policyId: string;
-  policyVersion: string;
-  /** Points the award is worth under the frozen framework. Zero for a case study. */
-  bonusPoints: (award: ProjectBonusAward | undefined) => number;
-}
-
-async function gradableTarget(id: string): Promise<GradableTarget> {
-  const project = await projectTargetOf(id);
-  if (project) {
-    const policy = await getPolicy(project.policyId, project.policyVersion);
-    return {
-      id: project.id,
-      kind: 'group_project',
-      classId: project.classId,
-      groupId: project.groupId,
-      policy,
-      rubric: policy.projectRubric,
-      rubricVersion: policy.projectRubric.version,
-      policyId: project.policyId,
-      policyVersion: project.policyVersion,
-      bonusPoints: (award) =>
-        (award?.mvp ? policy.projectBonus.mvpPoints : 0) +
-        (award?.video ? policy.projectBonus.videoPoints : 0),
-    };
-  }
-
-  const assignment = await getAssignment(id);
-  if (!assignment) throw new AppError('NOT_FOUND', 'errors.assignmentNotFound');
-
-  const policy = await policyOfAssignment(assignment);
-  return {
-    id: assignment.id,
-    kind: 'case_study',
-    classId: assignment.classId,
-    groupId: assignment.groupId,
-    caseStudyId: assignment.caseStudyId,
-    policy,
-    rubric: policy.rubric,
-    rubricVersion: assignment.rubricVersion,
-    policyId: assignment.policyId,
-    policyVersion: assignment.policyVersion,
-    // A case study has no bonus. Returning zero rather than refusing keeps the
-    // one pipeline honest: an award sent for a case study simply buys nothing.
-    bonusPoints: () => 0,
-  };
-}
 
 function parse(data: FirebaseFirestore.DocumentData): LecturerAssessment | null {
   const parsed = lecturerAssessmentSchema.safeParse(data);

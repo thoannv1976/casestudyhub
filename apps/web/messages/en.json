@@ -644,7 +644,8 @@
     "lateWarning": "The deadline has passed. You can still hand in, and it will be recorded as late.",
     "externalLink": "leaves this site",
     "submitLink": "Submit link",
-    "linkFor": "Link for {deliverable}"
+    "linkFor": "Link for {deliverable}",
+    "powerPointNote": "The model can only read the words in a .pptx — charts, screenshots and numbers inside a picture are lost. Hand in a PDF as well and it reads the whole thing."
   },
   "session": {
     "boardTitle": "Presentations",
@@ -1139,5 +1140,42 @@
     "grade": "Mark",
     "marked": "Marked",
     "unmarked": "Not marked"
+  },
+  "overview": {
+    "title": "Class overview",
+    "subtitle": "The whole class in one table: one row per piece of work a group owes — a case study or the group project. Who has not handed in, what is unmarked, who has a mark.",
+    "download": "Download CSV",
+    "open": "Open",
+    "lateItems": "{count} late",
+    "gradedStudents": "{count} students",
+    "columns": {
+      "group": "Group",
+      "work": "Work",
+      "deadline": "Deadline",
+      "handedIn": "Handed in",
+      "progress": "Progress",
+      "marking": "Marking",
+      "groupScore": "Group score",
+      "average": "Average",
+      "action": "Open the work"
+    },
+    "kind": {
+      "case_study": "Case study",
+      "group_project": "Group project"
+    },
+    "marking": {
+      "unmarked": "Not marked",
+      "draft": "Draft",
+      "published": "Published"
+    },
+    "totals": {
+      "work": "Pieces of work",
+      "complete": "Nothing missing",
+      "missing": "Something missing",
+      "late": "With something late",
+      "unmarked": "Not marked",
+      "draft": "Draft",
+      "published": "Published"
+    }
   }
 }

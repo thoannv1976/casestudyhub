@@ -644,7 +644,8 @@
     "lateWarning": "Đã quá hạn nộp. Bạn vẫn nộp được, và bài sẽ được ghi nhận là nộp muộn.",
     "externalLink": "dẫn ra ngoài",
     "submitLink": "Nộp link",
-    "linkFor": "Link cho {deliverable}"
+    "linkFor": "Link cho {deliverable}",
+    "powerPointNote": "AI chỉ đọc được phần chữ của file .pptx — mất hình, biểu đồ và số nằm trong ảnh. Nộp thêm bản PDF thì AI đọc được đầy đủ."
   },
   "session": {
     "boardTitle": "Các buổi thuyết trình",
@@ -1139,5 +1140,42 @@
     "grade": "Chấm điểm",
     "marked": "Đã chấm",
     "unmarked": "Chưa chấm"
+  },
+  "overview": {
+    "title": "Bảng tổng hợp",
+    "subtitle": "Cả lớp trong một bảng: mỗi dòng là một việc một nhóm phải làm — case study hoặc bài tập lớn. Còn ai chưa nộp, bài nào chưa chấm, ai đã có điểm.",
+    "download": "Tải CSV",
+    "open": "Mở",
+    "lateItems": "{count} muộn",
+    "gradedStudents": "{count} SV",
+    "columns": {
+      "group": "Nhóm",
+      "work": "Bài",
+      "deadline": "Hạn nộp",
+      "handedIn": "Đã nộp",
+      "progress": "Tiến độ",
+      "marking": "Chấm",
+      "groupScore": "Điểm nhóm",
+      "average": "Điểm TB",
+      "action": "Mở bài"
+    },
+    "kind": {
+      "case_study": "Case study",
+      "group_project": "Bài tập lớn"
+    },
+    "marking": {
+      "unmarked": "Chưa chấm",
+      "draft": "Bản nháp",
+      "published": "Đã công bố"
+    },
+    "totals": {
+      "work": "Việc phải làm",
+      "complete": "Nộp đủ",
+      "missing": "Còn thiếu",
+      "late": "Có bài muộn",
+      "unmarked": "Chưa chấm",
+      "draft": "Đang nháp",
+      "published": "Đã công bố"
+    }
   }
 }

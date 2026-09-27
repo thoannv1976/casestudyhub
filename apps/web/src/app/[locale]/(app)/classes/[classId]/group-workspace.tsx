@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { Deliverable, Submission } from '@casestudyhub/shared';
+import { isPowerPoint, type Deliverable, type Submission } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
@@ -161,6 +161,13 @@ export function GroupWorkspace({
                     ) : null}
                   </h3>
                   <p className="text-muted mt-1 text-xs">{deliverable.formats.join(' / ')}</p>
+                  {/* Said where the choice is made, not afterwards: a .pptx is
+                      stored fine, but only its words can be read back. */}
+                  {isPowerPoint(current?.contentType) ? (
+                    <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+                      {t('powerPointNote')}
+                    </p>
+                  ) : null}
                 </div>
                 {current ? (
                   <Badge tone={current.isLate ? 'neutral' : 'brand'}>

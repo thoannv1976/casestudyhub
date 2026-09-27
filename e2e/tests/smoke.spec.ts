@@ -1584,6 +1584,66 @@ test('the lecturer marks the class group project with its own rubric', async ({ 
   await expect(page.getByText('These grades have been published')).toBeVisible();
 });
 
+test('the class overview shows both pieces of work in one table', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page.getByRole('link', { name: 'Class overview' }).click();
+  await page.waitForURL(/\/overview$/);
+  const classId = page.url().split('/teaching/')[1]?.split('/')[0] ?? '';
+  expect(classId).not.toHaveLength(0);
+
+  const table = page.getByTestId('class-overview');
+  // The case study and the project are separate rows, named as what they are.
+  await expect(table.getByRole('row').filter({ hasText: 'Case study' }).first()).toContainText(
+    'Amazon',
+  );
+  await expect(table.getByRole('row').filter({ hasText: 'Group project' }).first()).toBeVisible();
+
+  // The project mark published a moment ago is here, and so is its bonus.
+  const projectRow = table
+    .getByRole('row')
+    .filter({ hasText: 'Group project' })
+    .filter({ hasText: 'Group 1' });
+  await expect(projectRow).toContainText('Published');
+  await expect(projectRow).toContainText('96');
+
+  await expect(page.getByTestId('overview-totals')).toContainText('Pieces of work');
+
+  // The same rows as a spreadsheet, because the mark that counts is typed into
+  // the university's own system.
+  const csv = await page.request.get(`/api/classes/${classId}/overview?format=csv`);
+  expect(csv.status()).toBe(200);
+  expect(csv.headers()['content-type']).toContain('text/csv');
+  const body = await csv.text();
+  expect(body).toContain('group_project');
+  expect(body).toContain('case_study');
+});
+
+test('a lecturer can ask the model to read the project, once one is configured', async ({
+  page,
+}) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  await page
+    .getByTestId('project-manager')
+    .getByRole('row')
+    .filter({ hasText: 'Group 1' })
+    .getByRole('link')
+    .click();
+  await page.waitForURL(/\/project\/.+/);
+
+  // The card is here and says why it cannot run, rather than not existing: on
+  // this deployment no model is configured, and that is a state, not an error.
+  await expect(page.getByRole('heading', { name: 'What the model read' })).toBeVisible();
+  await expect(page.getByText('No AI model is configured')).toBeVisible();
+});
+
 test('the student sees the project mark beside their case study mark', async ({ page }) => {
   await signIn(page, STUDENT.email, STUDENT.password);
   await page.goto('/en/portfolio');

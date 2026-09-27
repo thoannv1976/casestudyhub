@@ -2,7 +2,9 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
+  aiIsAvailable,
   assertCanManageClass,
+  getAiAssessment,
   getClassProject,
   getLecturerAssessment,
   getPolicy,
@@ -15,6 +17,7 @@ import {
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
+import { AiPanel } from '../../grade/[assignmentId]/ai-panel';
 import { GradeForm } from '../../grade/[assignmentId]/grade-form';
 import { HandedIn } from '../../handed-in';
 
@@ -45,6 +48,7 @@ export default async function ProjectGradePage({
   const user = await requireSessionUser();
   const t = await getTranslations('grading');
   const tProject = await getTranslations('project');
+  const tAi = await getTranslations('ai');
   const tError = await getTranslations('errors');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
@@ -67,13 +71,16 @@ export default async function ProjectGradePage({
   // change what this group is marked against.
   const policy = await getPolicy(project.policyId, project.policyVersion);
 
-  const [groups, members, assessment, isLate, submissions] = await Promise.all([
-    listGroups(classId),
-    listMembers(classId),
-    getLecturerAssessment(target.id),
-    groupSubmittedLate(target.id),
-    listSubmissions(target.id),
-  ]);
+  const [groups, members, assessment, isLate, submissions, aiAvailable, aiAssessment] =
+    await Promise.all([
+      listGroups(classId),
+      listMembers(classId),
+      getLecturerAssessment(target.id),
+      groupSubmittedLate(target.id),
+      listSubmissions(target.id),
+      aiIsAvailable(),
+      getAiAssessment(target.id),
+    ]);
 
   const group = groups.find((candidate) => candidate.id === groupId);
   if (!group || group.classId !== classId) notFound();
@@ -104,6 +111,14 @@ export default async function ProjectGradePage({
         </p>
         <div className="mt-4">
           <HandedIn deliverables={target.deliverables} submissions={submissions} />
+        </div>
+      </Card>
+
+      <Card>
+        <CardTitle>{tAi('title')}</CardTitle>
+        <p className="text-muted mt-2 text-sm">{tAi('advisory')}</p>
+        <div className="mt-4">
+          <AiPanel assignmentId={target.id} available={aiAvailable} initial={aiAssessment} />
         </div>
       </Card>
 

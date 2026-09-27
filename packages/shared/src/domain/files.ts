@@ -42,6 +42,17 @@ export const FORMAT_EXTENSIONS: Readonly<Record<DeliverableFormat, readonly stri
   FORM: [],
 };
 
+/**
+ * Whether a file is a PowerPoint deck.
+ *
+ * Worth a named predicate because two places have to agree about it: the
+ * model reads a deck as the text of each slide and nothing more, and the
+ * submission card tells the group so before they choose which file to hand in.
+ */
+export function isPowerPoint(contentType: string | undefined): boolean {
+  return contentType !== undefined && FORMAT_MIME_TYPES.PPTX.includes(contentType);
+}
+
 export function extensionOf(fileName: string): string {
   const dot = fileName.lastIndexOf('.');
   return dot === -1 ? '' : fileName.slice(dot).toLowerCase();

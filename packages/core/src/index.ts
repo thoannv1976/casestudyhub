@@ -31,6 +31,7 @@ export * from './ai/evaluation';
 export * from './ai/answers';
 export * from './ai/tutor';
 export * from './dashboard/dashboard';
+export * from './dashboard/class-overview';
 export * from './dossier/dossier';
 export * from './ai/diagnostics';
 export * from './settings/settings';

@@ -60,6 +60,7 @@ export default async function ClassDetailPage({
   const tSession = await getTranslations('session');
   const tError = await getTranslations('errors');
   const tProject = await getTranslations('project');
+  const tOverview = await getTranslations('overview');
 
   if (user.role !== 'lecturer' && user.role !== 'admin') {
     return <Alert tone="error">{tError('forbidden')}</Alert>;
@@ -143,6 +144,12 @@ export default async function ClassDetailPage({
         </div>
         <div className="flex flex-wrap items-center gap-3">
           <Badge tone="brand">{t('joinedCount', { joined, expected })}</Badge>
+          <Link
+            href={`/teaching/${classId}/overview`}
+            className="text-brand-600 dark:text-brand-300 text-sm font-medium underline"
+          >
+            {tOverview('title')}
+          </Link>
           <Link
             href={`/teaching/${classId}/report`}
             className="text-brand-600 dark:text-brand-300 text-sm font-medium underline"
