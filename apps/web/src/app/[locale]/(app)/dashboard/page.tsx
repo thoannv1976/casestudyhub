@@ -72,9 +72,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   href={`/sessions/${session.sessionId}`}
                   className="text-brand-600 dark:text-brand-300 font-medium underline"
                 >
-                  {session.kind === 'group_project'
-                    ? tProject('subject')
-                    : session.caseTitle}
+                  {session.kind === 'group_project' ? tProject('subject') : session.caseTitle}
                 </Link>
                 <span className="text-muted ml-2">
                   {session.groupName} · {session.className}

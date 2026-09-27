@@ -101,9 +101,7 @@ async function classesOfStudent(uid: string): Promise<ClassContext[]> {
 }
 
 /** Titles are read once per class rather than once per assignment. */
-async function caseTitles(
-  caseIds: readonly (string | undefined)[],
-): Promise<Map<string, string>> {
+async function caseTitles(caseIds: readonly (string | undefined)[]): Promise<Map<string, string>> {
   // A class group project session carries no case id, and asking Firestore for
   // a document called `undefined` throws rather than coming back empty - which
   // took down the whole dashboard for everybody in the class.
@@ -226,8 +224,7 @@ export async function dashboardFor(user: SessionUser, now = Date.now()): Promise
         caseTitle: titles.get(session.get('caseStudyId') as string) ?? '',
         // The project room has no case behind it, so the reader is told what
         // is being presented instead of being handed a blank link.
-        kind:
-          (session.get('kind') as string) === 'group_project' ? 'group_project' : 'case_study',
+        kind: (session.get('kind') as string) === 'group_project' ? 'group_project' : 'case_study',
       });
     }
 
