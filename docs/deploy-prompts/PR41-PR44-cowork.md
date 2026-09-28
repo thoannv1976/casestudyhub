@@ -35,11 +35,21 @@ Dự án GCP `casestudy1-509414`, vùng `asia-southeast1`.
 6. Storage rules: nếu vẫn bị bỏ qua vì Firebase Storage chưa bật thì cứ báo lại như lần trước, **đừng tự bật**.
 7. Bất cứ dòng đỏ hay cảnh báo nào khác, chép nguyên văn.
 
+## Việc quan trọng nhất: nộp thử một file
+
+Làm việc này **trước** mọi việc khác, và báo kết quả kể cả khi nó chạy trơn tru. Chưa ai từng tải một file thật lên bản production, và nếu bucket `casestudy1-509414-files` chưa tồn tại thì sinh viên sẽ không nộp được bài nào cả — mà nộp bài là việc chính của họ.
+
+Đăng nhập bằng **tài khoản sinh viên** (tôi sẽ đăng nhập hộ nếu cần), vào lớp, chọn một mục tài liệu bất kỳ và tải lên một file PDF nhỏ. Cần biết:
+
+- Có hiện thông báo thành công kèm chữ "phiên bản 1" không.
+- Bấm vào tên file vừa nộp có mở ra được không.
+- Nếu lỗi: **chép nguyên văn** thông báo trên màn hình, và chạy `gcloud storage buckets describe gs://casestudy1-509414-files` rồi chép nguyên văn kết quả. Đừng tự tạo bucket.
+
 ## Sau khi deploy, kiểm trên máy tính
 
 Đăng nhập bằng tài khoản tôi đã có, **đừng tạo tài khoản mới**.
 
-1. Vào lớp với tư cách **giảng viên** → thẻ **Bài tập lớn của lớp**: có ô _Số nhóm được thuyết trình_ và _Hạn xung phong_ không.
+1. Vào lớp với tư cách **giảng viên** → thẻ **Bài tập lớn của lớp**: có ô _Số nhóm được thuyết trình_ và _Hạn đăng ký (không bắt buộc)_ không.
 2. Vào lớp với tư cách **sinh viên**: có thẻ **Xung phong thuyết trình bài tập lớn** không; khi giảng viên chưa mở chỗ thì nó phải nói "Giảng viên chưa mở phần này".
 3. Trang chủ (dashboard) vẫn mở bình thường — đây là chỗ PR41 sửa một lỗi làm **sập trang** khi có buổi thuyết trình bài tập lớn đang chạy.
 4. Nếu tiện: nhờ một nhóm xung phong rồi mở buổi. Cột **Thuyết trình** phải hiện _Số 1_, và có link **Câu hỏi** dẫn tới bảng tổng hợp câu hỏi.
