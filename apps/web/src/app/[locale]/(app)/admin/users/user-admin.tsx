@@ -258,7 +258,7 @@ export function UserAdmin({ users, callerUid }: { users: UserProfile[]; callerUi
         </span>
       </div>
 
-      <div className="surface-card overflow-x-auto rounded-xl">
+      <div className="surface-card relative overflow-x-auto rounded-xl">
         <table className="w-full min-w-[42rem] text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--border-subtle)]">

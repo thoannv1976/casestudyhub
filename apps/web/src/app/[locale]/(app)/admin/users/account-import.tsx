@@ -153,7 +153,7 @@ export function AccountImport() {
               <Button variant="ghost" onClick={download}>
                 {t('importDownload')}
               </Button>
-              <div className="surface-card overflow-x-auto rounded-xl">
+              <div className="surface-card relative overflow-x-auto rounded-xl">
                 <table className="w-full min-w-[34rem] text-left text-sm">
                   <tbody data-testid="import-passwords">
                     {outcome.created.map((account) => (

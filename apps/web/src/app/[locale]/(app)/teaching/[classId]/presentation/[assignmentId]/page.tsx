@@ -176,7 +176,7 @@ export default async function DossierPage({
               })}
             </ul>
 
-            <div className="mt-6 overflow-x-auto">
+            <div className="relative mt-6 overflow-x-auto">
               <table className="w-full min-w-[40rem] text-left text-sm">
                 <thead>
                   <tr className="border-b border-[var(--border-subtle)]">

@@ -87,7 +87,10 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
             >
               CH
             </span>
-            <span className="font-semibold">{tApp('name')}</span>
+            {/* The wordmark costs a hundred pixels the header does not have on
+                a 360px phone, which pushed the whole page sideways. Hidden
+                rather than dropped: a screen reader still announces it. */}
+            <span className="sr-only font-semibold sm:not-sr-only">{tApp('name')}</span>
           </div>
           <div className="flex items-center gap-2">
             <LocaleSwitcher />
@@ -190,7 +193,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         </Section>
 
         <Section id="rubric" title={t('rubricTitle')} subtitle={t('rubricSubtitle')}>
-          <div className="surface-card overflow-x-auto rounded-xl">
+          <div className="surface-card relative overflow-x-auto rounded-xl">
             <table className="w-full min-w-[32rem] text-left text-sm">
               <caption className="sr-only">{tRubric('standard100')}</caption>
               <thead>

@@ -202,7 +202,7 @@ export function RosterManager({ classId, roster }: { classId: string; roster: Cl
         </div>
       ) : null}
 
-      <div className="surface-card overflow-x-auto rounded-xl">
+      <div className="surface-card relative overflow-x-auto rounded-xl">
         <table className="w-full min-w-[34rem] text-left text-sm">
           <thead>
             <tr className="border-b border-[var(--border-subtle)]">

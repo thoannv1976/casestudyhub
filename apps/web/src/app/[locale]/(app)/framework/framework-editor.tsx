@@ -345,7 +345,7 @@ export function FrameworkEditor({
           </div>
 
           {base.clos.length > 0 ? (
-            <div className="mt-6 overflow-x-auto">
+            <div className="relative mt-6 overflow-x-auto">
               <table className="w-full min-w-[32rem] text-left text-sm">
                 <thead>
                   <tr className="border-b border-[var(--border-subtle)]">

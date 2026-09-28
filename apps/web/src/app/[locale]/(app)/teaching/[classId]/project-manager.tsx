@@ -233,7 +233,7 @@ export function ProjectManager({
       ) : rows.length === 0 ? (
         <p className="text-muted text-sm">{t('noGroups')}</p>
       ) : (
-        <div className="surface-card overflow-x-auto rounded-xl">
+        <div className="surface-card relative overflow-x-auto rounded-xl">
           <table className="w-full min-w-[40rem] text-left text-sm">
             <thead>
               <tr className="border-b border-[var(--border-subtle)]">
