@@ -39,3 +39,8 @@ emulator-data/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Ảnh chụp màn hình để dựng tài liệu hướng dẫn; chụp lại được bằng
+# scripts/guide/screenshots.spec.ts nên không cần giữ trong repo.
+guide-shots/
+phone-shots/
