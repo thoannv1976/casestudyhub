@@ -1,4 +1,4 @@
-# Prompt deploy cho Claude Cowork — PR41 → PR43
+# Prompt deploy cho Claude Cowork — PR41 → PR44
 
 Copy toàn bộ phần trong khung dưới đây, dán vào Claude Cowork.
 
@@ -18,7 +18,7 @@ Bạn đang chạy trên máy của tôi và có Cloud Shell. Việc của bạn
 
 ```bash
 cd ~/casestudyhub && git checkout main && git pull
-git log --oneline -5          # phải thấy PR43 (2db65e9) trong danh sách
+git log --oneline -5          # phải thấy PR44 (6c7af9e) trong danh sách
 npx --yes firebase-tools@latest login --no-localhost
 bash scripts/deploy-cloudshell.sh
 ```
@@ -27,10 +27,10 @@ Dự án GCP `casestudy1-509414`, vùng `asia-southeast1`.
 
 **Báo cáo lại cho tôi, nguyên văn:**
 
-1. Commit đang deploy (`git log --oneline -1`) và revision Cloud Run mới. Chỉ cần chép lại cho tôi; nếu trong 5 commit gần nhất **không** thấy PR43 thì dừng và báo, vì như vậy là `git pull` chưa lấy về bản mới.
+1. Commit đang deploy (`git log --oneline -1`) và revision Cloud Run mới. Chỉ cần chép lại cho tôi; nếu trong 5 commit gần nhất **không** thấy PR44 thì dừng và báo, vì như vậy là `git pull` chưa lấy về bản mới.
 2. Kết quả `/api/health` — phải là `status: ok` kèm revision mới.
 3. Danh sách biến môi trường Cloud Run in ra trong lúc deploy. Nếu vẫn còn `AI_MODEL` thì chỉ **báo là còn**, đừng xóa: code từ PR36 không đọc biến đó nữa, nhưng tôi muốn biết nó còn nằm đó.
-4. Số index Firestore ở trạng thái READY. **Lần này không thêm index mới**, nên con số phải giữ nguyên **13**; khác 13 thì báo lại.
+4. Số index Firestore ở trạng thái READY. **Lần này thêm 4 index mới**, nên con số phải lên **17**. Index xây mất vài phút; nếu còn cái nào ở trạng thái CREATING thì chờ rồi kiểm lại, và báo cho tôi con số cuối cùng. Chưa đủ 17 mà đã cho sinh viên dùng thì có màn hình sẽ lỗi.
 5. Firestore rules đã upload và release chưa. Lần này rules thêm hai collection: `projectVolunteers` và `questionClusters`.
 6. Storage rules: nếu vẫn bị bỏ qua vì Firebase Storage chưa bật thì cứ báo lại như lần trước, **đừng tự bật**.
 7. Bất cứ dòng đỏ hay cảnh báo nào khác, chép nguyên văn.
