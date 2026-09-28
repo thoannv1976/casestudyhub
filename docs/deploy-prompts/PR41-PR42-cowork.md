@@ -1,4 +1,4 @@
-# Prompt deploy cho Claude Cowork — PR41
+# Prompt deploy cho Claude Cowork — PR41 + PR42
 
 Copy toàn bộ phần trong khung dưới đây, dán vào Claude Cowork.
 
@@ -24,7 +24,7 @@ là **deploy và báo cáo** bản mới nhất của CaseStudy Hub.
 
 ```bash
 cd ~/casestudyhub && git checkout main && git pull
-git log --oneline -3          # commit trên cùng phải là a835128 (PR41)
+git log --oneline -3          # commit trên cùng phải là b74a8dc (PR42)
 npx --yes firebase-tools@latest login --no-localhost
 bash scripts/deploy-cloudshell.sh
 ```
@@ -60,6 +60,14 @@ tôi đã có, đừng tạo tài khoản mới):
    làm sập trang khi có buổi thuyết trình bài tập lớn đang chạy.
 5. Nếu tiện, nhờ một nhóm xung phong rồi mở buổi: cột **Thuyết trình** phải hiện
    _Số 1_, và có link **Câu hỏi** dẫn tới bảng tổng hợp câu hỏi.
+
+**Và kiểm 2 việc của PR42 trên điện thoại thật** (không phải thu nhỏ cửa sổ):
+
+1. Mở trang chủ (chưa đăng nhập) rồi vuốt sang phải: trang **không được
+   nhúc nhích**. Trước PR42 nó trượt sang một vùng trắng.
+2. Đăng nhập bằng tài khoản giảng viên, mở trang lớp và bảng tổng hợp, rồi vuốt
+   sang phải ở vùng **ngoài bảng**: trang không được trượt. Vuốt **trên chính
+   bảng** thì bảng phải cuộn ngang được — đó là cố ý.
 
 Chỗ nào không chạy: chép nguyên văn màn hình / thông báo lỗi, đừng sửa.
 
