@@ -18,7 +18,7 @@ Bạn đang chạy trên máy của tôi và có Cloud Shell. Việc của bạn
 
 ```bash
 cd ~/casestudyhub && git checkout main && git pull
-git log --oneline -3          # commit trên cùng phải là 0cbd091
+git log --oneline -5          # phải thấy PR43 (2db65e9) trong danh sách
 npx --yes firebase-tools@latest login --no-localhost
 bash scripts/deploy-cloudshell.sh
 ```
@@ -27,7 +27,7 @@ Dự án GCP `casestudy1-509414`, vùng `asia-southeast1`.
 
 **Báo cáo lại cho tôi, nguyên văn:**
 
-1. Commit đang deploy (`git log --oneline -1`) và revision Cloud Run mới.
+1. Commit đang deploy (`git log --oneline -1`) và revision Cloud Run mới. Chỉ cần chép lại cho tôi; nếu trong 5 commit gần nhất **không** thấy PR43 thì dừng và báo, vì như vậy là `git pull` chưa lấy về bản mới.
 2. Kết quả `/api/health` — phải là `status: ok` kèm revision mới.
 3. Danh sách biến môi trường Cloud Run in ra trong lúc deploy. Nếu vẫn còn `AI_MODEL` thì chỉ **báo là còn**, đừng xóa: code từ PR36 không đọc biến đó nữa, nhưng tôi muốn biết nó còn nằm đó.
 4. Số index Firestore ở trạng thái READY. **Lần này không thêm index mới**, nên con số phải giữ nguyên **13**; khác 13 thì báo lại.
