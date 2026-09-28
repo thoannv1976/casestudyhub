@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { TUTOR_MODES, type TutorMode, type TutorSession } from '@casestudyhub/shared';
-import { Alert, Button, Field, Select } from '@/components/ui/form';
+import { Alert, Button, Field, Select, Textarea } from '@/components/ui/form';
 
 /**
  * The tutor a student can talk to about this case.
@@ -111,15 +111,7 @@ export function Tutor({
         </Field>
 
         <Field label={t('message')} htmlFor="message">
-          <textarea
-            id="message"
-            name="message"
-            required
-            minLength={5}
-            maxLength={2000}
-            rows={3}
-            className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm"
-          />
+          <Textarea id="message" name="message" required minLength={5} maxLength={2000} rows={3} />
         </Field>
 
         <p className="text-muted text-xs">{t('willNotWrite')}</p>

@@ -9,7 +9,7 @@ import {
   QUESTION_CATEGORIES,
   type ClassQuestion,
 } from '@casestudyhub/shared';
-import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
+import { Alert, Button, Field, Input, Select, Textarea } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
 
 /**
@@ -98,7 +98,7 @@ export function QuestionWall({
           <p className="text-muted text-sm">{own ? t('editHint') : t('askHint')}</p>
 
           <Field label={t('yourQuestion')} htmlFor="text">
-            <textarea
+            <Textarea
               id="text"
               name="text"
               required
@@ -106,7 +106,6 @@ export function QuestionWall({
               maxLength={1000}
               rows={3}
               defaultValue={own?.text ?? ''}
-              className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm"
             />
           </Field>
 
@@ -257,13 +256,12 @@ export function QuestionWall({
                           }}
                           className="space-y-2"
                         >
-                          <textarea
+                          <Textarea
                             name="answerText"
                             required
                             minLength={10}
                             rows={3}
                             aria-label={t('recordAnswer')}
-                            className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm"
                           />
                           <Button type="submit" disabled={busy}>
                             {t('saveAnswer')}

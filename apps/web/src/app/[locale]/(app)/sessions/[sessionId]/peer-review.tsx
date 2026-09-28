@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import type { PeerReview, Rubric } from '@casestudyhub/shared';
-import { Alert, Button, Field, Input } from '@/components/ui/form';
+import { Alert, Button, Field, Input, Textarea } from '@/components/ui/form';
 
 /**
  * The class scores the group that has just presented.
@@ -100,13 +100,12 @@ export function PeerReviewForm({
       </div>
 
       <Field label={t('comment')} htmlFor="comment" hint={t('commentHint')}>
-        <textarea
+        <Textarea
           id="comment"
           name="comment"
           rows={3}
           maxLength={2000}
           defaultValue={own?.comment ?? ''}
-          className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm"
         />
       </Field>
 

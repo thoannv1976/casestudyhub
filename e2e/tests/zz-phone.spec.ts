@@ -56,6 +56,54 @@ async function expectNoSidewaysScroll(page: Page, where: string) {
   ).toBeLessThanOrEqual(0);
 }
 
+/**
+ * Two things a finger needs, checked together because they have the same cause:
+ * a layout drawn for a mouse.
+ *
+ * A field under 16px makes Safari on iOS zoom the page in on focus and leave it
+ * there, which is how a student ends up filling in a sign-in form at 150%. And
+ * a target under 24x24 is below the floor WCAG 2.2 sets for a reason: a
+ * fingertip is about 9mm across.
+ */
+async function expectThumbFriendly(page: Page, where: string) {
+  const bad = await page.evaluate(() => {
+    const describe = (el: Element) =>
+      `${el.tagName.toLowerCase()}[${(el.getAttribute('class') ?? '').slice(0, 40)}] "${(el.textContent ?? '').trim().slice(0, 25)}"`;
+
+    const zoomers: string[] = [];
+    const tiny: string[] = [];
+
+    for (const el of Array.from(document.querySelectorAll('input, select, textarea, button'))) {
+      const style = getComputedStyle(el);
+      if (style.display === 'none' || style.visibility === 'hidden') continue;
+
+      const tag = el.tagName.toLowerCase();
+      const type = tag === 'input' ? (el as HTMLInputElement).type : '';
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 && box.height === 0) continue;
+
+      // A file picker has no caret to zoom towards, and a checkbox has no text.
+      const typed = tag !== 'button' && !['file', 'checkbox', 'radio', 'hidden'].includes(type);
+      if (typed && Number.parseFloat(style.fontSize) < 16) {
+        zoomers.push(`${style.fontSize}: ${describe(el)}`);
+      }
+
+      const isTarget = tag === 'button' || type === 'checkbox' || type === 'radio';
+      if (isTarget && (box.width < 24 || box.height < 24)) {
+        tiny.push(`${Math.round(box.width)}x${Math.round(box.height)}: ${describe(el)}`);
+      }
+    }
+
+    return { zoomers, tiny };
+  });
+
+  expect(
+    bad.zoomers,
+    `${where} has fields iOS would zoom into: ${bad.zoomers.join(' · ')}`,
+  ).toEqual([]);
+  expect(bad.tiny, `${where} has targets under 24x24: ${bad.tiny.join(' · ')}`).toEqual([]);
+}
+
 test('every page a student opens fits their phone', async ({ page }) => {
   test.setTimeout(180_000);
   await page.setViewportSize(PHONE);
@@ -67,6 +115,7 @@ test('every page a student opens fits their phone', async ({ page }) => {
   await page.getByRole('link').filter({ hasText: /E2E-/ }).first().click();
   await page.waitForURL(/\/classes\/.+/);
   await expectNoSidewaysScroll(page, 'the class page');
+  await expectThumbFriendly(page, 'the class page');
 
   for (const [path, name] of [
     ['/en/portfolio', 'the portfolio'],
@@ -77,6 +126,8 @@ test('every page a student opens fits their phone', async ({ page }) => {
     await page.goto(path);
     await expectNoSidewaysScroll(page, name);
   }
+
+  await expectThumbFriendly(page, 'the profile form');
 });
 
 test('every page a lecturer opens fits their phone', async ({ page }) => {
@@ -93,6 +144,7 @@ test('every page a lecturer opens fits their phone', async ({ page }) => {
   // Four wide tables on one page: the roster, the assignments, the project and
   // the groups. This is where the sideways scroll was found.
   await expectNoSidewaysScroll(page, 'the class page');
+  await expectThumbFriendly(page, 'the class page');
 
   for (const [path, name] of [
     [`/en/teaching/${classId}/overview`, 'the class overview'],
@@ -104,6 +156,10 @@ test('every page a lecturer opens fits their phone', async ({ page }) => {
   ] as const) {
     await page.goto(path);
     await expectNoSidewaysScroll(page, name);
+    if (path.endsWith('/framework') || path.endsWith('/system')) {
+      // Both carry checkboxes, which were 16px square until they were measured.
+      await expectThumbFriendly(page, name);
+    }
   }
 });
 
@@ -119,6 +175,7 @@ test('the room and the question board fit the phone they are read on', async ({ 
   await live.click();
   await page.waitForURL(/\/sessions\/.+/);
   await expectNoSidewaysScroll(page, 'the presentation room');
+  await expectThumbFriendly(page, 'the presentation room');
 
   await page.goto('/en/teaching');
   await page.getByRole('link').filter({ hasText: /E2E-/ }).first().click();
@@ -133,9 +190,11 @@ test('signing in works on the narrowest phone in the room', async ({ page }) => 
 
   await page.goto('/en/login');
   await expectNoSidewaysScroll(page, 'the sign-in page at 360px');
+  await expectThumbFriendly(page, 'the sign-in page');
 
   await page.goto('/en/register');
   await expectNoSidewaysScroll(page, 'the registration page at 360px');
+  await expectThumbFriendly(page, 'the registration page');
 
   await page.goto('/en');
   await expectNoSidewaysScroll(page, 'the front page at 360px');

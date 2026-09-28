@@ -1,4 +1,9 @@
-import type { InputHTMLAttributes, ReactNode, SelectHTMLAttributes } from 'react';
+import type {
+  InputHTMLAttributes,
+  ReactNode,
+  SelectHTMLAttributes,
+  TextareaHTMLAttributes,
+} from 'react';
 
 export function Field({
   label,
@@ -36,8 +41,16 @@ export function Field({
   );
 }
 
-const controlClasses =
-  'w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm ' +
+/**
+ * `text-base sm:text-sm` is not a matter of taste.
+ *
+ * Safari on iOS zooms the whole page in when a field it is about to focus has
+ * text under 16px, and does not zoom back out. Every form in the app was 14px,
+ * so every student signing in on an iPhone got a page that jumped and stayed
+ * magnified. 16px on a phone, 14px from `sm` up, where no browser zooms.
+ */
+export const controlClasses =
+  'w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-base sm:text-sm ' +
   'transition-colors focus:border-brand-500 disabled:opacity-60 aria-[invalid=true]:border-red-500';
 
 /**
@@ -46,7 +59,10 @@ const controlClasses =
  * checkbox into a tall empty box - and the caller's own `className` used to be
  * overwritten rather than merged, so passing `h-4 w-4` did nothing about it.
  */
-const checkboxClasses = 'h-4 w-4 shrink-0 rounded border border-[var(--border-subtle)]';
+const checkboxClasses =
+  // 24px on a phone, which is the smallest target WCAG 2.2 accepts, and the
+  // familiar 16px once there is a mouse pointing at it.
+  'h-6 w-6 shrink-0 rounded border border-[var(--border-subtle)] sm:h-4 sm:w-4';
 
 export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInputElement>) {
   const base =
@@ -56,6 +72,18 @@ export function Input({ className = '', ...props }: InputHTMLAttributes<HTMLInpu
 
 export function Select({ className = '', ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
   return <select {...props} className={`${controlClasses} ${className}`.trim()} />;
+}
+
+/**
+ * The same control, taller. It exists so that the five textareas in the app do
+ * not each carry their own copy of the classes above - which is how they came
+ * to be 14px on a phone after the fields beside them were fixed.
+ */
+export function Textarea({
+  className = '',
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return <textarea {...props} className={`${controlClasses} ${className}`.trim()} />;
 }
 
 export function Button({

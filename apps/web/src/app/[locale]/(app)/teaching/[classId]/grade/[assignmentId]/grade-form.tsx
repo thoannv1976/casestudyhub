@@ -9,7 +9,7 @@ import {
   type Rubric,
 } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
-import { Alert, Button, Field, Input } from '@/components/ui/form';
+import { Alert, Button, Field, Input, Textarea } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
 
 interface Member {
@@ -200,13 +200,12 @@ export function GradeForm({
           ))}
 
           <Field label={t('comment')} htmlFor="comment">
-            <textarea
+            <Textarea
               id="comment"
               name="comment"
               rows={3}
               maxLength={4000}
               defaultValue={assessment?.comment ?? ''}
-              className="w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm"
             />
           </Field>
         </fieldset>

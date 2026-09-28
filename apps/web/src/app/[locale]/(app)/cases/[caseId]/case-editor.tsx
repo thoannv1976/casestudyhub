@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from 'next-intl';
 import type { CaseStudy, CaseVersion } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
-import { Alert, Button, Field, Input } from '@/components/ui/form';
+import { Alert, Button, Field, Input, Textarea } from '@/components/ui/form';
 
 /**
  * Revising a case, and the record of every revision before it.
@@ -88,8 +88,9 @@ export function CaseEditor({
     }
   }
 
-  const area =
-    'h-24 w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-sm';
+  // Only the height is this editor's own; everything else about a control -
+  // including the 16px that stops iOS zooming - belongs to the shared one.
+  const area = 'h-24';
 
   return (
     <Card>
@@ -137,7 +138,7 @@ export function CaseEditor({
           </div>
 
           <Field label={t('description')} htmlFor="description">
-            <textarea
+            <Textarea
               id="description"
               name="description"
               className={area}
@@ -155,7 +156,7 @@ export function CaseEditor({
             ] as const
           ).map(([name, value]) => (
             <Field key={name} label={t(name)} htmlFor={name} hint={t('onePerLine')}>
-              <textarea
+              <Textarea
                 id={name}
                 name={name}
                 className={area}

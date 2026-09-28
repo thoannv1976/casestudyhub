@@ -147,7 +147,8 @@ export function GroupManager({
                       type="button"
                       disabled={busy}
                       onClick={() => setRenaming(renaming === group.id ? null : group.id)}
-                      className="text-muted hover:text-brand-600 text-xs font-medium disabled:opacity-40"
+                      // A 16px-tall word is not something a thumb can hit.
+                      className="text-muted hover:text-brand-600 inline-flex min-h-6 items-center px-1 text-xs font-medium disabled:opacity-40"
                     >
                       {renaming === group.id ? t('cancel') : t('rename')}
                     </button>
@@ -200,7 +201,10 @@ export function GroupManager({
                                 'DELETE',
                               )
                             }
-                            className="text-muted hover:text-red-600 disabled:opacity-40"
+                            // Removing somebody from a group is the last thing
+                            // that should be easy to hit by accident and hard
+                            // to hit on purpose: 12x20 became 24x24.
+                            className="text-muted inline-flex h-6 w-6 shrink-0 items-center justify-center rounded hover:text-red-600 disabled:opacity-40"
                             aria-label={t('removeMember', { name: member.fullName })}
                           >
                             ✕
