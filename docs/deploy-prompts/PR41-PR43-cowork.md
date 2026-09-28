@@ -1,4 +1,4 @@
-# Prompt deploy cho Claude Cowork — PR41 + PR42
+# Prompt deploy cho Claude Cowork — PR41 → PR43
 
 Copy toàn bộ phần trong khung dưới đây, dán vào Claude Cowork.
 
@@ -24,7 +24,7 @@ là **deploy và báo cáo** bản mới nhất của CaseStudy Hub.
 
 ```bash
 cd ~/casestudyhub && git checkout main && git pull
-git log --oneline -3          # commit trên cùng phải là b74a8dc (PR42)
+git log --oneline -3          # commit trên cùng phải là 2db65e9 (PR43)
 npx --yes firebase-tools@latest login --no-localhost
 bash scripts/deploy-cloudshell.sh
 ```
@@ -68,6 +68,13 @@ tôi đã có, đừng tạo tài khoản mới):
 2. Đăng nhập bằng tài khoản giảng viên, mở trang lớp và bảng tổng hợp, rồi vuốt
    sang phải ở vùng **ngoài bảng**: trang không được trượt. Vuốt **trên chính
    bảng** thì bảng phải cuộn ngang được — đó là cố ý.
+
+**Và 2 việc của PR43, phải thử trên iPhone thật nếu có:**
+
+1. Chạm vào ô Email ở trang đăng nhập: **trang không được tự phóng to**. Đây là
+   thứ chỉ Safari trên iPhone làm; Chrome trên Android không tái hiện được.
+2. Mở trang lớp bằng tài khoản giảng viên: nút **✕** gỡ sinh viên khỏi nhóm và
+   nút **Đổi tên** phải bấm trúng được bằng ngón tay, không cần phóng to.
 
 Chỗ nào không chạy: chép nguyên văn màn hình / thông báo lỗi, đừng sửa.
 
