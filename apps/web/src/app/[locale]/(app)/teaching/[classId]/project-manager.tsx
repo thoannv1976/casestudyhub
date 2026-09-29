@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { Deliverable } from '@casestudyhub/shared';
+import { fromZonedInput, toZonedInput, type Deliverable } from '@casestudyhub/shared';
 import { Link, useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input } from '@/components/ui/form';
 
@@ -28,14 +28,6 @@ export interface ProjectRow {
   targetId: string;
   /** Deliverable id → what the group has handed in, if anything. */
   handedIn: Record<string, { fileName: string; isLate: boolean; versionNumber: number }>;
-}
-
-function toLocalInput(iso: string): string {
-  const date = new Date(iso);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}`;
 }
 
 export function ProjectManager({
@@ -78,7 +70,7 @@ export function ProjectManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slots: Number(form.get('slots')),
-          ...(deadlineValue ? { volunteerDeadline: new Date(deadlineValue).toISOString() } : {}),
+          ...(deadlineValue ? { volunteerDeadline: fromZonedInput(deadlineValue) } : {}),
         }),
       });
       if (!response.ok) {
@@ -151,7 +143,7 @@ export function ProjectManager({
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          deadline: new Date(String(form.get('projectDeadline') ?? '')).toISOString(),
+          deadline: fromZonedInput(String(form.get('projectDeadline') ?? '')),
           reason: String(form.get('reason') ?? ''),
         }),
       });
@@ -184,7 +176,7 @@ export function ProjectManager({
               id="projectDeadline"
               name="projectDeadline"
               type="datetime-local"
-              defaultValue={deadline ? toLocalInput(deadline) : ''}
+              defaultValue={toZonedInput(deadline)}
               required
             />
           </Field>

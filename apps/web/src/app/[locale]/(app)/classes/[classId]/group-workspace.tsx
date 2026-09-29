@@ -1,11 +1,14 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { isPowerPoint, type Deliverable, type Submission } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Input } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
+
+/** Deadlines are read to the minute, so they are shown to the minute. */
+const WHEN = { dateStyle: 'short', timeStyle: 'short' } as const;
 
 /**
  * The group's own work area (SRS 7.3): what has to be handed in, what has been
@@ -46,6 +49,7 @@ export function GroupWorkspace({
   overdue: boolean;
 }) {
   const t = useTranslations('workspace');
+  const format = useFormatter();
   const tDeliverables = useTranslations('deliverables');
   const tError = useTranslations();
   const router = useRouter();
@@ -131,13 +135,13 @@ export function GroupWorkspace({
         {presentationDate ? (
           <div>
             <dt className="text-muted">{t('presentation')}</dt>
-            <dd className="font-medium">{new Date(presentationDate).toLocaleString()}</dd>
+            <dd className="font-medium">{format.dateTime(new Date(presentationDate), WHEN)}</dd>
           </div>
         ) : null}
         <div>
           <dt className="text-muted">{t('deadline')}</dt>
           <dd className={`font-medium ${overdue ? 'text-red-600 dark:text-red-400' : ''}`}>
-            {deadline.toLocaleString()}
+            {format.dateTime(deadline, WHEN)}
             {overdue ? ` · ${t('closed')}` : ''}
           </dd>
         </div>
@@ -198,7 +202,7 @@ export function GroupWorkspace({
                         <span className="text-muted text-xs">{t('externalLink')}</span>
                       ) : null}
                       <span className="text-muted text-xs">
-                        {new Date(submission.submittedAt).toLocaleString()}
+                        {format.dateTime(new Date(submission.submittedAt), WHEN)}
                       </span>
                       {submission.isLate ? (
                         <span className="text-xs text-red-600 dark:text-red-400">{t('late')}</span>

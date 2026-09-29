@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
+import { fromZonedInput, toZonedInput } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
@@ -57,7 +58,7 @@ export function CaseSelectionBoard({
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           mode: String(form.get('mode')),
-          deadline: raw ? new Date(raw).toISOString() : null,
+          deadline: raw ? fromZonedInput(raw) : null,
         }),
       });
       if (!response.ok) {
@@ -94,8 +95,12 @@ export function CaseSelectionBoard({
     }
   }
 
-  /** Written for the datetime-local input, which wants local time with no zone. */
-  const deadlineValue = deadline ? new Date(deadline).toISOString().slice(0, 16) : '';
+  /**
+   * Written for the datetime-local input, which wants a wall clock with no
+   * zone. It used to write `toISOString()` - UTC - so the form read back seven
+   * hours early, and saving it again moved the real deadline by that much.
+   */
+  const deadlineValue = toZonedInput(deadline);
 
   return (
     <Card>

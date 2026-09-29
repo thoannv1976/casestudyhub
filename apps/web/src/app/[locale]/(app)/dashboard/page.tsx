@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { getTranslations, setRequestLocale } from 'next-intl/server';
+import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
 import { dashboardFor, getUserProfile } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -49,6 +49,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
   const t = await getTranslations('dashboard');
   const tProgress = await getTranslations('progress');
   const tProject = await getTranslations('project');
+  const format = await getFormatter();
 
   const [profile, board] = await Promise.all([getUserProfile(user.uid), dashboardFor(user)]);
   const isStaff = user.role === 'admin' || user.role === 'lecturer';
@@ -121,7 +122,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                     </span>
                   ) : null}
                   <span className="text-muted ml-auto tabular-nums">
-                    {new Date(row.submissionDeadline).toLocaleDateString(locale)}
+                    {format.dateTime(new Date(row.submissionDeadline), { dateStyle: 'short' })}
                   </span>
                 </li>
               ))}

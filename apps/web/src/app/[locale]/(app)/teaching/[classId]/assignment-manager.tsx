@@ -1,10 +1,12 @@
 'use client';
 
 import { Fragment, useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   PROGRESS_FILTERS,
+  fromZonedInput,
   matchesFilter,
+  toZonedInput,
   type Assignment,
   type AssignmentProgress,
   type CaseStudy,
@@ -14,6 +16,8 @@ import {
 } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
+/** Deadlines are read to the minute, so they are shown to the minute. */
+const WHEN = { dateStyle: 'short', timeStyle: 'short' } as const;
 
 /**
  * Setting a case for a group, and the progress table of SRS 4.2: who has
@@ -24,13 +28,6 @@ import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
  * the ISO string would show the lecturer UTC and silently move every date by
  * seven hours.
  */
-function toLocalInput(iso: string): string {
-  const date = new Date(iso);
-  const pad = (value: number) => String(value).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(
-    date.getHours(),
-  )}:${pad(date.getMinutes())}`;
-}
 
 /** An assignment the server could not classify is shown, never hidden. */
 const EMPTY_PROGRESS: AssignmentProgress = {
@@ -57,6 +54,7 @@ export function AssignmentManager({
   progressByAssignment: Record<string, AssignmentProgress>;
 }) {
   const t = useTranslations('assignments');
+  const format = useFormatter();
   const tProgress = useTranslations('progress');
   const tError = useTranslations();
 
@@ -92,7 +90,7 @@ export function AssignmentManager({
         body: JSON.stringify({
           groupId: String(form.get('groupId') ?? ''),
           caseStudyId: String(form.get('caseStudyId') ?? ''),
-          presentationDate: new Date(String(form.get('presentationDate') ?? '')).toISOString(),
+          presentationDate: fromZonedInput(String(form.get('presentationDate') ?? '')),
         }),
       });
       if (!response.ok) {
@@ -124,7 +122,7 @@ export function AssignmentManager({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           assignmentId,
-          presentationDate: new Date(String(form.get('newPresentationDate') ?? '')).toISOString(),
+          presentationDate: fromZonedInput(String(form.get('newPresentationDate') ?? '')),
           reason: String(form.get('reason') ?? ''),
         }),
       });
@@ -262,10 +260,10 @@ export function AssignmentManager({
                       <td className="px-4 py-3">{nameOfGroup(assignment.groupId)}</td>
                       <td className="px-4 py-3">{nameOfCase(assignment.caseStudyId)}</td>
                       <td className="px-4 py-3">
-                        {new Date(assignment.presentationDate).toLocaleString()}
+                        {format.dateTime(new Date(assignment.presentationDate), WHEN)}
                       </td>
                       <td className="px-4 py-3">
-                        {new Date(assignment.submissionDeadline).toLocaleString()}
+                        {format.dateTime(new Date(assignment.submissionDeadline), WHEN)}
                       </td>
                       <td className="px-4 py-3">
                         {latest.length === 0 ? (
@@ -341,7 +339,7 @@ export function AssignmentManager({
                                 id={`newPresentationDate__${assignment.id}`}
                                 name="newPresentationDate"
                                 type="datetime-local"
-                                defaultValue={toLocalInput(assignment.presentationDate)}
+                                defaultValue={toZonedInput(assignment.presentationDate)}
                                 required
                               />
                             </Field>

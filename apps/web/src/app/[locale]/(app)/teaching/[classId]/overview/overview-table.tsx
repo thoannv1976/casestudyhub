@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { PROGRESS_FILTERS, matchesFilter, type ProgressFilter } from '@casestudyhub/shared';
 import type { ClassOverview } from '@casestudyhub/core';
 import { Link } from '@/i18n/navigation';
@@ -16,6 +16,7 @@ import { Link } from '@/i18n/navigation';
  */
 export function OverviewTable({ classId, overview }: { classId: string; overview: ClassOverview }) {
   const t = useTranslations('overview');
+  const format = useFormatter();
   const tProgress = useTranslations('progress');
   const tProject = useTranslations('project');
   const [filter, setFilter] = useState<ProgressFilter>('all');
@@ -108,7 +109,7 @@ export function OverviewTable({ classId, overview }: { classId: string; overview
                   <span className="text-muted block text-xs">{t(`kind.${row.kind}`)}</span>
                 </td>
                 <td className="px-4 py-3">
-                  {new Date(row.submissionDeadline).toLocaleDateString()}
+                  {format.dateTime(new Date(row.submissionDeadline), { dateStyle: 'short' })}
                 </td>
                 <td className="px-4 py-3 tabular-nums">
                   {row.handedInCount}/{row.requiredCount}

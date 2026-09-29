@@ -2466,6 +2466,48 @@ test('a lecturer opens self-selection and a group takes a case', async ({ page }
   await expect(page.getByText('Your group has chosen')).toBeVisible();
 });
 
+/**
+ * Deadlines are read and typed in one time zone, the course's.
+ *
+ * The form used to write the stored instant back as UTC, so a deadline set for
+ * 10:10 in Hanoi reopened as 03:10 - and saving the form again, without
+ * touching the field, moved the real deadline seven hours earlier. Every save
+ * moved it again.
+ */
+test('a deadline reopens as the time it was set to, and does not drift on saving', async ({
+  page,
+}) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const typed = '2026-12-20T10:10';
+  await page.locator('#deadline').fill(typed);
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(page.getByTestId('alert-error')).toHaveCount(0);
+
+  // Reopen the page: the field must say what was typed, not what was stored.
+  await page.reload();
+  await expect(page.locator('#deadline')).toHaveValue(typed);
+
+  // Save again without touching it, then reopen. This is where the deadline
+  // used to walk backwards seven hours at a time.
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await page.reload();
+  await expect(page.locator('#deadline')).toHaveValue(typed);
+
+  // And the student reads the clock the lecturer typed, not the stored UTC.
+  await signOut(page);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+  // The app formats in its own locale, not the browser's, so this reads as
+  // "Dec 20, 2026, 10:10 AM" - the point is the 10:10, which used to be 03:10.
+  await expect(page.getByText('Choices close Dec 20, 2026, 10:10 AM')).toBeVisible();
+});
+
 test('the case another group took is shown as taken, not offered again', async ({ page }) => {
   // A different student, in a different group, which has chosen nothing yet.
   await signIn(page, STUDENT.email, STUDENT.password);
