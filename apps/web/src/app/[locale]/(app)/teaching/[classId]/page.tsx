@@ -195,7 +195,7 @@ export default async function ClassDetailPage({
       <Card>
         <CardTitle>{tGroups('title')}</CardTitle>
         <div className="mt-4">
-          <GroupManager classId={classId} groups={groups} members={members} />
+          <GroupManager classId={classId} groups={groups} members={members} roster={roster} />
         </div>
       </Card>
 

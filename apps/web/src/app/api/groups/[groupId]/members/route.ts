@@ -6,7 +6,9 @@ import {
   assignMember,
   getUserProfile,
   joinGroup,
+  leaveGroup,
   listGroups,
+  moveMember,
   removeMember,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -65,7 +67,14 @@ export async function POST(
   }
 }
 
-/** A lecturer takes a student out of their group. */
+/**
+ * A lecturer takes a student out of their group, or a student walks out of
+ * their own.
+ *
+ * As with joining, which of the two it is comes from the caller's role and
+ * never from the body - a student cannot send somebody else's uid and have it
+ * honoured, because their uid is the only one this branch reads.
+ */
 export async function DELETE(
   request: NextRequest,
   context: { params: Promise<{ groupId: string }> },
@@ -77,13 +86,49 @@ export async function DELETE(
       classId?: string;
       studentUid?: string;
     };
-    if (!classId || !studentUid) throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
+    if (!classId) throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
 
     await classOfGroup(groupId, classId);
+
+    if (caller.role === 'student') {
+      await leaveGroup(caller, classId);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (!studentUid) throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
     await assertCanManageClass(caller, classId);
     await removeMember(caller, classId, studentUid);
 
     return NextResponse.json({ ok: true });
+  } catch (error) {
+    return respondWithError(error);
+  }
+}
+
+/**
+ * A lecturer moves a student into this group from whichever one they are in.
+ *
+ * `groupId` in the path is where they are going, which is why this is a PATCH
+ * on the destination rather than on the student.
+ */
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ groupId: string }> },
+) {
+  try {
+    const actor = await requireSessionUser();
+    const { groupId } = await context.params;
+    const { classId, studentUid } = (await request.json()) as {
+      classId?: string;
+      studentUid?: string;
+    };
+    if (!classId || !studentUid) throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
+
+    await classOfGroup(groupId, classId);
+    await assertCanManageClass(actor, classId);
+
+    const { fromGroupId } = await moveMember(actor, classId, studentUid, groupId);
+    return NextResponse.json({ fromGroupId });
   } catch (error) {
     return respondWithError(error);
   }

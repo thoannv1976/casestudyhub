@@ -47,6 +47,22 @@ export const ROLE_ALLOCATION_BY_TEAM_SIZE: Readonly<
   4: { R1: 1, R2: 2, R3: 3, R4: 4, R5: 1, R6: 4 },
 } as const;
 
+/**
+ * Above six, the extra members double up rather than sit without a role.
+ *
+ * Which roles take a partner is not arbitrary. R1, R2 and R5 are the three the
+ * table already merges away for small teams, so they are the ones the Guide
+ * treats as sharable; R3 and R4 are never touched, because they carry the
+ * analytical and critical work each member is assessed on individually.
+ *
+ * Member 7 partners the first of these, member 8 the second, member 9 the
+ * third. A group larger than nine has no allocation and is assigned by hand.
+ */
+export const ROLE_PARTNER_ORDER: readonly PresentationRoleId[] = ['R1', 'R2', 'R5'];
+
+/** The largest team the allocation above can seat. */
+export const MAX_ALLOCATABLE_TEAM_SIZE = 6 + ROLE_PARTNER_ORDER.length;
+
 const ROLE_KEY_BY_ID: Readonly<Record<string, string>> = Object.fromEntries(
   DEFAULT_PRESENTATION_ROLES.map((role) => [role.id, role.key]),
 );

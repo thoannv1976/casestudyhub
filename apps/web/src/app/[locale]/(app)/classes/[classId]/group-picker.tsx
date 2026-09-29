@@ -31,12 +31,12 @@ export function GroupPicker({
 
   const own = members.find((member) => member.studentUid === ownUid);
 
-  async function join(groupId: string) {
+  async function call(groupId: string, method: 'POST' | 'DELETE') {
     setBusy(true);
     setErrorKey(null);
     try {
       const response = await fetch(`/api/groups/${groupId}/members`, {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ classId }),
       });
@@ -49,6 +49,17 @@ export function GroupPicker({
     } finally {
       setBusy(false);
     }
+  }
+
+  /**
+   * Leaving is asked about first. It is one click away from a group somebody
+   * may have spent a week arranging, and the refusal that matters - a group
+   * that already has work set - comes back from the server as a message rather
+   * than as a hidden button, so the student learns why.
+   */
+  function leave(groupId: string) {
+    if (!window.confirm(t('leaveConfirm'))) return;
+    void call(groupId, 'DELETE');
   }
 
   if (groups.length === 0) {
@@ -68,6 +79,7 @@ export function GroupPicker({
           return (
             <li
               key={group.id}
+              data-testid="group-card"
               className={`surface-card rounded-xl p-4 ${isOwn ? 'border-brand-500' : ''}`}
             >
               <div className="flex items-start justify-between gap-2">
@@ -75,7 +87,7 @@ export function GroupPicker({
                 {isOwn ? <Badge tone="brand">{t('yourGroup')}</Badge> : null}
               </div>
               <p className="text-muted mt-1 text-xs">
-                {groupMembers.length}/{group.maxMembers}
+                {t('memberCount', { count: groupMembers.length, max: group.maxMembers })}
                 {group.locked ? ` · ${t('locked')}` : ''}
               </p>
 
@@ -94,9 +106,17 @@ export function GroupPicker({
                 ))}
               </ul>
 
+              {isOwn && !group.locked ? (
+                <div className="mt-4">
+                  <Button variant="ghost" disabled={busy} onClick={() => leave(group.id)}>
+                    {t('leave')}
+                  </Button>
+                </div>
+              ) : null}
+
               {!own && !group.locked && group.formationMode === 'student_self_join' ? (
                 <div className="mt-4">
-                  <Button disabled={busy || full} onClick={() => void join(group.id)}>
+                  <Button disabled={busy || full} onClick={() => void call(group.id, 'POST')}>
                     {full ? t('full') : t('join')}
                   </Button>
                 </div>

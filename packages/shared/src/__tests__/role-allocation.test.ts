@@ -73,9 +73,40 @@ describe('autoAssignRoles (Guide Table 3)', () => {
     }
   });
 
-  it('refuses a group above the policy maximum', () => {
+  /**
+   * A group of seven used to be refused, because the check read the course
+   * framework's maximum of six. That left a lecturer who had deliberately
+   * raised one group's limit with a button that always failed. What decides
+   * now is what the allocation can actually seat.
+   */
+  it('seats a group of seven, eight or nine by doubling up', () => {
+    for (const size of [7, 8, 9]) {
+      const assignments = autoAssignRoles(members(size), policy);
+
+      // Every role still has an owner, and nobody is left without one.
+      expect(isAllocationComplete(assignments)).toBe(true);
+      expect(membersWithoutRole(assignments, members(size))).toEqual([]);
+
+      // The extra members partner a role rather than getting one of their own.
+      expect(new Set(assignments.map((a) => a.roleId)).size).toBe(6);
+      expect(assignments).toHaveLength(6 + (size - 6));
+    }
+  });
+
+  it('never doubles up on the two roles that measure the individual', () => {
+    // R3 (data) and R4 (critique) are what each member is assessed on, so a
+    // partner on either would blur exactly what the rubric is looking at.
+    for (const size of [7, 8, 9]) {
+      const assignments = autoAssignRoles(members(size), policy);
+      const owners = (roleId: string) => assignments.filter((a) => a.roleId === roleId).length;
+      expect(owners('R3')).toBe(1);
+      expect(owners('R4')).toBe(1);
+    }
+  });
+
+  it('refuses a group too large for any allocation', () => {
     try {
-      autoAssignRoles(members(7), policy);
+      autoAssignRoles(members(10), policy);
       expect.unreachable('should have thrown');
     } catch (error) {
       expect((error as RoleAllocationError).code).toBe('GROUP_TOO_LARGE');

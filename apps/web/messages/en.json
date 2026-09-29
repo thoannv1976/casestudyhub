@@ -329,7 +329,9 @@
     "volunteeringNotOpen": "The lecturer has not opened volunteering yet.",
     "notVolunteered": "This group has not volunteered to present.",
     "onlyGroupMembersVolunteer": "Only a member of the group may volunteer for it.",
-    "tooFewQuestionsToCluster": "At least three questions are needed before grouping them means anything."
+    "tooFewQuestionsToCluster": "At least three questions are needed before grouping them means anything.",
+    "maxMembersBelowMembers": "It cannot go below the number of members already in the group.",
+    "leaveAfterAssignment": "This group has work set, so you cannot leave it yourself. Ask your lecturer to move you."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -566,7 +568,25 @@
     "cancel": "Cancel",
     "groupName": "Group name",
     "saveName": "Save name",
-    "renamed": "Group renamed to {name}."
+    "renamed": "Group renamed to {name}.",
+    "capacity": "Capacity",
+    "saveCapacity": "Save capacity",
+    "capacityHint": "How many members this group may hold, from 2 to 12.",
+    "capacitySaved": "Group {name} now holds up to {max}.",
+    "leave": "Leave this group",
+    "leaveConfirm": "Leave this group? You can join another one afterwards.",
+    "left": "You have left the group.",
+    "moveTo": "Move to group",
+    "move": "Move",
+    "moved": "Moved {name} to {group}.",
+    "assign": "Place in group",
+    "assigned": "Placed {name} in {group}.",
+    "memberCount": "{count}/{max} members",
+    "placementTitle": "Place and move students",
+    "placementHint": "The whole class, with the group each is in. Pick a group to place somebody who has none, or to move somebody who has.",
+    "nobodyToPlace": "This class has no students to place yet.",
+    "noGroupYet": "no group yet",
+    "placeInto": "Pick a group for {name}"
   },
   "cases": {
     "title": "Case study library",

@@ -291,7 +291,7 @@ test('a student joins a group', async ({ page }) => {
   await page.waitForURL(/\/classes\/.+/);
 
   await page
-    .getByRole('listitem')
+    .getByTestId('group-card')
     .filter({ hasText: 'Group 1' })
     .getByRole('button', { name: 'Join this group' })
     .click();
@@ -308,7 +308,7 @@ test('a student cannot hold two groups in one class', async ({ page }) => {
 
   // The second group offers no join button at all once a student has one.
   await expect(
-    page.getByRole('listitem').filter({ hasText: 'Group 2' }).getByRole('button', {
+    page.getByTestId('group-card').filter({ hasText: 'Group 2' }).getByRole('button', {
       name: 'Join this group',
     }),
   ).toHaveCount(0);
@@ -326,7 +326,7 @@ test('three more students fill the group to the four the framework requires', as
     await page.getByText(CLASS_CODE).click();
     await page.waitForURL(/\/classes\/.+/);
     await page
-      .getByRole('listitem')
+      .getByTestId('group-card')
       .filter({ hasText: 'Group 1' })
       .getByRole('button', { name: 'Join this group' })
       .click();
@@ -344,7 +344,7 @@ test('the fifth student is refused a group of four that is already full', async 
 
   // The seat count is what the transaction protects; the interface must show
   // the same truth.
-  await expect(page.getByRole('listitem').filter({ hasText: 'Group 1' })).toContainText('4/4');
+  await expect(page.getByTestId('group-card').filter({ hasText: 'Group 1' })).toContainText('4/4');
 });
 
 test('the lecturer assigns the presentation roles automatically', async ({ page }) => {
@@ -353,7 +353,7 @@ test('the lecturer assigns the presentation roles automatically', async ({ page 
   await page.getByText(CLASS_CODE).click();
   await page.waitForURL(/\/teaching\/.+/);
 
-  const groupOne = page.getByRole('listitem').filter({ hasText: 'Group 1' });
+  const groupOne = page.getByTestId('group-card').filter({ hasText: 'Group 1' });
   await groupOne.getByRole('button', { name: 'Auto assign roles' }).click();
 
   // The merge table for a team of four: member 1 also takes R5, member 4 also
@@ -372,7 +372,7 @@ test('roles cannot be allocated to a group below the required size', async ({ pa
 
   // Group 2 is empty, so the button the framework protects stays unavailable.
   await expect(
-    page.getByRole('listitem').filter({ hasText: 'Group 2' }).getByRole('button', {
+    page.getByTestId('group-card').filter({ hasText: 'Group 2' }).getByRole('button', {
       name: 'Auto assign roles',
     }),
   ).toBeDisabled();
@@ -523,7 +523,7 @@ test('the lecturer renames a group', async ({ page }) => {
   await page.waitForURL(/\/teaching\/.+/);
 
   await page
-    .getByRole('listitem')
+    .getByTestId('group-card')
     .filter({ hasText: 'Group 2' })
     .getByRole('button', { name: 'Rename' })
     .click();
@@ -731,11 +731,89 @@ test('the student in the audience joins the class and a different group', async 
   await page.getByText(CLASS_CODE).click();
   await page.waitForURL(/\/classes\/.+/);
   await page
-    .getByRole('listitem')
+    .getByTestId('group-card')
     .filter({ hasText: 'Group 2' })
     .getByRole('button', { name: 'Join this group' })
     .click();
   await expect(page.getByText('Your group', { exact: true })).toBeVisible();
+});
+
+/**
+ * Joining the wrong group, and getting out of it.
+ *
+ * Three things that used to have no answer at all: a group's size was fixed
+ * the moment it was created, a student who picked the wrong group was stuck in
+ * it, and a lecturer could take somebody out of a group but not put them into
+ * one. The three meet here because that is how they meet in a real first week.
+ */
+test('a lecturer makes room in a full group', async ({ page }) => {
+  // The administrator, because at this point in the story the lecturer has not
+  // been given the class yet - the same reason the tests around this one use
+  // the administrator to run the room.
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const groupOne = page.getByTestId('group-card').filter({ hasText: 'Group 1' });
+  await expect(groupOne).toContainText('4/4 members');
+
+  await groupOne.locator('input[name="maxMembers"]').fill('5');
+  await groupOne.getByRole('button', { name: 'Save capacity' }).click();
+
+  await expect(page.getByTestId('alert-success')).toContainText('now holds up to 5');
+  await expect(page.getByTestId('group-card').filter({ hasText: 'Group 1' })).toContainText(
+    '4/5 members',
+  );
+});
+
+test('a student in the wrong group leaves it and joins another', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  // They are in Group 2, and Group 1 now has the seat the lecturer just made.
+  page.once('dialog', (dialog) => void dialog.accept());
+  await page
+    .getByTestId('group-card')
+    .filter({ hasText: 'Group 2' })
+    .getByRole('button', { name: 'Leave this group' })
+    .click();
+
+  await expect(page.getByText('Your group', { exact: true })).toHaveCount(0);
+
+  await page
+    .getByTestId('group-card')
+    .filter({ hasText: 'Group 1' })
+    .getByRole('button', { name: 'Join this group' })
+    .click();
+  await expect(
+    page.getByTestId('group-card').filter({ hasText: 'Group 1' }).getByText('Your group'),
+  ).toBeVisible();
+});
+
+test('the lecturer moves them back in one step', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  // The placement table says where everybody is, and is where they are moved.
+  const row = page
+    .getByTestId('placement')
+    .getByRole('listitem')
+    .filter({ hasText: AUDIENCE.fullName });
+  await expect(row).toContainText('Group 1');
+
+  await row.getByLabel(`Pick a group for ${AUDIENCE.fullName}`).selectOption({ label: 'Group 2' });
+
+  await expect(page.getByTestId('alert-success')).toContainText('Moved');
+  // Back where the rest of this run expects them: in the audience, not the
+  // group that is about to present.
+  await expect(page.getByTestId('group-card').filter({ hasText: 'Group 2' })).toContainText(
+    AUDIENCE.fullName,
+  );
 });
 
 test('before the session starts the slides belong to the group alone', async ({ page }) => {

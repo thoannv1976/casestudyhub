@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { Group, GroupMember } from '@casestudyhub/shared';
+import type { ClassEnrollment, Group, GroupMember } from '@casestudyhub/shared';
 import { useRouter } from '@/i18n/navigation';
 import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
 import { Badge } from '@/components/ui/card';
@@ -11,10 +11,13 @@ export function GroupManager({
   classId,
   groups,
   members,
+  roster,
 }: {
   classId: string;
   groups: Group[];
   members: GroupMember[];
+  /** The class list, so the students nobody placed can be seen and placed. */
+  roster: ClassEnrollment[];
 }) {
   const t = useTranslations('groups');
   const tError = useTranslations();
@@ -24,6 +27,69 @@ export function GroupManager({
   const [busy, setBusy] = useState(false);
   /** Which group has its name open for editing, if any. */
   const [renaming, setRenaming] = useState<string | null>(null);
+
+  /**
+   * Everybody who can be put somewhere, with where they are now.
+   *
+   * One list rather than two, because placing a student who has no group and
+   * moving one who has are the same decision from the lecturer's side: this
+   * person belongs in that group. It also keeps other groups' names out of a
+   * group's own card, where they read as if they were part of it.
+   *
+   * Two filters, both deliberate: only active enrolments, because somebody
+   * waiting for approval has not joined the class yet; and only rows with an
+   * account behind them, since a name imported from the faculty list cannot be
+   * placed until that student has registered.
+   */
+  const groupOf = new Map(members.map((member) => [member.studentUid, member.groupId]));
+  const nameOf = new Map(groups.map((group) => [group.id, group.groupName]));
+  const placeable = roster
+    .filter((student) => student.status === 'active')
+    .filter((student): student is typeof student & { studentUid: string } =>
+      Boolean(student.studentUid),
+    )
+    .map((student) => {
+      const currentGroupId = groupOf.get(student.studentUid) ?? null;
+      return {
+        ...student,
+        currentGroupId,
+        currentGroupName: currentGroupId ? (nameOf.get(currentGroupId) ?? null) : null,
+      };
+    });
+
+  /** Moves somebody into another group; one call, one transaction behind it. */
+  async function move(studentUid: string, name: string, toGroupId: string) {
+    const done = await call(`/api/groups/${toGroupId}/members`, { classId, studentUid }, 'PATCH');
+    if (done) {
+      const group = groups.find((candidate) => candidate.id === toGroupId);
+      setNotice(t('moved', { name, group: group?.groupName ?? '' }));
+    }
+  }
+
+  /** Places a student who has no group at all. */
+  async function place(studentUid: string, name: string, groupId: string) {
+    const done = await call(`/api/groups/${groupId}/members`, { classId, studentUid });
+    if (done) {
+      const group = groups.find((candidate) => candidate.id === groupId);
+      setNotice(t('assigned', { name, group: group?.groupName ?? '' }));
+    }
+  }
+
+  /** How many members a group may hold, changed after it was created. */
+  async function saveCapacity(
+    groupId: string,
+    name: string,
+    event: React.FormEvent<HTMLFormElement>,
+  ) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const done = (await call(
+      `/api/groups/${groupId}`,
+      { classId, maxMembers: Number(form.get('maxMembers')) },
+      'PATCH',
+    )) as { maxMembers?: number } | null;
+    if (done?.maxMembers) setNotice(t('capacitySaved', { name, max: done.maxMembers }));
+  }
 
   async function call(url: string, body: Record<string, unknown>, method = 'POST') {
     setBusy(true);
@@ -133,12 +199,13 @@ export function GroupManager({
           {groups.map((group) => {
             const groupMembers = membersOf(group.id);
             return (
-              <li key={group.id} className="surface-card rounded-xl p-4">
+              <li key={group.id} data-testid="group-card" className="surface-card rounded-xl p-4">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h3 className="font-semibold">{group.groupName}</h3>
                     <p className="text-muted text-xs">
-                      {groupMembers.length}/{group.maxMembers} · {group.groupCode}
+                      {t('memberCount', { count: groupMembers.length, max: group.maxMembers })} ·{' '}
+                      {group.groupCode}
                     </p>
                   </div>
                   <span className="flex items-center gap-2">
@@ -215,6 +282,31 @@ export function GroupManager({
                   )}
                 </ul>
 
+                <form
+                  onSubmit={(event) => void saveCapacity(group.id, group.groupName, event)}
+                  className="mt-3 flex flex-wrap items-end gap-2"
+                >
+                  <Field
+                    label={t('capacity')}
+                    htmlFor={`maxMembers__${group.id}`}
+                    hint={t('capacityHint')}
+                  >
+                    <Input
+                      id={`maxMembers__${group.id}`}
+                      name="maxMembers"
+                      type="number"
+                      min={Math.max(groupMembers.length, 2)}
+                      max={12}
+                      defaultValue={group.maxMembers}
+                      required
+                      className="w-24"
+                    />
+                  </Field>
+                  <Button type="submit" variant="ghost" disabled={busy}>
+                    {t('saveCapacity')}
+                  </Button>
+                </form>
+
                 <div className="mt-4 flex flex-wrap gap-2">
                   <Button
                     variant="ghost"
@@ -244,6 +336,58 @@ export function GroupManager({
           })}
         </ul>
       )}
+
+      {groups.length > 0 ? (
+        <section className="space-y-3" data-testid="placement">
+          <h3 className="text-sm font-semibold">{t('placementTitle')}</h3>
+          <p className="text-muted text-sm">{t('placementHint')}</p>
+
+          {placeable.length === 0 ? (
+            <p className="text-muted text-sm">{t('nobodyToPlace')}</p>
+          ) : (
+            <ul className="space-y-2 text-sm">
+              {placeable.map((student) => (
+                <li
+                  key={student.studentUid}
+                  className="surface-card flex flex-wrap items-center justify-between gap-2 rounded-xl px-3 py-2"
+                >
+                  <span>
+                    <span className="font-mono text-xs">{student.studentId}</span>{' '}
+                    {student.fullName}
+                    <span className="text-muted ml-2 text-xs">
+                      {student.currentGroupName ?? t('noGroupYet')}
+                    </span>
+                  </span>
+                  <select
+                    aria-label={t('placeInto', { name: student.fullName })}
+                    disabled={busy}
+                    value=""
+                    onChange={(event) => {
+                      const groupId = event.target.value;
+                      if (!groupId) return;
+                      if (student.currentGroupId) {
+                        void move(student.studentUid, student.fullName, groupId);
+                      } else {
+                        void place(student.studentUid, student.fullName, groupId);
+                      }
+                    }}
+                    className="surface-card h-9 rounded px-2 text-base disabled:opacity-40 sm:h-8 sm:text-xs"
+                  >
+                    <option value="">{student.currentGroupId ? t('moveTo') : t('assign')}</option>
+                    {groups
+                      .filter((group) => !group.locked && group.id !== student.currentGroupId)
+                      .map((group) => (
+                        <option key={group.id} value={group.id}>
+                          {group.groupName}
+                        </option>
+                      ))}
+                  </select>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

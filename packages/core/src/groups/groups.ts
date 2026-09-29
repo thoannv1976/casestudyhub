@@ -511,3 +511,223 @@ export async function setGroupRoles(
     after: { manual: true, changed: input.assignments.length },
   });
 }
+
+/** What a group may be resized to. The create form already uses this range. */
+export const MIN_GROUP_CAPACITY = 2;
+export const MAX_GROUP_CAPACITY = 12;
+
+/**
+ * Changes how many members one group may hold, after it was created.
+ *
+ * The floor is the people already in it. Letting a lecturer set a limit below
+ * the current membership would leave a group permanently over its own limit,
+ * and nothing in the app knows how to resolve that - it would simply refuse
+ * the next join for a reason nobody could act on.
+ */
+export async function setGroupMaxMembers(
+  actor: SessionUser,
+  classId: string,
+  groupId: string,
+  maxMembers: number,
+): Promise<number> {
+  if (
+    !Number.isInteger(maxMembers) ||
+    maxMembers < MIN_GROUP_CAPACITY ||
+    maxMembers > MAX_GROUP_CAPACITY
+  ) {
+    throw new AppError('VALIDATION_FAILED', 'errors.maxMembersInvalid');
+  }
+
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.groups).doc(groupId);
+
+  const before = await db.runTransaction(async (tx) => {
+    const snapshot = await tx.get(ref);
+    if (!snapshot.exists || snapshot.get('classId') !== classId) {
+      throw new AppError('NOT_FOUND', 'errors.groupNotFound');
+    }
+
+    const memberCount = (snapshot.get('memberCount') as number | undefined) ?? 0;
+    if (maxMembers < memberCount) {
+      throw new AppError('POLICY_VIOLATION', 'errors.maxMembersBelowMembers');
+    }
+
+    const current = (snapshot.get('maxMembers') as number | undefined) ?? 0;
+    if (current === maxMembers) throw new AppError('VALIDATION_FAILED', 'errors.nothingToUpdate');
+
+    tx.update(ref, { maxMembers, updatedAt: FieldValue.serverTimestamp() });
+    return current;
+  });
+
+  await writeAuditLog({
+    action: 'group.capacity_changed',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.groups}/${groupId}`,
+    classId,
+    before: { maxMembers: before },
+    after: { maxMembers },
+  });
+
+  return maxMembers;
+}
+
+/**
+ * The leader of a group, after somebody leaves it.
+ *
+ * Whoever joined earliest takes over. Without this a group whose only leader
+ * walks out has nobody marked as leader, and the role never comes back.
+ */
+function nextLeader(
+  members: FirebaseFirestore.QueryDocumentSnapshot[],
+  leavingUid: string,
+): FirebaseFirestore.QueryDocumentSnapshot | null {
+  const remaining = members.filter((doc) => doc.get('studentUid') !== leavingUid);
+  if (remaining.length === 0) return null;
+
+  return remaining.reduce((earliest, candidate) => {
+    const at = (doc: FirebaseFirestore.QueryDocumentSnapshot) =>
+      (doc.get('joinedAt') as FirebaseFirestore.Timestamp | undefined)?.toMillis() ??
+      Number.MAX_SAFE_INTEGER;
+    return at(candidate) < at(earliest) ? candidate : earliest;
+  });
+}
+
+/**
+ * A student leaves the group they joined.
+ *
+ * For the case this exists to solve: joining the wrong group in the first
+ * week. It closes once the group has work, because from then on leaving is a
+ * way out of an assignment rather than a correction - at that point the
+ * lecturer moves people, and can see who they moved.
+ */
+export async function leaveGroup(student: SessionUser, classId: string): Promise<void> {
+  const db = getDb();
+  const memberRef = db.collection(COLLECTIONS.groupMembers).doc(membershipId(classId, student.uid));
+
+  const groupId = await db.runTransaction(async (tx) => {
+    const memberSnapshot = await tx.get(memberRef);
+    if (!memberSnapshot.exists) throw new AppError('NOT_FOUND', 'errors.notInGroup');
+
+    const group = memberSnapshot.get('groupId') as string;
+    const groupRef = db.collection(COLLECTIONS.groups).doc(group);
+
+    const [groupSnapshot, assignments, siblings] = await Promise.all([
+      tx.get(groupRef),
+      tx.get(db.collection(COLLECTIONS.assignments).where('groupId', '==', group).limit(1)),
+      tx.get(db.collection(COLLECTIONS.groupMembers).where('groupId', '==', group)),
+    ]);
+
+    if (!groupSnapshot.exists) throw new AppError('NOT_FOUND', 'errors.groupNotFound');
+    if (groupSnapshot.get('locked') === true) {
+      throw new AppError('POLICY_VIOLATION', 'errors.groupLocked');
+    }
+    // Work exists for this group, so who is in it is the lecturer's to change.
+    if (!assignments.empty) {
+      throw new AppError('POLICY_VIOLATION', 'errors.leaveAfterAssignment');
+    }
+
+    if (memberSnapshot.get('isLeader') === true) {
+      const heir = nextLeader(siblings.docs, student.uid);
+      if (heir) tx.update(heir.ref, { isLeader: true, updatedAt: FieldValue.serverTimestamp() });
+    }
+
+    tx.delete(memberRef);
+    tx.update(groupRef, {
+      memberCount: FieldValue.increment(-1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    return group;
+  });
+
+  await writeAuditLog({
+    action: 'group.member_left',
+    actorUid: student.uid,
+    actorRole: student.role,
+    target: `${COLLECTIONS.groupMembers}/${membershipId(classId, student.uid)}`,
+    classId,
+    before: { groupId },
+  });
+}
+
+/**
+ * A lecturer moves a student from one group to another.
+ *
+ * One transaction, not a removal followed by a placement. Two calls leave a
+ * moment where the student belongs to no group at all, and if the second one
+ * fails - a full group, a dropped connection - they stay there.
+ *
+ * The membership document id carries the class and the student, never the
+ * group, so a move rewrites one document rather than deleting and recreating
+ * it. What does not survive the move is the roles: they were handed out for a
+ * presentation this student is no longer part of.
+ */
+export async function moveMember(
+  actor: SessionUser,
+  classId: string,
+  studentUid: string,
+  toGroupId: string,
+): Promise<{ fromGroupId: string }> {
+  const db = getDb();
+  const memberRef = db.collection(COLLECTIONS.groupMembers).doc(membershipId(classId, studentUid));
+  const targetRef = db.collection(COLLECTIONS.groups).doc(toGroupId);
+
+  const fromGroupId = await db.runTransaction(async (tx) => {
+    const [memberSnapshot, targetSnapshot] = await Promise.all([
+      tx.get(memberRef),
+      tx.get(targetRef),
+    ]);
+
+    if (!memberSnapshot.exists) throw new AppError('NOT_FOUND', 'errors.notInGroup');
+    if (!targetSnapshot.exists || targetSnapshot.get('classId') !== classId) {
+      throw new AppError('NOT_FOUND', 'errors.groupNotFound');
+    }
+
+    const from = memberSnapshot.get('groupId') as string;
+    if (from === toGroupId) throw new AppError('VALIDATION_FAILED', 'errors.nothingToUpdate');
+
+    const targetCount = (targetSnapshot.get('memberCount') as number | undefined) ?? 0;
+    const targetMax = (targetSnapshot.get('maxMembers') as number | undefined) ?? 0;
+    if (targetCount >= targetMax) throw new AppError('CONFLICT', 'errors.groupFull');
+
+    const siblings = await tx.get(
+      db.collection(COLLECTIONS.groupMembers).where('groupId', '==', from),
+    );
+
+    if (memberSnapshot.get('isLeader') === true) {
+      const heir = nextLeader(siblings.docs, studentUid);
+      if (heir) tx.update(heir.ref, { isLeader: true, updatedAt: FieldValue.serverTimestamp() });
+    }
+
+    tx.update(memberRef, {
+      groupId: toGroupId,
+      roleIds: [],
+      isLeader: targetCount === 0,
+      movedByUid: actor.uid,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(db.collection(COLLECTIONS.groups).doc(from), {
+      memberCount: FieldValue.increment(-1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(targetRef, {
+      memberCount: FieldValue.increment(1),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    return from;
+  });
+
+  await writeAuditLog({
+    action: 'group.member_moved',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.groupMembers}/${membershipId(classId, studentUid)}`,
+    classId,
+    before: { groupId: fromGroupId },
+    after: { groupId: toGroupId },
+  });
+
+  return { fromGroupId };
+}

@@ -1,5 +1,7 @@
 import {
+  MAX_ALLOCATABLE_TEAM_SIZE,
   ROLE_ALLOCATION_BY_TEAM_SIZE,
+  ROLE_PARTNER_ORDER,
   type PresentationRoleId,
   PRESENTATION_ROLE_IDS,
 } from '../domain/roles';
@@ -41,32 +43,49 @@ export function autoAssignRoles(
       'GROUP_TOO_SMALL',
     );
   }
-  if (size > policy.groupSize.max) {
+
+  // Deliberately not `policy.groupSize.max`. A lecturer who raises one group's
+  // limit to eight has made that decision explicitly, and refusing to seat the
+  // eighth member because the course framework says six would leave them at a
+  // dead end with no way forward but assigning every role by hand. What can
+  // actually be seated is what the allocation knows how to seat.
+  if (size > MAX_ALLOCATABLE_TEAM_SIZE) {
     throw new RoleAllocationError(
-      `A group may have at most ${policy.groupSize.max} members, got ${size}`,
+      `No role allocation for a team of ${size}; at most ${MAX_ALLOCATABLE_TEAM_SIZE} can be seated`,
       'GROUP_TOO_LARGE',
     );
   }
 
-  const table = ROLE_ALLOCATION_BY_TEAM_SIZE[size as 4 | 5 | 6];
+  // Above six, the first six are seated by the table and the rest partner an
+  // existing role.
+  const seated = Math.min(size, 6);
+  const table = ROLE_ALLOCATION_BY_TEAM_SIZE[seated as 4 | 5 | 6];
   if (!table) {
     throw new RoleAllocationError(
-      `No role allocation table defined for a team of ${size}`,
+      `No role allocation table defined for a team of ${seated}`,
       'NO_ALLOCATION_TABLE',
     );
   }
 
-  return PRESENTATION_ROLE_IDS.map((roleId) => {
+  const assignments: RoleAssignment[] = PRESENTATION_ROLE_IDS.map((roleId) => {
     const memberIndex = table[roleId];
     const memberId = memberIds[memberIndex - 1];
     if (!memberId) {
       throw new RoleAllocationError(
-        `Allocation table for a team of ${size} points at member ${memberIndex}`,
+        `Allocation table for a team of ${seated} points at member ${memberIndex}`,
         'NO_ALLOCATION_TABLE',
       );
     }
     return { roleId, memberId };
   });
+
+  for (let extra = 6; extra < size; extra += 1) {
+    const roleId = ROLE_PARTNER_ORDER[extra - 6];
+    const memberId = memberIds[extra];
+    if (roleId && memberId) assignments.push({ roleId, memberId });
+  }
+
+  return assignments;
 }
 
 /** Roles owned by one member, in presentation order. */

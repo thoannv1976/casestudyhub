@@ -329,7 +329,9 @@
     "volunteeringNotOpen": "Giảng viên chưa mở đăng ký thuyết trình.",
     "notVolunteered": "Nhóm này chưa xung phong thuyết trình.",
     "onlyGroupMembersVolunteer": "Chỉ thành viên trong nhóm mới xung phong được cho nhóm.",
-    "tooFewQuestionsToCluster": "Cần ít nhất 3 câu hỏi mới gom theo chủ đề được."
+    "tooFewQuestionsToCluster": "Cần ít nhất 3 câu hỏi mới gom theo chủ đề được.",
+    "maxMembersBelowMembers": "Không hạ được xuống dưới số thành viên đang có trong nhóm.",
+    "leaveAfterAssignment": "Nhóm đã được giao bài nên không tự rời được. Hãy nhờ giảng viên chuyển nhóm."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -566,7 +568,25 @@
     "cancel": "Thôi",
     "groupName": "Tên nhóm",
     "saveName": "Lưu tên",
-    "renamed": "Đã đổi tên nhóm thành {name}."
+    "renamed": "Đã đổi tên nhóm thành {name}.",
+    "capacity": "Sức chứa",
+    "saveCapacity": "Lưu sức chứa",
+    "capacityHint": "Số thành viên tối đa của nhóm này, từ 2 đến 12.",
+    "capacitySaved": "Đã đổi sức chứa nhóm {name} thành {max}.",
+    "leave": "Rời nhóm",
+    "leaveConfirm": "Rời khỏi nhóm này? Bạn có thể vào nhóm khác sau đó.",
+    "left": "Bạn đã rời nhóm.",
+    "moveTo": "Chuyển sang nhóm",
+    "move": "Chuyển",
+    "moved": "Đã chuyển {name} sang nhóm {group}.",
+    "assign": "Xếp vào nhóm",
+    "assigned": "Đã xếp {name} vào nhóm {group}.",
+    "memberCount": "{count}/{max} thành viên",
+    "placementTitle": "Xếp và chuyển nhóm",
+    "placementHint": "Cả lớp ở đây, kèm nhóm hiện tại. Chọn nhóm để xếp người chưa có nhóm, hoặc chuyển người đang ở nhóm khác.",
+    "nobodyToPlace": "Lớp chưa có sinh viên nào để xếp.",
+    "noGroupYet": "chưa có nhóm",
+    "placeInto": "Chọn nhóm cho {name}"
   },
   "cases": {
     "title": "Thư viện Case Study",

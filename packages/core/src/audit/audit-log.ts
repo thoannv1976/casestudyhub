@@ -20,6 +20,8 @@ export const AUDIT_ACTIONS = [
   'group.created',
   'group.locked',
   'group.member_moved',
+  'group.member_left',
+  'group.capacity_changed',
   'group.random_distribution',
   'group.roles_assigned',
   'group.renamed',
