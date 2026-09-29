@@ -2,7 +2,13 @@
 
 import { useState } from 'react';
 import { useFormatter, useTranslations } from 'next-intl';
-import { PROGRESS_FILTERS, matchesFilter, type ProgressFilter } from '@casestudyhub/shared';
+import {
+  PROGRESS_FILTERS,
+  PROGRESS_TONE,
+  matchesFilter,
+  type ProgressFilter,
+} from '@casestudyhub/shared';
+import { Badge, type BadgeTone } from '@/components/ui/card';
 import type { ClassOverview } from '@casestudyhub/core';
 import { Link } from '@/i18n/navigation';
 
@@ -14,6 +20,13 @@ import { Link } from '@/i18n/navigation';
  * can read. The filter is the same one the progress table uses, because a
  * lecturer asking "which ones are behind" is asking the same question here.
  */
+/** Marking reads the same way everywhere: done, in hand, not started. */
+const MARKING_TONE: Readonly<Record<string, BadgeTone>> = {
+  published: 'success',
+  draft: 'warning',
+  unmarked: 'neutral',
+};
+
 export function OverviewTable({ classId, overview }: { classId: string; overview: ClassOverview }) {
   const t = useTranslations('overview');
   const format = useFormatter();
@@ -120,17 +133,15 @@ export function OverviewTable({ classId, overview }: { classId: string; overview
                   ) : null}
                 </td>
                 <td className="px-4 py-3">
-                  <span
-                    className={
-                      row.progress.state === 'overdue'
-                        ? 'font-medium text-red-600 dark:text-red-400'
-                        : ''
-                    }
-                  >
+                  {/* The column a lecturer scans down. A badge carries the
+                      state at a glance; the word is still there to read. */}
+                  <Badge tone={PROGRESS_TONE[row.progress.state]}>
                     {tProgress(row.progress.state)}
-                  </span>
+                  </Badge>
                 </td>
-                <td className="px-4 py-3">{t(`marking.${row.marking}`)}</td>
+                <td className="px-4 py-3">
+                  <Badge tone={MARKING_TONE[row.marking]}>{t(`marking.${row.marking}`)}</Badge>
+                </td>
                 <td className="px-4 py-3 tabular-nums">
                   {row.groupScoreRaw ?? '—'}
                   {row.bonusPoints ? (

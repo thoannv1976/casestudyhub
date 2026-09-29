@@ -96,7 +96,7 @@ export default async function ProjectGradePage({
             {group.groupName} · {tProject('subject')}
           </p>
         </div>
-        <Badge tone={assessment?.status === 'published' ? 'brand' : 'neutral'}>
+        <Badge tone={assessment?.status === 'published' ? 'success' : 'warning'}>
           {t(`status.${assessment?.status ?? 'unmarked'}`)}
         </Badge>
       </div>

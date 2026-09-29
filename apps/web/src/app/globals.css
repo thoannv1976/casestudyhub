@@ -25,13 +25,25 @@
 }
 
 :root {
-  --surface: #ffffff;
-  --surface-muted: #f4f6f5;
+  /* A hint of the brand green in the page behind the cards, so a card reads as
+     a raised surface rather than as a rectangle drawn on white. */
+  --surface: #f7faf8;
+  --surface-muted: #eef2f0;
   --surface-raised: #ffffff;
-  --border-subtle: #e2e7e4;
+  --border-subtle: #dde5e0;
   --text-strong: #0f2f20;
   --text-body: #33403a;
   --text-muted: #5f6f67;
+
+  /* What a state means, not how loud it is. Each pair clears 4.5:1. */
+  --tone-success-bg: #dcf0e4;
+  --tone-success-fg: #14532d;
+  --tone-warning-bg: #fdf0d5;
+  --tone-warning-fg: #78450f;
+  --tone-danger-bg: #fde2e1;
+  --tone-danger-fg: #8c1d18;
+  --tone-info-bg: #dde9fa;
+  --tone-info-fg: #1c3f72;
 }
 
 :root[data-theme='dark'] {
@@ -42,6 +54,17 @@
   --text-strong: #eef7f1;
   --text-body: #cfded6;
   --text-muted: #91a79c;
+
+  /* Dark mode inverts the pair: a deep, desaturated ground with bright text.
+     The light-mode values would glare here and fail contrast the other way. */
+  --tone-success-bg: #123524;
+  --tone-success-fg: #86e3ab;
+  --tone-warning-bg: #3a2a0d;
+  --tone-warning-fg: #f3c366;
+  --tone-danger-bg: #3d1614;
+  --tone-danger-fg: #f6a9a3;
+  --tone-info-bg: #16283f;
+  --tone-info-fg: #9dc4f5;
 }
 
 @layer base {
@@ -74,6 +97,17 @@
   .surface-card {
     background-color: var(--surface-raised);
     border: 1px solid var(--border-subtle);
+    transition:
+      border-color 150ms ease,
+      box-shadow 150ms ease;
+  }
+
+  /* Only where a card is a control. A card that does nothing should not
+     appear to offer something when the pointer crosses it. */
+  a.surface-card:hover,
+  button.surface-card:hover,
+  label.surface-card:hover {
+    border-color: var(--color-brand-400);
   }
 
   .text-muted {

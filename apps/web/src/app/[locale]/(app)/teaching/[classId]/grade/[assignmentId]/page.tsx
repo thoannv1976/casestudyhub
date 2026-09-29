@@ -124,7 +124,7 @@ export default async function GradePage({
             {group?.groupName ?? assignment.groupId} · {caseStudy?.title ?? assignment.caseStudyId}
           </p>
         </div>
-        <Badge tone={assessment?.status === 'published' ? 'brand' : 'neutral'}>
+        <Badge tone={assessment?.status === 'published' ? 'success' : 'warning'}>
           {t(`status.${assessment?.status ?? 'unmarked'}`)}
         </Badge>
       </div>

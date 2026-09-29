@@ -83,7 +83,7 @@ export function SessionBoard({
               <div className="flex flex-wrap items-center gap-2">
                 {session ? (
                   <>
-                    <Badge tone={session.status === 'completed' ? 'neutral' : 'brand'}>
+                    <Badge tone={session.status === 'completed' ? 'neutral' : 'info'}>
                       {t(`status.${session.status}`)}
                     </Badge>
                     <Link

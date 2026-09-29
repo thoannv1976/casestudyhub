@@ -59,7 +59,7 @@ export default async function MyClassesPage({ params }: { params: Promise<{ loca
                 <Card className="hover:border-brand-400 h-full transition-colors">
                   <div className="flex items-start justify-between gap-3">
                     <CardTitle>{details?.className ?? enrollment.classId}</CardTitle>
-                    <Badge tone={enrollment.status === 'active' ? 'brand' : 'neutral'}>
+                    <Badge tone={enrollment.status === 'active' ? 'success' : 'warning'}>
                       {enrollment.status === 'active' ? t('statusActive') : t('statusPending')}
                     </Badge>
                   </div>

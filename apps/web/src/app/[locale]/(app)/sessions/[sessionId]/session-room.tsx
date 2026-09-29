@@ -90,7 +90,7 @@ export function SessionRoom({
           <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
           <p className="text-muted mt-2 text-sm">{subtitle}</p>
         </div>
-        <Badge tone={session.status === 'completed' ? 'neutral' : 'brand'}>
+        <Badge tone={session.status === 'completed' ? 'neutral' : 'info'}>
           {t(`status.${session.status}`)}
         </Badge>
       </div>

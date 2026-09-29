@@ -111,3 +111,20 @@ export function matchesFilter(progress: AssignmentProgress, filter: ProgressFilt
   if (filter === 'needsLecturer') return progress.needsLecturer;
   return progress.state === filter;
 }
+
+/**
+ * How each state is coloured, in one place.
+ *
+ * It lives beside the states themselves so that adding a state without
+ * deciding how it reads is a type error rather than a badge that silently
+ * comes out grey.
+ */
+export const PROGRESS_TONE: Readonly<
+  Record<ProgressState, 'neutral' | 'success' | 'warning' | 'danger' | 'info'>
+> = {
+  awaiting: 'info',
+  overdue: 'danger',
+  complete: 'warning',
+  marked: 'warning',
+  published: 'success',
+};

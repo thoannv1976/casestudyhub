@@ -270,7 +270,7 @@ export default async function StudentClassPage({
                   >
                     {group?.groupName ?? session.groupId}
                   </Link>
-                  <Badge tone={session.status === 'completed' ? 'neutral' : 'brand'}>
+                  <Badge tone={session.status === 'completed' ? 'neutral' : 'info'}>
                     {tSession(`status.${session.status}`)}
                   </Badge>
                 </li>

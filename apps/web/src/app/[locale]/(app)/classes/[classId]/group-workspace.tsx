@@ -174,7 +174,7 @@ export function GroupWorkspace({
                   ) : null}
                 </div>
                 {current ? (
-                  <Badge tone={current.isLate ? 'neutral' : 'brand'}>
+                  <Badge tone={current.isLate ? 'danger' : 'success'}>
                     {current.isLate
                       ? t('versionLate', { version: current.versionNumber })
                       : t('version', { version: current.versionNumber })}

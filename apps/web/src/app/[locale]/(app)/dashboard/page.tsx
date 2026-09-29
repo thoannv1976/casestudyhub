@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { getFormatter, getTranslations, setRequestLocale } from 'next-intl/server';
+import { PROGRESS_TONE } from '@casestudyhub/shared';
 import { dashboardFor, getUserProfile } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -24,14 +25,6 @@ const ROLE_LABEL_KEY = {
 } as const;
 
 /** The tone of a state, so the eye finds the overdue row before reading it. */
-const STATE_TONE = {
-  awaiting: 'neutral',
-  overdue: 'accent',
-  complete: 'brand',
-  marked: 'brand',
-  published: 'neutral',
-} as const;
-
 /**
  * What this person has to do next.
  *
@@ -100,7 +93,7 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
                   key={row.assignmentId}
                   className="flex flex-wrap items-baseline gap-x-3 gap-y-1"
                 >
-                  <Badge tone={STATE_TONE[row.progress.state]}>
+                  <Badge tone={PROGRESS_TONE[row.progress.state]}>
                     {tProgress(row.progress.state)}
                   </Badge>
                   <Link
