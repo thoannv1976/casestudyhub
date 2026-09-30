@@ -12,7 +12,7 @@ Bạn đang chạy trên máy của tôi và có Cloud Shell. Việc của bạn
 - **KHÔNG tự dán khóa API nào.** Khóa OpenAI/Gemini do tôi nhập trong trang Quản trị → Hệ thống, không nhập bằng biến môi trường, không nhập giúp tôi.
 - **KHÔNG tự đặt hạn nộp, KHÔNG tự chấm điểm, KHÔNG tự tạo lớp hay nhóm.** Dữ liệu thật là của giảng viên.
 - **Đừng tự tạo bucket, đừng chạy `scripts/setup-firebase.sh`.**
-- **KHÔNG dùng `SKIP_FIRESTORE=1`.** Lần này Firestore rules có thay đổi, bỏ qua bước đó là deploy thiếu.
+- **KHÔNG dùng `SKIP_FIRESTORE=1`.** Bước đó đẩy Firestore rules và index; bỏ qua là deploy thiếu.
 
 **Các lệnh cần chạy, đúng thứ tự:**
 
@@ -30,8 +30,8 @@ Dự án GCP `casestudy1-509414`, vùng `asia-southeast1`.
 1. Commit đang deploy (`git log --oneline -1`) và revision Cloud Run mới. Chỉ cần chép lại cho tôi; nếu trong 5 commit gần nhất **không** thấy PR47 thì dừng và báo, vì như vậy là `git pull` chưa lấy về bản mới.
 2. Kết quả `/api/health` — phải là `status: ok` kèm revision mới.
 3. Danh sách biến môi trường Cloud Run in ra trong lúc deploy. Nếu vẫn còn `AI_MODEL` thì chỉ **báo là còn**, đừng xóa: code từ PR36 không đọc biến đó nữa, nhưng tôi muốn biết nó còn nằm đó.
-4. Số index Firestore ở trạng thái READY. **Lần này thêm 4 index mới**, nên con số phải lên **17**. Index xây mất vài phút; nếu còn cái nào ở trạng thái CREATING thì chờ rồi kiểm lại, và báo cho tôi con số cuối cùng. Chưa đủ 17 mà đã cho sinh viên dùng thì có màn hình sẽ lỗi.
-5. Firestore rules đã upload và release chưa. Lần này rules thêm hai collection: `projectVolunteers` và `questionClusters`.
+4. Số index Firestore ở trạng thái READY — hiện phải là **17**. Index xây mất vài phút; còn cái nào ở trạng thái CREATING thì chờ rồi kiểm lại, và báo con số cuối cùng. Thiếu index thì có màn hình sẽ lỗi trước mặt sinh viên.
+5. Firestore rules đã release chưa. Nếu log ghi `already up to date, skipping upload` thì **kiểm rồi báo, đừng coi là thiếu**: chạy `git log --oneline -1 -- firebase/firestore.rules`. Nếu lần sửa cuối của file đó nằm ở một bản đã deploy trước rồi thì "already up to date" là đúng. (Đây là chỗ tôi từng viết sai trong prompt và bạn phải đi kiểm giúp — nên giờ tôi để cách kiểm ở đây thay vì khẳng định.)
 6. Storage rules: nếu vẫn bị bỏ qua vì Firebase Storage chưa bật thì cứ báo lại như lần trước, **đừng tự bật**.
 7. Bất cứ dòng đỏ hay cảnh báo nào khác, chép nguyên văn.
 
