@@ -44,3 +44,6 @@ emulator-data/
 # scripts/guide/screenshots.spec.ts nên không cần giữ trong repo.
 guide-shots/
 phone-shots/
+
+# Ảnh so sánh trước/sau, sinh lại được bằng scripts/guide/screenshots.spec.ts
+truoc-sau/

@@ -4,7 +4,7 @@ Dán vào phiên Cowork. Việc này **chỉ đọc**, không lưu gì, nên kh�
 
 ---
 
-Bản đang chạy là revision `casestudyhub-web-00023-fh8`, dựng từ commit `2dc5149`, trong đó có `5c9fa60 PR47` (đổi màu). Tôi cần biết màu đã tới trình duyệt chưa, và nếu rồi thì vì sao nhìn vẫn thấy một màu.
+Bản trên production hiện đã cũ hơn `main`: cần deploy lại để có `a97b3e6 PR48` (giao diện). Sau khi deploy xong thì kiểm phần dưới. Tôi cần biết màu đã tới trình duyệt chưa, và nếu rồi thì vì sao nhìn vẫn thấy một màu.
 
 **Việc 1 — chứng minh CSS màu có trên production.** Mở app, xem mã nguồn trang để lấy đường dẫn file CSS (dạng `/_next/static/chunks/<tên>.css`), rồi tải nó về và tìm bốn class sau. Chép lại nguyên văn dòng tìm được, hoặc báo là không có:
 
