@@ -20,6 +20,19 @@ import { Link } from '@/i18n/navigation';
  * can read. The filter is the same one the progress table uses, because a
  * lecturer asking "which ones are behind" is asking the same question here.
  */
+/**
+ * The colour of a number on the summary tiles.
+ *
+ * Only three of the seven ever take one. The rest are counts of work, and a
+ * page where every number is coloured is a page where none of them stands out.
+ */
+function TOTAL_COLOUR(key: string, value: number): string {
+  if (value === 0) return '';
+  if (key === 'missing' || key === 'late') return 'text-[var(--tone-danger-fg)]';
+  if (key === 'published') return 'text-[var(--tone-success-fg)]';
+  return '';
+}
+
 /** Marking reads the same way everywhere: done, in hand, not started. */
 const MARKING_TONE: Readonly<Record<string, BadgeTone>> = {
   published: 'success',
@@ -56,8 +69,13 @@ export function OverviewTable({ classId, overview }: { classId: string; overview
             ['published', overview.totals.published],
           ] as const
         ).map(([key, value]) => (
-          <li key={key} className="surface-card rounded-xl px-4 py-3">
-            <p className="text-xl font-semibold tabular-nums">{value}</p>
+          <li key={key} className="surface-card min-w-28 rounded-xl px-4 py-3">
+            {/* A count of nothing is good news for "missing" and "late", and
+                colouring a zero red would cry wolf. So the tile only takes a
+                colour when the number has something to say. */}
+            <p className={`text-2xl font-semibold tabular-nums ${TOTAL_COLOUR(key, value)}`}>
+              {value}
+            </p>
             <p className="text-muted mt-1 text-xs">{t(`totals.${key}`)}</p>
           </li>
         ))}

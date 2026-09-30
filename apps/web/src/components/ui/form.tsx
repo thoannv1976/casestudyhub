@@ -102,8 +102,11 @@ export function Button({
   className?: string;
 }) {
   const variants = {
-    primary: 'bg-brand-600 text-white hover:bg-brand-700 disabled:bg-brand-300',
-    ghost: 'surface-card hover:border-brand-400',
+    // A shadow that lifts on hover and settles on press: the cheapest way to
+    // say "this does something" without another colour in the palette.
+    primary:
+      'bg-brand-600 text-white shadow-sm hover:bg-brand-700 hover:shadow active:translate-y-px disabled:bg-brand-300 disabled:shadow-none',
+    ghost: 'surface-card hover:border-brand-400 hover:text-brand-700 dark:hover:text-brand-300',
   } as const;
 
   return (

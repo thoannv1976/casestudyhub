@@ -81,6 +81,25 @@ describe('the colours a state is read by', () => {
     }
   });
 
+  it('is readable as plain text on a card, which is how the totals use it', () => {
+    // The summary tiles colour the number itself rather than putting it in a
+    // badge, so the pair that matters there is the tone's text colour against
+    // the card behind it - a pair nothing measured until the tiles used it.
+    for (const tone of ['danger', 'success'] as const) {
+      const light = contrast(
+        token(':root {', 'surface-raised'),
+        token(':root {', `tone-${tone}-fg`),
+      );
+      expect(light, `${tone} on a light card is ${light.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+
+      const dark = contrast(
+        token(":root[data-theme='dark']", 'surface-raised'),
+        token(":root[data-theme='dark']", `tone-${tone}-fg`),
+      );
+      expect(dark, `${tone} on a dark card is ${dark.toFixed(2)}:1`).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
   it('keeps body text readable on the tinted page background', () => {
     // The page stopped being pure white, so this is the pair that changed.
     expect(

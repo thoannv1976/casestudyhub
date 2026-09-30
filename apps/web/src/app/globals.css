@@ -44,6 +44,9 @@
   --tone-danger-fg: #8c1d18;
   --tone-info-bg: #dde9fa;
   --tone-info-fg: #1c3f72;
+
+  --shadow-card: 0 1px 2px rgb(15 47 32 / 0.04), 0 1px 3px rgb(15 47 32 / 0.06);
+  --shadow-card-hover: 0 2px 4px rgb(15 47 32 / 0.06), 0 4px 12px rgb(15 47 32 / 0.08);
 }
 
 :root[data-theme='dark'] {
@@ -65,6 +68,11 @@
   --tone-danger-fg: #f6a9a3;
   --tone-info-bg: #16283f;
   --tone-info-fg: #9dc4f5;
+
+  /* A shadow is light that did not arrive. On a dark page there is none to
+     withhold, so depth comes from the border instead. */
+  --shadow-card: none;
+  --shadow-card-hover: 0 0 0 1px var(--color-brand-400);
 }
 
 @layer base {
@@ -97,6 +105,9 @@
   .surface-card {
     background-color: var(--surface-raised);
     border: 1px solid var(--border-subtle);
+    /* A card should sit on the page, not be drawn on it. One soft shadow does
+       that; two would make the page feel like it is floating apart. */
+    box-shadow: var(--shadow-card);
     transition:
       border-color 150ms ease,
       box-shadow 150ms ease;
@@ -108,10 +119,51 @@
   button.surface-card:hover,
   label.surface-card:hover {
     border-color: var(--color-brand-400);
+    box-shadow: var(--shadow-card-hover);
   }
 
   .text-muted {
     color: var(--text-muted);
+  }
+
+  /*
+   * Every page names itself the same way, so the rule goes here rather than
+   * into fifteen page components that would drift apart. The short brand rule
+   * under the title is what gives a page a top, which a bare line of bold text
+   * never did.
+   */
+  main h1 {
+    position: relative;
+    padding-bottom: 0.6rem;
+  }
+
+  main h1::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 2.5rem;
+    height: 3px;
+    border-radius: 999px;
+    background-color: var(--color-brand-500);
+  }
+
+  /*
+   * Tables are the screens a lecturer spends the term in. A tinted head keeps
+   * the column names from reading as a first row of data, and a row that
+   * lights up under the pointer is how you keep your place crossing eight
+   * columns on a wide table.
+   */
+  .surface-card table thead tr {
+    background-color: var(--surface-muted);
+  }
+
+  .surface-card table tbody tr {
+    transition: background-color 120ms ease;
+  }
+
+  .surface-card table tbody tr:hover {
+    background-color: var(--surface-muted);
   }
 }
 
