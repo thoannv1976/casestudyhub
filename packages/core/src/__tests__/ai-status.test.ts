@@ -66,7 +66,11 @@ describe('how the model is configured', () => {
       { GOOGLE_CLOUD_PROJECT: 'casestudy1-509414' },
       {
         aiEnabled: true,
-        aiModels: { gemini: 'gemini-2.5-flash', openai: 'gpt-4.1-mini' },
+        aiModels: {
+          gemini: 'gemini-2.5-flash',
+          openai: 'gpt-4.1-mini',
+          anthropic: 'claude-opus-5-5',
+        },
         aiLocation: 'asia-southeast1',
       },
     );
@@ -145,7 +149,7 @@ describe('choosing a vendor', () => {
   it('uses each vendor its own model name', () => {
     const settings = {
       aiEnabled: true,
-      aiModels: { gemini: 'gemini-2.5-pro', openai: 'gpt-4.1' },
+      aiModels: { gemini: 'gemini-2.5-pro', openai: 'gpt-4.1', anthropic: 'claude-sonnet-5-5' },
     } as const;
 
     expect(configOf({ GOOGLE_CLOUD_PROJECT: 'p' }, { ...settings })?.model).toBe('gemini-2.5-pro');
@@ -203,7 +207,7 @@ describe('choosing a vendor', () => {
       {
         aiEnabled: true,
         aiProvider: 'openai',
-        aiModels: { gemini: 'gemini-2.5-flash', openai: 'gpt-4.1' },
+        aiModels: { gemini: 'gemini-2.5-flash', openai: 'gpt-4.1', anthropic: 'claude-opus-5-5' },
       },
       { openai: 'sk-stored' },
     );

@@ -2,11 +2,15 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type {
-  ClassQuestion,
-  PeerReview,
-  PresentationPolicy,
-  PresentationSession,
+import {
+  answersDueAt,
+  questionWindowOpen,
+  questionsCloseAt,
+  type AfterClassQa,
+  type ClassQuestion,
+  type PeerReview,
+  type PresentationPolicy,
+  type PresentationSession,
 } from '@casestudyhub/shared';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { PeerReviewForm } from './peer-review';
@@ -38,6 +42,7 @@ export interface RoomState {
 export function SessionRoom({
   sessionId,
   policy,
+  afterClassQa,
   initial,
   ownUid,
   isStaff,
@@ -48,6 +53,8 @@ export function SessionRoom({
   sessionId: string;
   /** The framework this session runs under, frozen when the case was set. */
   policy: PresentationPolicy;
+  /** How long asking and answering stay open after the session ends. */
+  afterClassQa: AfterClassQa;
   initial: RoomState;
   ownUid: string;
   isStaff: boolean;
@@ -58,6 +65,8 @@ export function SessionRoom({
 }) {
   const t = useTranslations('session');
   const tQuestions = useTranslations('questions');
+  // Read once: the windows are dated in days, and the server decides anyway.
+  const [now] = useState(() => Date.now());
   const tPeer = useTranslations('peerReview');
 
   const [room, setRoom] = useState(initial);
@@ -134,7 +143,10 @@ export function SessionRoom({
             isStaff={isStaff}
             isPresenter={isPresenter}
             canAsk={isStudent && !isPresenter}
-            questionsOpen={session.questionsOpen}
+            questionsOpen={questionWindowOpen(session, afterClassQa, now)}
+            questionsCloseAt={questionsCloseAt(session, afterClassQa)}
+            answersDueAt={answersDueAt(session, afterClassQa)}
+            afterSession={session.status === 'completed'}
             onChanged={refresh}
           />
         </div>

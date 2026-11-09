@@ -79,6 +79,8 @@ lên trình bày đến lúc sinh viên nhìn thấy điểm đã công bố.
 | 24  | Hệ thống và hạn mức AI      | Số liệu nền tảng đếm bằng aggregate query; đóng/mở đăng ký, giới hạn file danh sách lớp, và hạn mức lượt gọi mô hình mỗi tháng — chặn ngay tại cổng AI, đếm theo tháng                                             | ✅         |
 | 25  | Phiên bản case study        | Case sửa được lần đầu tiên, và sửa là ghi phiên bản mới chứ không đè bản cũ; `caseVersionId` mà assignment đóng băng từ nay đọc lại được                                                                           | ✅         |
 | 26  | Bộ case của lớp             | Thư viện dùng chung; mỗi lớp chọn bộ case riêng hoặc sao chép từ lớp khác, không tải lại file; nhiều nhóm cùng một case (số chỗ do giảng viên đặt); nhóm luôn mở được case mình nhận                               | ✅         |
+| 27  | Quản lý thư viện case       | Tìm, lọc, lưu trữ/khôi phục, gỡ file, tải nhiều file, chọn loại file, đếm lớp và bài giao dùng case, tạo nhiều case nháp từ nhiều file                                                                             | ✅         |
+| 28  | Hỏi–đáp sau thuyết trình    | Hỏi thêm sau buổi, nhóm trả lời trong app, AI (OpenAI/Gemini/Claude) gợi ý, giảng viên chốt, câu hỏi hay/câu trả lời tốt, báo cáo CSV; tham gia và điểm chuyên cần theo lớp                                        | ✅         |
 | —   | Tích hợp Moodle/LTI         | Qua UniGame Hub (Hub đã có khoá LTI với Moodle của trường): mở từ Moodle, ghép tài khoản, gắn khoá ↔ lớp, gửi điểm đã công bố về Sổ điểm Moodle. Xem docs/06 mục 14b                                               | ✅         |
 
 **Ghi chú thiết kế Phase 4**

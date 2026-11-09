@@ -43,7 +43,7 @@ export function AiProviderForm({
 
   const stored = credentials[provider];
   /** Vertex is the one route that needs no key at all. */
-  const needsKey = provider === 'openai' || geminiTransport === 'apiKey';
+  const needsKey = provider !== 'gemini' || geminiTransport === 'apiKey';
 
   async function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

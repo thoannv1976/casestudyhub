@@ -1282,6 +1282,70 @@ test('an email belonging to nobody is refused, and a student is not a lecturer',
   await expect(page.getByTestId('alert-error')).toContainText('not a lecturer account');
 });
 
+/**
+ * Questions and answers after the presentation: the lecturer settles the answer
+ * the class keeps - from the group's, from a model's suggestion, or in their own
+ * words - and marks the questions worth reading again. Attendance is read from
+ * who asked and who scored.
+ */
+test('the lecturer settles the answer the class keeps, and marks a good question', async ({
+  page,
+}) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  await page.getByRole('link', { name: 'Questions & answers' }).click();
+  await page.waitForURL(/\/questions$/);
+
+  const item = page.getByTestId('qa-question').filter({ hasText: 'outearns retail' });
+  // The group's answer from the room is there to settle from.
+  await expect(item).toContainText('Third-party seller services revenue');
+
+  await item
+    .getByRole('textbox', { name: 'Answer to settle' })
+    .fill('Third-party seller services earn more per order than retail, as slide 9 shows.');
+  await item.getByRole('button', { name: 'Settle this answer' }).click();
+  await expect(item.getByText('Settled', { exact: true })).toBeVisible();
+
+  await item.getByRole('button', { name: '★ Good question' }).click();
+  await expect(item.getByRole('button', { name: 'Unmark good question' })).toBeVisible();
+});
+
+test('the asker reads the settled answer on the wall', async ({ page }) => {
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto(`/en${sessionUrl}`);
+
+  const question = page.getByRole('listitem').filter({ hasText: 'outearns retail' });
+  await expect(question).toContainText('as slide 9 shows');
+  await expect(question).toContainText('Settled by');
+  await expect(question).toContainText('Good question');
+});
+
+test('the lecturer reads who took part, and the attendance that follows', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+  await page.getByRole('link', { name: 'Participation & attendance' }).click();
+  await page.waitForURL(/\/participation$/);
+
+  const row = page
+    .getByTestId('participation-table')
+    .getByRole('row')
+    .filter({ hasText: AUDIENCE.fullName });
+  // They asked at a presentation they sat in, so they have a score, not a dash.
+  await expect(row.locator('td').last()).not.toHaveText('—');
+
+  // The same line, from the student's side.
+  await signOut(page);
+  await signIn(page, AUDIENCE.email, AUDIENCE.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+  await expect(page.getByTestId('own-participation')).toContainText('Attendance so far');
+});
+
 test('the marking screen lays the evidence out beside the rubric', async ({ page }) => {
   await signIn(page, LECTURER.email, LECTURER.newPassword);
   await page.goto('/en/teaching');

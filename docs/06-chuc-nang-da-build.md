@@ -67,6 +67,14 @@ Trang: `/classes/[classId]`, `/teaching/[classId]`.
   thuộc học phần khác. Thư viện, trang chọn case và đường tải file dùng chung
   một quy tắc.
 
+- **Quản lý thư viện**: tìm theo mã/tên/doanh nghiệp, lọc theo học phần và trạng
+  thái, mỗi case hiện "Đang dùng: N lớp · M bài giao"; **lưu trữ / khôi phục**
+  (case lưu trữ không còn được mời chọn nhưng nhóm đang giữ vẫn mở được tài
+  liệu); tải **nhiều file một lần**, **chọn loại file**, **gỡ file** (file đã
+  giao thì chỉ ẩn).
+- **Tạo case hàng loạt**: chọn nhiều file → mỗi file thành một case nháp, mã tự
+  đánh số tiếp (CASE28, CASE29…), tên lấy từ tên file, xem trước rồi mới tạo.
+
 Trang: `/cases`, `/cases/[caseId]`, `/classes/[classId]`, mục "Bộ case của
 lớp" ở `/teaching/[classId]`.
 
@@ -148,6 +156,31 @@ Trang: `/sessions/[sessionId]`.
 
 Trang: `/teaching/[classId]/project/[groupId]/questions`, `/cases/[caseId]`.
 
+## 9b. Hỏi–đáp sau buổi thuyết trình, chuyên cần
+
+- **Hỏi sau buổi**: giảng viên đặt "Số ngày còn được đặt câu hỏi" (0–14) sau
+  khi buổi kết thúc; sinh viên đã nghe thuyết trình vẫn hỏi hoặc sửa câu hỏi
+  trong khoảng đó. Để 0 là như cũ: hết buổi là đóng.
+- **Nhóm trả lời trong app**: sau buổi, nhóm thuyết trình trả lời mọi câu còn
+  lại (không cần chọn trước), hạn do giảng viên đặt (0 = không hạn). Mỗi câu
+  trả lời ghi rõ **trên lớp** hay **trong app**.
+- **AI gợi ý, giảng viên chốt**: AI (OpenAI, Gemini hoặc **Claude**, giảng viên
+  chọn trong số hãng đã có khóa) viết **gợi ý** cạnh câu hỏi — không bao giờ ghi
+  đè câu trả lời, không đổi trạng thái, sinh viên không nhận được. Giảng viên
+  chốt câu trả lời (lấy của nhóm, lấy gợi ý AI, hoặc tự viết); app ghi lại chốt
+  từ đâu và báo cho người hỏi. Đánh dấu **Câu hỏi hay** / **Câu trả lời tốt**.
+- **Báo cáo tổng hợp câu hỏi**: trang Hỏi–đáp lọc theo tất cả / chưa chốt / hay
+  và tốt; tải CSV toàn bộ hoặc chỉ câu hay (có BOM để Excel đọc đúng tiếng Việt).
+- **Tham gia & chuyên cần**: mỗi sinh viên, mỗi buổi ngồi nghe (trừ buổi nhóm
+  mình): có đặt câu hỏi, có chấm chéo; số câu hỏi, câu hay, lượt thích, câu trả
+  lời trên lớp/trong app, câu trả lời tốt. **Điểm chuyên cần** /10 = tỷ lệ
+  (trọng số hỏi × có hỏi + trọng số chấm × có chấm) trên số buổi, cộng thưởng
+  mỗi câu hỏi hay, tối đa 10; giảng viên chỉnh trọng số theo lớp. Tải CSV.
+  Sinh viên thấy dòng của chính mình ở trang lớp.
+
+Trang: `/teaching/[classId]/questions`, `/teaching/[classId]/participation`,
+`/sessions/[sessionId]`, `/classes/[classId]`.
+
 ## 10. Chấm điểm
 
 - Chấm theo rubric của **đúng phiên bản khung** bài đó đã đóng băng.
@@ -186,10 +219,10 @@ quyết định — không đường code nào cho điểm AI chạm vào `grade
 | Đọc bài nộp và đề xuất điểm theo rubric, kèm dẫn chứng | Giảng viên |
 | Gợi ý câu hỏi để chất vấn nhóm                         | Giảng viên |
 | Xếp câu hỏi thành chủ đề                               | Giảng viên |
-| Trả lời câu hỏi còn lại                                | Giảng viên |
+| Gợi ý câu trả lời (giảng viên chốt)                    | Giảng viên |
 | Gia sư hỏi đáp về case (không làm bài hộ)              | Sinh viên  |
 
-- Chọn **OpenAI hoặc Gemini** trong Quản trị, nhập khóa API ngay trên web, không
+- Chọn **OpenAI, Gemini hoặc Claude (Anthropic)** trong Quản trị, nhập khóa API ngay trên web, không
   cần deploy lại. Gemini chạy được cả đường Vertex AI (không cần khóa).
 - Nút **Thử gọi mô hình** để biết khóa có tới được nhà cung cấp hay không.
 - Hạn mức lượt gọi mỗi tháng, đếm và chặn.

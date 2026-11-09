@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { answerQuestionSchema, askQuestionSchema, redactForViewer } from '@casestudyhub/shared';
+import {
+  answerChannelFor,
+  answerQuestionSchema,
+  answerWindowOpen,
+  askQuestionSchema,
+  redactForViewer,
+} from '@casestudyhub/shared';
 import {
   AppError,
   answerQuestion,
@@ -9,6 +15,7 @@ import {
   getSession,
   getUserProfile,
   listSessionQuestions,
+  qaPolicyOfClass,
   selectQuestion,
   toggleUpvote,
   votesOf,
@@ -109,11 +116,20 @@ export async function POST(
       case 'answer': {
         if (!isPresenter && !isStaff) throw new AppError('FORBIDDEN', 'errors.notPresentingGroup');
         const input = answerQuestionSchema.parse(body);
+        // After the session the group answers in writing, until the date the
+        // class set; the lecturer is not held to it.
+        if (!isStaff) {
+          const { afterClassQa } = await qaPolicyOfClass(session.classId);
+          if (!answerWindowOpen(session, afterClassQa, Date.now())) {
+            throw new AppError('POLICY_VIOLATION', 'errors.answersClosed');
+          }
+        }
         await answerQuestion(
           caller,
           profile?.fullName ?? caller.email,
           input.questionId,
           input.answerText,
+          answerChannelFor(session),
         );
         return NextResponse.json({ ok: true });
       }

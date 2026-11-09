@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { classCodeSchema, localeSchema, studentIdSchema, userRoleSchema } from '../domain/identity';
 import { MAX_CASE_SET, MAX_GROUPS_PER_CASE } from '../domain/academic';
+import { afterClassQaSchema, attendancePolicySchema } from '../domain/questions';
 
 /** Request contracts for the academic structure and user administration. */
 
@@ -228,3 +229,10 @@ export const caseSetRequestSchema = z.union([
   z.object({ copyFromClassId: z.string().trim().min(1) }),
 ]);
 export type CaseSetRequest = z.infer<typeof caseSetRequestSchema>;
+
+/** The lecturer's after-class Q&A and attendance settings for a class. */
+export const qaSettingsRequestSchema = z.object({
+  afterClassQa: afterClassQaSchema.optional(),
+  attendancePolicy: attendancePolicySchema.optional(),
+});
+export type QaSettingsRequest = z.infer<typeof qaSettingsRequestSchema>;

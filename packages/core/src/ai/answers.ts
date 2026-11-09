@@ -1,6 +1,11 @@
 import { z } from 'zod';
 import { FieldValue } from 'firebase-admin/firestore';
-import { COLLECTIONS, currentAttachments, type ClassQuestion } from '@casestudyhub/shared';
+import {
+  COLLECTIONS,
+  currentAttachments,
+  type AiProviderName,
+  type ClassQuestion,
+} from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
 import { AppError } from '../errors';
@@ -21,8 +26,10 @@ import type { AiFilePart } from './provider';
  * and kept with the case, so next year's class - and the year after - inherits
  * what this class wanted to know.
  *
- * An AI answer is marked as one (`answeredByAi`), and an answer given aloud in
- * the room is never overwritten by it. What a student said stands.
+ * The model *suggests*. Its answer is stored beside the question as a
+ * suggestion, never as the answer: the lecturer reads it next to the group's
+ * own answer, edits whichever is closer, and settles one (`reviewQuestion`).
+ * Students never receive a suggestion. What a student said stands untouched.
  */
 
 const INLINE_MIME_TYPES = new Set([
@@ -89,6 +96,7 @@ async function caseMaterial(caseStudyId: string): Promise<AiFilePart[]> {
 
 export interface AnswerBankResult {
   considered: number;
+  /** Questions that received a suggestion in this pass. */
   answered: number;
   ungrounded: number;
   skipped: number;
@@ -97,9 +105,13 @@ export interface AnswerBankResult {
   outputTokens: number;
 }
 
-/** Questions the AI should take on: everything the room did not answer. */
+/**
+ * Questions the model should take on: every one without a settled answer and
+ * without a suggestion yet - including those the group answered, so the
+ * lecturer has both side by side when settling.
+ */
 export function questionsAwaitingAnswer(questions: readonly ClassQuestion[]): ClassQuestion[] {
-  return questions.filter((question) => question.status !== 'answered' && !question.answerText);
+  return questions.filter((question) => !question.finalAnswer && !question.aiSuggestion);
 }
 
 /**
@@ -118,6 +130,7 @@ async function answerAll(
     limit?: number;
     auditTarget: string;
     classId?: string;
+    provider?: AiProviderName;
   },
 ): Promise<AnswerBankResult> {
   const all = input.all;
@@ -138,7 +151,7 @@ async function answerAll(
   const files = input.files;
   if (files.length === 0) throw new AppError('POLICY_VIOLATION', 'errors.nothingToEvaluate');
 
-  const provider = await getAiProvider();
+  const provider = await getAiProvider(input.provider);
   const db = getDb();
 
   let answered = 0;
@@ -178,15 +191,16 @@ async function answerAll(
       const text = entry.answer.trim();
       if (text.length < 10) continue;
 
+      // A suggestion only: the answer, the status and the checklist that
+      // reads them are the group's and the lecturer's.
       writes.update(db.collection(COLLECTIONS.questions).doc(question.id), {
-        answerText: text.slice(0, 4000),
-        answeredByAi: true,
-        answeredByName: provider.model,
-        answeredAt: new Date().toISOString(),
-        // Deliberately not 'answered': that status means a member of the group
-        // answered it in the room, and it feeds the Q&A checklist.
-        status: 'closed',
-        aiGroundedInCase: entry.groundedInCase,
+        aiSuggestion: {
+          text: text.slice(0, 4000),
+          groundedInCase: entry.groundedInCase,
+          provider: provider.name,
+          model: result.model,
+          createdAt: new Date().toISOString(),
+        },
         updatedAt: FieldValue.serverTimestamp(),
       });
       queued += 1;
@@ -203,7 +217,7 @@ async function answerAll(
     actorRole: actor.role,
     target: input.auditTarget,
     ...(input.classId ? { classId: input.classId } : {}),
-    after: { answered, ungrounded, promptTokens, outputTokens },
+    after: { suggested: answered, ungrounded, promptTokens, outputTokens, model: provider.model },
   });
 
   return {
@@ -221,13 +235,14 @@ async function answerAll(
 export async function answerQuestionBank(
   actor: SessionUser,
   caseStudyId: string,
-  options: { limit?: number } = {},
+  options: { limit?: number; provider?: AiProviderName } = {},
 ): Promise<AnswerBankResult> {
   return answerAll(actor, {
     all: await listCaseQuestions(caseStudyId),
     files: await caseMaterial(caseStudyId),
     limit: options.limit,
     auditTarget: `${COLLECTIONS.caseStudies}/${caseStudyId}`,
+    provider: options.provider,
   });
 }
 
@@ -242,18 +257,22 @@ export async function answerQuestionBank(
 export async function answerSessionQuestions(
   actor: SessionUser,
   sessionId: string,
-  options: { limit?: number } = {},
+  options: { limit?: number; provider?: AiProviderName } = {},
 ): Promise<AnswerBankResult> {
   const session = await getSession(sessionId);
   if (!session) throw new AppError('NOT_FOUND', 'errors.sessionNotFound');
 
+  // A case study is answered from the case itself and from what the group
+  // made of it; the class project only from what the group handed in.
   const sources = await gatherEvaluationSources(session.assignmentId);
+  const caseFiles = session.caseStudyId ? await caseMaterial(session.caseStudyId) : [];
 
   return answerAll(actor, {
     all: await listSessionQuestions(sessionId),
-    files: sources.files,
+    files: [...caseFiles, ...sources.files],
     limit: options.limit,
     auditTarget: `${COLLECTIONS.presentationSessions}/${sessionId}`,
     classId: session.classId,
+    provider: options.provider,
   });
 }

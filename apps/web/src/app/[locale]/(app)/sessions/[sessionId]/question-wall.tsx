@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import {
   DEFAULT_PRESENTATION_ROLES,
   MAX_SELECTED_QUESTIONS,
+  officialAnswer,
   roleKeyOf,
   QUESTION_CATEGORIES,
   type ClassQuestion,
@@ -31,6 +32,9 @@ export function QuestionWall({
   isPresenter,
   canAsk,
   questionsOpen,
+  questionsCloseAt = null,
+  answersDueAt = null,
+  afterSession = false,
   onChanged,
 }: {
   sessionId: string;
@@ -41,12 +45,21 @@ export function QuestionWall({
   isPresenter: boolean;
   canAsk: boolean;
   questionsOpen: boolean;
+  /** When asking closes, if the class keeps it open after the session. */
+  questionsCloseAt?: string | null;
+  /** When the group's written answers are due, if the class set a date. */
+  answersDueAt?: string | null;
+  /** The session has ended: the group now answers in writing, any question. */
+  afterSession?: boolean;
   /** Asks the room to poll again, so every panel sees the same state. */
   onChanged: () => Promise<void>;
 }) {
   const t = useTranslations('questions');
   const tRoles = useTranslations('roles');
   const tError = useTranslations();
+  const format = useFormatter();
+  const when = (iso: string) =>
+    format.dateTime(new Date(iso), { dateStyle: 'medium', timeStyle: 'short' });
 
   const [errorKey, setErrorKey] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -150,6 +163,16 @@ export function QuestionWall({
       ) : null}
 
       {!questionsOpen ? <p className="text-muted text-sm">{t('closed')}</p> : null}
+      {questionsOpen && questionsCloseAt ? (
+        <p className="text-muted text-sm" data-testid="ask-until">
+          {t('askUntil', { when: when(questionsCloseAt) })}
+        </p>
+      ) : null}
+      {afterSession && isPresenter ? (
+        <Alert tone="success">
+          {answersDueAt ? t('answerInAppUntil', { when: when(answersDueAt) }) : t('answerInApp')}
+        </Alert>
+      ) : null}
 
       <div>
         <h3 className="text-sm font-semibold">
@@ -185,6 +208,9 @@ export function QuestionWall({
                       {question.status === 'answered' ? (
                         <Badge tone="brand">{t('answered')}</Badge>
                       ) : null}
+                      {question.featuredQuestion ? (
+                        <Badge tone="accent">{t('featuredQuestion')}</Badge>
+                      ) : null}
                     </div>
 
                     <button
@@ -203,33 +229,45 @@ export function QuestionWall({
                   <p className="mt-3 text-sm">{question.text}</p>
                   {asker ? <p className="text-muted mt-1 text-xs">{asker}</p> : null}
 
-                  {question.answerText ? (
-                    <div className="border-brand-300 mt-3 border-l-2 pl-3">
-                      <p className="text-sm">{question.answerText}</p>
-                      <p className="text-muted mt-1 text-xs">
-                        {question.answeredByName}
-                        {question.answeredByAi ? ` · ${t('byAi')}` : ''}
-                      </p>
-                    </div>
-                  ) : null}
+                  {(() => {
+                    const answer = officialAnswer(question);
+                    if (!answer) return null;
+                    return (
+                      <div className="border-brand-300 mt-3 border-l-2 pl-3">
+                        <p className="text-sm">{answer.text}</p>
+                        <p className="text-muted mt-1 text-xs">
+                          {answer.source === 'final'
+                            ? t('settledBy', { name: question.finalizedByName ?? '' })
+                            : answer.source === 'ai'
+                              ? `${question.answeredByName ?? ''} · ${t('byAi')}`
+                              : `${question.answeredByName ?? ''} · ${t(
+                                  answer.channel === 'app' ? 'inApp' : 'inClass',
+                                )}`}
+                          {question.featuredAnswer ? ` · ${t('featuredAnswer')}` : ''}
+                        </p>
+                      </div>
+                    );
+                  })()}
 
                   {(isPresenter || isStaff) && question.status !== 'answered' ? (
                     <div className="mt-3 space-y-2">
                       <div className="flex flex-wrap gap-2">
-                        <Button
-                          variant="ghost"
-                          disabled={busy}
-                          onClick={() =>
-                            void send({
-                              action: 'select',
-                              questionId: question.id,
-                              selected: question.status !== 'selected',
-                            })
-                          }
-                        >
-                          {question.status === 'selected' ? t('deselect') : t('select')}
-                        </Button>
-                        {question.status === 'selected' ? (
+                        {afterSession ? null : (
+                          <Button
+                            variant="ghost"
+                            disabled={busy}
+                            onClick={() =>
+                              void send({
+                                action: 'select',
+                                questionId: question.id,
+                                selected: question.status !== 'selected',
+                              })
+                            }
+                          >
+                            {question.status === 'selected' ? t('deselect') : t('select')}
+                          </Button>
+                        )}
+                        {question.status === 'selected' || afterSession ? (
                           <Button
                             variant="ghost"
                             disabled={busy}
@@ -237,7 +275,7 @@ export function QuestionWall({
                               setAnswering(answering === question.id ? null : question.id)
                             }
                           >
-                            {t('recordAnswer')}
+                            {afterSession ? t('writeAnswer') : t('recordAnswer')}
                           </Button>
                         ) : null}
                       </div>

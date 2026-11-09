@@ -2,12 +2,19 @@ import { FieldValue } from 'firebase-admin/firestore';
 import {
   COLLECTIONS,
   MAX_SELECTED_QUESTIONS,
+  afterClassQaSchema,
   anonymiseForReuse,
   askerTally,
+  attendancePolicySchema,
   classQuestionSchema,
+  questionWindowOpen,
+  type AfterClassQa,
+  type AnswerChannel,
   type AskQuestionRequest,
   type AskerTally,
+  type AttendancePolicy,
   type ClassQuestion,
+  type ReviewQuestionRequest,
 } from '@casestudyhub/shared';
 import { getDb } from '../firebase/admin';
 import { writeAuditLog } from '../audit/audit-log';
@@ -36,6 +43,21 @@ function parse(data: FirebaseFirestore.DocumentData): ClassQuestion | null {
   return parsed.success ? parsed.data : null;
 }
 
+/** A class's after-class Q&A and attendance settings, defaulted when never set. */
+export async function qaPolicyOfClass(
+  classId: string,
+): Promise<{ afterClassQa: AfterClassQa; attendancePolicy: AttendancePolicy }> {
+  const snapshot = await getDb().collection(COLLECTIONS.classes).doc(classId).get();
+  const afterClassQa = afterClassQaSchema.safeParse(snapshot.get('afterClassQa') ?? {});
+  const attendancePolicy = attendancePolicySchema.safeParse(snapshot.get('attendancePolicy') ?? {});
+  return {
+    afterClassQa: afterClassQa.success ? afterClassQa.data : afterClassQaSchema.parse({}),
+    attendancePolicy: attendancePolicy.success
+      ? attendancePolicy.data
+      : attendancePolicySchema.parse({}),
+  };
+}
+
 export interface AskerProfile {
   fullName: string;
   studentId: string;
@@ -50,7 +72,12 @@ export async function askQuestion(
 ): Promise<ClassQuestion> {
   const session = await getSession(sessionId);
   if (!session) throw new AppError('NOT_FOUND', 'errors.sessionNotFound');
-  if (!session.questionsOpen) throw new AppError('POLICY_VIOLATION', 'errors.questionsClosed');
+  // Open in the room, or - where the class allows it - for some days after,
+  // for a student who watched the presentation and thought of it later.
+  const { afterClassQa } = await qaPolicyOfClass(session.classId);
+  if (!questionWindowOpen(session, afterClassQa, Date.now())) {
+    throw new AppError('POLICY_VIOLATION', 'errors.questionsClosed');
+  }
 
   // The presenting group answers questions; it does not ask itself any.
   const membership = await findMembership(session.classId, student.uid);
@@ -66,6 +93,10 @@ export async function askQuestion(
   // underneath them would be unfair to the group.
   if (existing.exists && existing.get('status') !== 'submitted') {
     throw new AppError('CONFLICT', 'errors.questionAlreadySelected');
+  }
+  // Nor once it has an answer the lecturer settled: that answer is to this text.
+  if (existing.exists && existing.get('finalAnswer')) {
+    throw new AppError('CONFLICT', 'errors.questionAlreadyAnswered');
   }
 
   const record = {
@@ -87,12 +118,18 @@ export async function askQuestion(
     upvotes: existing.exists ? ((existing.get('upvotes') as number | undefined) ?? 0) : 0,
     status: 'submitted' as const,
     answeredByAi: false,
+    // A mark the lecturer gave survives the student fixing a typo.
+    featuredQuestion: existing.exists ? existing.get('featuredQuestion') === true : false,
+    featuredAnswer: false,
   };
 
   await ref.set(
     {
       ...record,
       updatedAt: FieldValue.serverTimestamp(),
+      // A suggestion written for the old wording is a suggestion for a
+      // question nobody is asking any more.
+      ...(existing.exists ? { aiSuggestion: FieldValue.delete() } : {}),
       ...(existing.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
     },
     { merge: true },
@@ -256,12 +293,16 @@ export async function selectQuestion(
   });
 }
 
-/** Records the answer given in the room, and who gave it. */
+/**
+ * Records an answer from the presenting group, and who gave it: aloud in the
+ * room, or written in the app once the session has ended.
+ */
 export async function answerQuestion(
   responder: SessionUser,
   responderName: string,
   questionIdValue: string,
   answerText: string,
+  channel: AnswerChannel = 'class',
 ): Promise<void> {
   const db = getDb();
   const ref = db.collection(COLLECTIONS.questions).doc(questionIdValue);
@@ -274,6 +315,7 @@ export async function answerQuestion(
     answeredByName: responderName,
     answeredAt: new Date().toISOString(),
     answeredByAi: false,
+    answerChannel: channel,
     status: 'answered',
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -288,8 +330,116 @@ export async function answerQuestion(
     responderUid: responder.uid,
     responderName,
     roleId: snapshot.get('roleId') ?? null,
+    channel,
     createdAt: FieldValue.serverTimestamp(),
   });
+}
+
+/** Every question asked in one class, across all its presentations. */
+export async function listClassQuestions(classId: string): Promise<ClassQuestion[]> {
+  const snapshot = await getDb()
+    .collection(COLLECTIONS.questions)
+    .where('classId', '==', classId)
+    .get();
+
+  return snapshot.docs
+    .map((doc) => parse(doc.data()))
+    .filter((question): question is ClassQuestion => question !== null)
+    .sort((a, b) => b.upvotes - a.upvotes || a.id.localeCompare(b.id));
+}
+
+export async function getQuestion(questionIdValue: string): Promise<ClassQuestion | null> {
+  const snapshot = await getDb().collection(COLLECTIONS.questions).doc(questionIdValue).get();
+  return snapshot.exists ? parse(snapshot.data() as FirebaseFirestore.DocumentData) : null;
+}
+
+/**
+ * The lecturer settles an answer, or marks a question or an answer as worth
+ * reading again.
+ *
+ * Settling is choosing what the class and every later cohort will read: the
+ * group's answer as it stands, the model's suggestion, or the lecturer's own
+ * wording. Which of those it was is recorded, so a reader can tell. Nothing a
+ * student wrote is overwritten: the group's own answer stays where it was.
+ */
+export async function reviewQuestion(
+  actor: SessionUser,
+  actorName: string,
+  input: ReviewQuestionRequest,
+): Promise<ClassQuestion> {
+  const db = getDb();
+  const ref = db.collection(COLLECTIONS.questions).doc(input.questionId);
+  const snapshot = await ref.get();
+  if (!snapshot.exists) throw new AppError('NOT_FOUND', 'errors.questionNotFound');
+  const question = parse(snapshot.data() as FirebaseFirestore.DocumentData);
+  if (!question) throw new AppError('INTERNAL', 'errors.unexpected');
+
+  const patch: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
+  const after: Record<string, unknown> = {};
+
+  if (input.finalAnswer === null) {
+    patch.finalAnswer = FieldValue.delete();
+    patch.finalSource = FieldValue.delete();
+    patch.finalizedByUid = FieldValue.delete();
+    patch.finalizedByName = FieldValue.delete();
+    patch.finalizedAt = FieldValue.delete();
+    // An answer that is no longer settled cannot be the good one.
+    patch.featuredAnswer = false;
+    after.finalAnswer = null;
+  } else if (typeof input.finalAnswer === 'string') {
+    const text = input.finalAnswer.trim();
+    const source =
+      question.answerText && !question.answeredByAi && text === question.answerText.trim()
+        ? 'group'
+        : question.aiSuggestion && text === question.aiSuggestion.text.trim()
+          ? 'ai'
+          : 'lecturer';
+    patch.finalAnswer = text;
+    patch.finalSource = source;
+    patch.finalizedByUid = actor.uid;
+    patch.finalizedByName = actorName;
+    patch.finalizedAt = new Date().toISOString();
+    after.finalSource = source;
+  }
+
+  if (typeof input.featuredQuestion === 'boolean') {
+    patch.featuredQuestion = input.featuredQuestion;
+    after.featuredQuestion = input.featuredQuestion;
+  }
+  if (typeof input.featuredAnswer === 'boolean') {
+    const hasAnswer =
+      input.finalAnswer === null
+        ? false
+        : Boolean(input.finalAnswer || question.finalAnswer || question.answerText);
+    if (input.featuredAnswer && !hasAnswer) {
+      throw new AppError('POLICY_VIOLATION', 'errors.nothingToFeature');
+    }
+    patch.featuredAnswer = input.featuredAnswer;
+    after.featuredAnswer = input.featuredAnswer;
+  }
+
+  await ref.update(patch);
+
+  await writeAuditLog({
+    action: 'question.reviewed',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.questions}/${input.questionId}`,
+    classId: question.classId,
+    after,
+  });
+
+  // The asker hears when their question has an answer they can rely on.
+  if (typeof input.finalAnswer === 'string' && !question.finalAnswer) {
+    await notify({
+      recipientUids: [question.askedByUid],
+      kind: 'question.answered',
+      params: {},
+      href: `/sessions/${question.sessionId}`,
+    }).catch(() => undefined);
+  }
+
+  return (await getQuestion(input.questionId)) as ClassQuestion;
 }
 
 export interface QaCompletion {

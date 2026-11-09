@@ -21,7 +21,7 @@ export const SYSTEM_SETTINGS_ID = 'platform';
  * entry here: everything else in the platform reaches a model through one
  * interface and never learns which vendor answered.
  */
-export const AI_PROVIDERS = ['gemini', 'openai'] as const;
+export const AI_PROVIDERS = ['gemini', 'openai', 'anthropic'] as const;
 export const aiProviderSchema = z.enum(AI_PROVIDERS);
 export type AiProviderName = z.infer<typeof aiProviderSchema>;
 
@@ -29,6 +29,7 @@ export type AiProviderName = z.infer<typeof aiProviderSchema>;
 export const DEFAULT_AI_MODELS: Record<AiProviderName, string> = {
   gemini: 'gemini-2.5-flash',
   openai: 'gpt-4.1-mini',
+  anthropic: 'claude-opus-5-5',
 };
 
 /**
@@ -117,8 +118,13 @@ export const systemSettingsSchema = z.object({
     .object({
       gemini: z.string().trim().min(1).max(80).default(DEFAULT_AI_MODELS.gemini),
       openai: z.string().trim().min(1).max(80).default(DEFAULT_AI_MODELS.openai),
+      anthropic: z.string().trim().min(1).max(80).default(DEFAULT_AI_MODELS.anthropic),
     })
-    .default({ gemini: DEFAULT_AI_MODELS.gemini, openai: DEFAULT_AI_MODELS.openai }),
+    .default({
+      gemini: DEFAULT_AI_MODELS.gemini,
+      openai: DEFAULT_AI_MODELS.openai,
+      anthropic: DEFAULT_AI_MODELS.anthropic,
+    }),
 
   /** `global` serves Gemini everywhere and is the least region-restricted. */
   aiLocation: z.string().trim().min(1).max(40).default('global'),

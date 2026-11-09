@@ -185,6 +185,18 @@ export default async function ClassDetailPage({
           >
             {tSession('classReport')}
           </Link>
+          <Link
+            href={`/teaching/${classId}/questions`}
+            className="text-brand-600 dark:text-brand-300 text-sm font-medium underline"
+          >
+            {tCaseSelection('qaLink')}
+          </Link>
+          <Link
+            href={`/teaching/${classId}/participation`}
+            className="text-brand-600 dark:text-brand-300 text-sm font-medium underline"
+          >
+            {tCaseSelection('participationLink')}
+          </Link>
         </div>
       </div>
 

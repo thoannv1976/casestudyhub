@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { aiProviderSchema } from '@casestudyhub/shared';
 import {
   AiBudgetSpentError,
   AiNotConfiguredError,
@@ -73,13 +74,21 @@ export async function POST(
     const { sessionId } = await context.params;
     await assertCanManageClass(actor, await classOfSession(sessionId));
 
-    const body = (await request.json().catch(() => ({}))) as { action?: string };
+    const body = (await request.json().catch(() => ({}))) as {
+      action?: string;
+      provider?: unknown;
+    };
+    // Which vendor suggests, when the lecturer picked one that has a key.
+    const chosen = aiProviderSchema.safeParse(body.provider);
+    const provider = chosen.success ? chosen.data : undefined;
 
     if (body.action === 'cluster') {
       return NextResponse.json({ clusters: await clusterSessionQuestions(actor, sessionId) });
     }
     if (body.action === 'answer') {
-      return NextResponse.json({ result: await answerSessionQuestions(actor, sessionId) });
+      return NextResponse.json({
+        result: await answerSessionQuestions(actor, sessionId, { provider }),
+      });
     }
 
     throw new AppError('VALIDATION_FAILED', 'errors.unknownKind');

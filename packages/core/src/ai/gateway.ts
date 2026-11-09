@@ -1,7 +1,9 @@
+import { AI_PROVIDERS, type AiProviderName } from '@casestudyhub/shared';
 import { AiBudgetSpentError, AiNotConfiguredError, type AiProvider } from './provider';
 import { readAiConfig, type AiConfig } from './config';
 import { createGeminiProvider } from './gemini';
 import { createOpenAiProvider } from './openai';
+import { createAnthropicProvider } from './anthropic';
 import {
   currentAiUsage,
   getAiCredentials,
@@ -19,9 +21,28 @@ import {
  * provider here and never reaches a network.
  */
 
-export async function currentAiConfig(): Promise<AiConfig | null> {
+/**
+ * What would be called: the platform's chosen vendor, or - for a feature that
+ * lets the lecturer pick, such as suggesting answers - another vendor that also
+ * has a key. Under the same on/off switch and the same budget either way.
+ */
+export async function currentAiConfig(preferred?: AiProviderName): Promise<AiConfig | null> {
   const [settings, credentials] = await Promise.all([getSystemSettings(), getAiCredentials()]);
-  return readAiConfig(settings, credentials);
+  return readAiConfig(preferred ? { ...settings, aiProvider: preferred } : settings, credentials);
+}
+
+/** The vendors a lecturer may pick from right now: those that would answer. */
+export async function availableAiProviders(): Promise<AiProviderName[]> {
+  const [settings, credentials] = await Promise.all([getSystemSettings(), getAiCredentials()]);
+  if (override) return [settings.aiProvider];
+  return AI_PROVIDERS.filter(
+    (provider) => readAiConfig({ ...settings, aiProvider: provider }, credentials) !== null,
+  );
+}
+
+/** The vendor the platform calls when nobody picked one. */
+export async function defaultAiProviderName(): Promise<AiProviderName> {
+  return (await getSystemSettings()).aiProvider;
 }
 
 export async function isAiConfigured(): Promise<boolean> {
@@ -29,7 +50,14 @@ export async function isAiConfigured(): Promise<boolean> {
 }
 
 function providerFor(config: AiConfig): AiProvider {
-  return config.provider === 'openai' ? createOpenAiProvider(config) : createGeminiProvider(config);
+  switch (config.provider) {
+    case 'openai':
+      return createOpenAiProvider(config);
+    case 'anthropic':
+      return createAnthropicProvider(config);
+    default:
+      return createGeminiProvider(config);
+  }
 }
 
 /**
@@ -68,9 +96,9 @@ export function setAiProvider(provider: AiProvider | null): void {
   override = provider;
 }
 
-export async function getAiProvider(): Promise<AiProvider> {
+export async function getAiProvider(preferred?: AiProviderName): Promise<AiProvider> {
   if (override) return metered(override);
-  const config = await currentAiConfig();
+  const config = await currentAiConfig(preferred);
   if (!config) throw new AiNotConfiguredError();
   return metered(providerFor(config));
 }

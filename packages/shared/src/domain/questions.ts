@@ -27,6 +27,28 @@ export const QUESTION_STATUSES = ['submitted', 'selected', 'answered', 'closed']
 export const questionStatusSchema = z.enum(QUESTION_STATUSES);
 export type QuestionStatus = z.infer<typeof questionStatusSchema>;
 
+/** Where the presenting group answered: aloud in the room, or in writing afterwards. */
+export const ANSWER_CHANNELS = ['class', 'app'] as const;
+export const answerChannelSchema = z.enum(ANSWER_CHANNELS);
+export type AnswerChannel = z.infer<typeof answerChannelSchema>;
+
+/**
+ * What a model proposed as the answer. Kept beside the question, never in its
+ * answer: the lecturer reads it, edits it if needed, and decides. A student
+ * never receives it - only what the lecturer settled on.
+ */
+export const aiSuggestionSchema = z.object({
+  text: z.string().max(4000),
+  groundedInCase: z.boolean().default(true),
+  provider: z.string().min(1),
+  model: z.string().min(1),
+  createdAt: z.string().min(1),
+});
+export type AiSuggestion = z.infer<typeof aiSuggestionSchema>;
+
+/** Where a settled answer came from, recorded when the lecturer settles it. */
+export const FINAL_ANSWER_SOURCES = ['group', 'ai', 'lecturer'] as const;
+
 export const classQuestionSchema = z.object({
   id: z.string().min(1),
   /**
@@ -70,8 +92,66 @@ export const classQuestionSchema = z.object({
    * worth knowing, and it warns a reader not to treat the answer as sourced.
    */
   aiGroundedInCase: z.boolean().optional(),
+  /** Aloud in the room or written in the app afterwards; absent means the room. */
+  answerChannel: answerChannelSchema.optional(),
+  aiSuggestion: aiSuggestionSchema.optional(),
+  /** The answer the lecturer settled on: what the class and later cohorts read. */
+  finalAnswer: z.string().max(4000).optional(),
+  finalSource: z.enum(FINAL_ANSWER_SOURCES).optional(),
+  finalizedByUid: z.string().optional(),
+  finalizedByName: z.string().optional(),
+  finalizedAt: z.string().optional(),
+  /** Marked by the lecturer: a question worth reading again. */
+  featuredQuestion: z.boolean().default(false),
+  /** Marked by the lecturer: an answer worth reading again. */
+  featuredAnswer: z.boolean().default(false),
 });
 export type ClassQuestion = z.infer<typeof classQuestionSchema>;
+
+/** The lecturer settles an answer, and may mark the question or the answer. */
+export const reviewQuestionSchema = z.object({
+  questionId: z.string().min(1),
+  /** The settled text; null takes a settled answer back. Absent leaves it alone. */
+  finalAnswer: z
+    .string({ error: 'errors.answerTooShort' })
+    .trim()
+    .min(10, 'errors.answerTooShort')
+    .max(4000)
+    .nullable()
+    .optional(),
+  featuredQuestion: z.boolean().optional(),
+  featuredAnswer: z.boolean().optional(),
+});
+export type ReviewQuestionRequest = z.infer<typeof reviewQuestionSchema>;
+
+/**
+ * The answer a reader is given, and whose it is.
+ *
+ * The lecturer's settled answer wins; until there is one, the group's own
+ * answer stands; an answer the model wrote before answers needed settling is
+ * shown as the model's. An unsettled AI suggestion is never an answer.
+ */
+export function officialAnswer(
+  question: ClassQuestion,
+): { text: string; source: 'final' | 'group' | 'ai'; channel?: AnswerChannel } | null {
+  if (question.finalAnswer) return { text: question.finalAnswer, source: 'final' };
+  if (question.answerText && !question.answeredByAi) {
+    return {
+      text: question.answerText,
+      source: 'group',
+      channel: question.answerChannel ?? 'class',
+    };
+  }
+  if (question.answerText) return { text: question.answerText, source: 'ai' };
+  return null;
+}
+
+/** A question as a student may receive it: the model's unsettled draft removed. */
+export function withoutAiSuggestion(question: ClassQuestion): ClassQuestion {
+  if (!question.aiSuggestion) return question;
+  const { aiSuggestion: _dropped, ...rest } = question;
+  return rest as ClassQuestion;
+}
 
 export const askQuestionSchema = z.object({
   category: questionCategorySchema,
@@ -104,7 +184,7 @@ export const MAX_SELECTED_QUESTIONS = 3;
  */
 export function anonymiseForReuse(question: ClassQuestion): ClassQuestion {
   return {
-    ...question,
+    ...withoutAiSuggestion(question),
     askedByUid: 'anonymous',
     askedByName: 'Anonymous',
     askedByStudentId: 'anonymous',
@@ -132,8 +212,10 @@ export function redactForViewer(
   viewer: { uid: string; isStaff: boolean },
 ): ClassQuestion {
   if (viewer.isStaff) return question;
-  if (question.askedByUid === viewer.uid) return question;
-  if (!question.anonymousToClass) return { ...question, askedByStudentId: 'hidden' };
+  if (question.askedByUid === viewer.uid) return withoutAiSuggestion(question);
+  if (!question.anonymousToClass) {
+    return { ...withoutAiSuggestion(question), askedByStudentId: 'hidden' };
+  }
   return anonymiseForReuse(question);
 }
 
@@ -199,4 +281,108 @@ export function reconcileClusters(
     clusters: clusters.slice(0, 10),
     unclustered: questionIds.filter((id) => !placed.has(id)),
   };
+}
+
+const DAY_MS = 24 * 3600_000;
+
+/**
+ * How long a class keeps asking, and a group keeps answering, after the
+ * presentation ends. Zero keeps the room's rule: questions close when the
+ * session ends, and answers are not held to a date.
+ */
+export const afterClassQaSchema = z.object({
+  askDays: z.number().int().min(0).max(14).default(0),
+  answerDays: z.number().int().min(0).max(30).default(0),
+});
+export type AfterClassQa = z.infer<typeof afterClassQaSchema>;
+
+interface SessionTimes {
+  status: string;
+  questionsOpen: boolean;
+  endedAt?: string;
+}
+
+/** When asking closes after the session, if the class allows asking afterwards. */
+export function questionsCloseAt(session: SessionTimes, policy: AfterClassQa): string | null {
+  if (session.status !== 'completed' || !session.endedAt || policy.askDays <= 0) return null;
+  const ended = Date.parse(session.endedAt);
+  return Number.isNaN(ended) ? null : new Date(ended + policy.askDays * DAY_MS).toISOString();
+}
+
+/** Whether a student may ask (or edit) their question now, by the server clock. */
+export function questionWindowOpen(
+  session: SessionTimes,
+  policy: AfterClassQa,
+  nowMs: number,
+): boolean {
+  if (session.questionsOpen) return true;
+  const closes = questionsCloseAt(session, policy);
+  return closes !== null && nowMs <= Date.parse(closes);
+}
+
+/** When the presenting group's written answers are due, if the class set a date. */
+export function answersDueAt(session: SessionTimes, policy: AfterClassQa): string | null {
+  if (!session.endedAt || policy.answerDays <= 0) return null;
+  const ended = Date.parse(session.endedAt);
+  return Number.isNaN(ended) ? null : new Date(ended + policy.answerDays * DAY_MS).toISOString();
+}
+
+/** Whether the presenting group may still answer, by the server clock. */
+export function answerWindowOpen(
+  session: SessionTimes,
+  policy: AfterClassQa,
+  nowMs: number,
+): boolean {
+  if (session.status !== 'completed') return true;
+  const due = answersDueAt(session, policy);
+  return due === null || nowMs <= Date.parse(due);
+}
+
+/** An answer given once the session has ended was written in the app. */
+export function answerChannelFor(session: { status: string }): AnswerChannel {
+  return session.status === 'completed' ? 'app' : 'class';
+}
+
+/**
+ * What attendance is worth (điểm chuyên cần), set per class.
+ *
+ * For every presentation a student sat in the audience of, asking a question
+ * earns `questionWeight` and scoring the group earns `reviewWeight`; the
+ * share of what was possible, times ten, is the score. A question the lecturer
+ * marked as worth reading again adds `featuredBonus`. Never above ten.
+ */
+export const attendancePolicySchema = z.object({
+  questionWeight: z.number().min(0).max(1).default(0.5),
+  reviewWeight: z.number().min(0).max(1).default(0.5),
+  featuredBonus: z.number().min(0).max(2).default(0.5),
+});
+export type AttendancePolicy = z.infer<typeof attendancePolicySchema>;
+
+export interface AttendanceSession {
+  /** False for the session the student's own group presented. */
+  eligible: boolean;
+  asked: boolean;
+  reviewed: boolean;
+}
+
+/** The attendance score out of ten, or null when there was nothing to attend yet. */
+export function attendanceScore(
+  sessions: readonly AttendanceSession[],
+  featuredQuestions: number,
+  policy: AttendancePolicy,
+): number | null {
+  const eligible = sessions.filter((session) => session.eligible);
+  if (eligible.length === 0) return null;
+
+  const weight = policy.questionWeight + policy.reviewWeight;
+  const earned = eligible.reduce(
+    (sum, session) =>
+      sum +
+      (session.asked ? policy.questionWeight : 0) +
+      (session.reviewed ? policy.reviewWeight : 0),
+    0,
+  );
+  const base = weight === 0 ? 0 : (10 * earned) / (weight * eligible.length);
+  const score = Math.min(10, base + policy.featuredBonus * featuredQuestions);
+  return Math.round(score * 10) / 10;
 }

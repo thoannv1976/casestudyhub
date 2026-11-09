@@ -33,6 +33,7 @@ export function QuestionBoard({
   aiAvailable: boolean;
 }) {
   const t = useTranslations('questionBoard');
+  const tQuestions = useTranslations('questions');
   const tAi = useTranslations('ai');
   const tCategory = useTranslations('questions.categories');
   const tError = useTranslations();
@@ -190,6 +191,23 @@ export function QuestionBoard({
                         ? ` · ${t('notInSources')}`
                         : ''}
                     </p>
+                  </div>
+                ) : null}
+                {question.finalAnswer ? (
+                  <div className="border-brand-300 mt-3 border-l-2 pl-3">
+                    <p className="text-sm">{question.finalAnswer}</p>
+                    <p className="text-muted mt-1 text-xs">
+                      {tQuestions('settledBy', { name: question.finalizedByName ?? '' })}
+                    </p>
+                  </div>
+                ) : question.aiSuggestion ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-[var(--border-subtle)] p-3">
+                    <p className="text-muted text-xs">
+                      {t('answeredByModel', { model: question.aiSuggestion.model })} ·{' '}
+                      {tQuestions('notSettled')}
+                      {question.aiSuggestion.groundedInCase ? '' : ` · ${t('notInSources')}`}
+                    </p>
+                    <p className="mt-1 text-sm">{question.aiSuggestion.text}</p>
                   </div>
                 ) : null}
               </li>

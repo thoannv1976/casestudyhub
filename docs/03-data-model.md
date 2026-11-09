@@ -25,7 +25,9 @@ semesters/{id}                  Fall 2026
 courses/{id}                    E-Commerce 2026, danh sách CLO
 classes/{id}                    ECOM-A01, classCode, lecturerIds, policy version,
                                 caseSetIds (bộ case của lớp, không có = theo học phần),
-                                groupsPerCase (số nhóm tối đa mỗi case, mặc định 1)
+                                groupsPerCase (số nhóm tối đa mỗi case, mặc định 1),
+                                afterClassQa {askDays, answerDays},
+                                attendancePolicy {questionWeight, reviewWeight, featuredBonus}
 classEnrollments/{id}           (classId, studentUid, status, role trong lớp)
 groups/{id}                     G01, maxMembers, memberCount, locked
 groupMembers/{id}               (groupId, studentUid, roleIds[R1..R6])

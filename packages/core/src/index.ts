@@ -40,6 +40,7 @@ export * from './settings/settings';
 export * from './notifications/notifications';
 export * from './policy/policy-store';
 export * from './analytics/reports';
+export * from './analytics/participation';
 export * from './lti';
 
 // Next.js-specific entry points are NOT re-exported here: `auth/session` and

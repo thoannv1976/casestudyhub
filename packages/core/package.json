@@ -13,6 +13,7 @@
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "@casestudyhub/shared": "*",
     "fflate": "^0.8.3",
     "firebase-admin": "^14.4.0",

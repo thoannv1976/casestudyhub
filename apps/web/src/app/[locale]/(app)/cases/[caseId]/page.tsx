@@ -9,6 +9,7 @@ import {
   listCaseQuestions,
   listCaseVersions,
 } from '@casestudyhub/core';
+import { officialAnswer } from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert } from '@/components/ui/form';
@@ -72,9 +73,17 @@ export default async function CaseKnowledgePage({
   // A tutor conversation belongs to one student, and is loaded for them only.
   const tutorSession = isStaff ? null : await getTutorSession(caseId, user.uid);
 
-  const answered = questions.filter((question) => question.answerText);
-  const byRoom = answered.filter((question) => !question.answeredByAi);
+  // What a reader is given: the lecturer's settled answer, else the group's.
+  // An AI suggestion nobody settled is not an answer, and students never get it.
+  const answered = questions.filter((question) => officialAnswer(question));
+  // Answered aloud by the group, whether or not the lecturer settled it since.
+  const byRoom = questions.filter(
+    (question) => question.answerText && !question.answeredByAi && question.answerChannel !== 'app',
+  );
   const unanswered = questions.length - answered.length;
+  const awaitingSuggestion = questions.filter(
+    (question) => !question.finalAnswer && !question.aiSuggestion,
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -96,7 +105,7 @@ export default async function CaseKnowledgePage({
 
         {isStaff ? (
           <div className="mt-4">
-            <AnswerBank caseId={caseId} available={aiAvailable} pending={unanswered} />
+            <AnswerBank caseId={caseId} available={aiAvailable} pending={awaitingSuggestion} />
           </div>
         ) : null}
       </Card>
@@ -124,29 +133,59 @@ export default async function CaseKnowledgePage({
         {questions.length === 0 ? (
           <li className="text-muted text-sm">{t('empty')}</li>
         ) : (
-          questions.map((question) => (
-            <li key={question.id} className="surface-card rounded-xl p-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge>{tQuestions(`categories.${question.category}`)}</Badge>
-                {question.answeredByAi ? <Badge tone="accent">{t('answeredByAi')}</Badge> : null}
-                {question.answerText && !question.answeredByAi ? (
-                  <Badge tone="brand">{t('answeredInRoom')}</Badge>
+          questions.map((question) => {
+            const answer = officialAnswer(question);
+            return (
+              <li key={question.id} className="surface-card rounded-xl p-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge>{tQuestions(`categories.${question.category}`)}</Badge>
+                  {answer?.source === 'final' ? <Badge tone="brand">{t('settled')}</Badge> : null}
+                  {answer?.source === 'ai' ? (
+                    <Badge tone="accent">{t('answeredByAi')}</Badge>
+                  ) : null}
+                  {answer?.source === 'group' ? (
+                    <Badge tone="brand">
+                      {answer.channel === 'app' ? t('answeredInApp') : t('answeredInRoom')}
+                    </Badge>
+                  ) : null}
+                  {question.featuredQuestion ? (
+                    <Badge tone="accent">{tQuestions('featuredQuestion')}</Badge>
+                  ) : null}
+                  {question.featuredAnswer ? (
+                    <Badge tone="accent">{tQuestions('featuredAnswer')}</Badge>
+                  ) : null}
+                  {question.aiGroundedInCase === false ? <Badge>{t('notInTheCase')}</Badge> : null}
+                  <span className="text-muted text-xs tabular-nums">▲ {question.upvotes}</span>
+                </div>
+
+                <p className="mt-3 text-sm font-medium">{question.text}</p>
+
+                {answer ? (
+                  <p className="border-brand-300 mt-3 border-l-2 pl-3 text-sm">{answer.text}</p>
+                ) : (
+                  <p className="text-muted mt-3 text-sm">{t('notYetAnswered')}</p>
+                )}
+                {answer?.source === 'final' &&
+                question.answerText &&
+                !question.answeredByAi &&
+                question.answerText !== answer.text ? (
+                  <p className="text-muted mt-2 text-xs">
+                    {t('groupSaid')}: {question.answerText}
+                  </p>
                 ) : null}
-                {question.aiGroundedInCase === false ? <Badge>{t('notInTheCase')}</Badge> : null}
-                <span className="text-muted text-xs tabular-nums">▲ {question.upvotes}</span>
-              </div>
 
-              <p className="mt-3 text-sm font-medium">{question.text}</p>
-
-              {question.answerText ? (
-                <p className="border-brand-300 mt-3 border-l-2 pl-3 text-sm">
-                  {question.answerText}
-                </p>
-              ) : (
-                <p className="text-muted mt-3 text-sm">{t('notYetAnswered')}</p>
-              )}
-            </li>
-          ))
+                {isStaff && question.aiSuggestion && !question.finalAnswer ? (
+                  <div className="mt-3 rounded-lg border border-dashed border-[var(--border-subtle)] p-3 text-sm">
+                    <p className="text-muted text-xs">
+                      {t('suggestionLabel', { model: question.aiSuggestion.model })}
+                      {question.aiSuggestion.groundedInCase ? '' : ` · ${t('notInTheCase')}`}
+                    </p>
+                    <p className="mt-1">{question.aiSuggestion.text}</p>
+                  </div>
+                ) : null}
+              </li>
+            );
+          })
         )}
       </ul>
     </div>

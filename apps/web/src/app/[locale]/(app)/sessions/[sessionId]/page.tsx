@@ -22,6 +22,7 @@ import {
   policyOfClass,
   projectTargetOf,
   votesOf,
+  qaPolicyOfClass,
 } from '@casestudyhub/core';
 import { redactForViewer, roleKeyOf, summarisePeerReviews } from '@casestudyhub/shared';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -78,6 +79,7 @@ export default async function SessionPage({
   }
 
   const isStaff = user.role === 'admin' || user.role === 'lecturer';
+  const qaPolicy = await qaPolicyOfClass(session.classId);
 
   const [details, assignment, caseStudy, groups, members, membership, questions, myVotes] =
     await Promise.all([
@@ -252,6 +254,7 @@ export default async function SessionPage({
       <SessionRoom
         sessionId={sessionId}
         policy={policy}
+        afterClassQa={qaPolicy.afterClassQa}
         ownUid={user.uid}
         isStaff={isStaff}
         isStudent={user.role === 'student'}

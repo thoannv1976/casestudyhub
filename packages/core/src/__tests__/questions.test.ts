@@ -22,6 +22,8 @@ function question(overrides: Partial<ClassQuestion> = {}): ClassQuestion {
     upvotes: 0,
     status: 'submitted',
     answeredByAi: false,
+    featuredQuestion: false,
+    featuredAnswer: false,
     ...overrides,
   };
 }

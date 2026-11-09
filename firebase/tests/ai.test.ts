@@ -363,7 +363,9 @@ describe('the model reading a group’s work', () => {
 });
 
 describe('answering the question bank', () => {
-  it('takes on everything the room left open, and nothing it answered', async () => {
+  it('suggests for every question not yet settled, the answered ones too', async () => {
+    // The lecturer settles with the group's answer and the model's side by
+    // side; a question already settled, or already suggested for, is skipped.
     await seedCaseAndAssignment();
     await seedQuestion('q1');
     await seedQuestion('q2');
@@ -372,13 +374,23 @@ describe('answering the question bank', () => {
       answerText: 'Third-party seller services revenue, on slide 9.',
       answeredByName: 'Nguyen Van A',
     });
+    await seedQuestion('q4', { finalAnswer: 'Settled by the lecturer already, in full.' });
+    await seedQuestion('q5', {
+      aiSuggestion: {
+        text: 'An earlier suggestion.',
+        groundedInCase: true,
+        provider: 'gemini',
+        model: 'gemini-2.5-flash',
+        createdAt: new Date().toISOString(),
+      },
+    });
 
     const all = await listCaseQuestions(CASE_ID);
     expect(
       questionsAwaitingAnswer(all)
         .map((q) => q.id)
         .sort(),
-    ).toEqual(['q1', 'q2']);
+    ).toEqual(['q1', 'q2', 'q3']);
   });
 
   it('never overwrites what a student said in the room', async () => {
@@ -398,15 +410,19 @@ describe('answering the question bank', () => {
     );
 
     const result = await answerQuestionBank(actor, CASE_ID);
-    expect(result.answered).toBe(0);
+    // A suggestion is written beside it…
+    expect(result.answered).toBe(1);
 
+    // …and what the student said stands, untouched.
     const stored = (await listCaseQuestions(CASE_ID))[0];
     expect(stored?.answerText).toContain('slide 9');
     expect(stored?.answeredByAi).toBe(false);
     expect(stored?.answeredByName).toBe('Nguyen Van A');
+    expect(stored?.status).toBe('answered');
+    expect(stored?.aiSuggestion?.text).toBe('A different answer from a model.');
   });
 
-  it('answers the open ones and marks them as the AI’s work', async () => {
+  it('suggests for the open ones and leaves the answer to the lecturer', async () => {
     await seedCaseAndAssignment();
     await seedQuestion('q1');
     await seedQuestion('q2');
@@ -434,13 +450,13 @@ describe('answering the question bank', () => {
 
     const stored = await listCaseQuestions(CASE_ID);
     for (const question of stored) {
-      expect(question.answeredByAi).toBe(true);
-      expect(question.answerText).toBeTruthy();
-      // Deliberately not 'answered': that status means a member of the group
-      // answered in the room, and it feeds the Q&A checklist.
-      expect(question.status).toBe('closed');
+      // A suggestion only: no answer, no status change, nothing a student sees.
+      expect(question.aiSuggestion?.text).toBeTruthy();
+      expect(question.answerText).toBeUndefined();
+      expect(question.answeredByAi).toBe(false);
+      expect(question.status).toBe('submitted');
     }
-    expect(stored.some((question) => question.aiGroundedInCase === false)).toBe(true);
+    expect(stored.some((question) => question.aiSuggestion?.groundedInCase === false)).toBe(true);
   });
 
   it('ignores an answer for a question it never asked about', async () => {
@@ -480,7 +496,11 @@ describe('answering the question bank', () => {
 
   it('does nothing, cheaply, when there is nothing left open', async () => {
     await seedCaseAndAssignment();
-    await seedQuestion('q3', { status: 'answered', answerText: 'Answered in the room.' });
+    await seedQuestion('q3', {
+      status: 'answered',
+      answerText: 'Answered in the room.',
+      finalAnswer: 'Answered in the room, and settled by the lecturer.',
+    });
 
     const { provider, recorded } = fakeProvider(() => ({ answers: [] }));
     setAiProvider(provider);

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { getTranslations, setRequestLocale } from 'next-intl/server';
 import {
   choosableCases,
+  classParticipation,
   findMembership,
   getCase,
   getPolicy,
@@ -57,6 +58,7 @@ export default async function StudentClassPage({
   const tProject = await getTranslations('project');
   const tVolunteer = await getTranslations('volunteer');
   const tError = await getTranslations('errors');
+  const tParticipation = await getTranslations('participation');
 
   const details = await getClassById(classId);
   if (!details) notFound();
@@ -132,6 +134,14 @@ export default async function StudentClassPage({
   // Volunteering to present is open to a group whether or not it has handed
   // anything in yet. The window is decided on the server, so every student in
   // the class sees the same answer whatever their device clock says.
+  // The student's own line of the attendance table: how they are doing, read
+  // from the same calculation the lecturer sees.
+  const participation =
+    user.role === 'student'
+      ? ((await classParticipation(classId)).rows.find((row) => row.studentUid === user.uid) ??
+        null)
+      : null;
+
   const floor = await volunteering(classId);
   const ownVolunteer = floor.volunteers.find((row) => row.groupId === membership?.groupId) ?? null;
   const projectSubmissions = project ? await listSubmissions(project.id) : [];
@@ -158,6 +168,33 @@ export default async function StudentClassPage({
         <h1 className="text-2xl font-semibold tracking-tight">{details.className}</h1>
         <p className="text-muted mt-2 font-mono text-sm">{details.classCode}</p>
       </div>
+
+      {participation ? (
+        <Card>
+          <CardTitle>{tParticipation('ownTitle')}</CardTitle>
+          <div className="mt-2 space-y-1 text-sm" data-testid="own-participation">
+            {participation.eligibleSessions === 0 ? (
+              <p className="text-muted">{tParticipation('ownNone')}</p>
+            ) : (
+              <>
+                <p>
+                  {tParticipation('ownBody', {
+                    eligible: participation.eligibleSessions,
+                    asked: participation.sessionsAsked,
+                    reviewed: participation.sessionsReviewed,
+                    featured: participation.featuredQuestions,
+                  })}
+                </p>
+                {participation.attendance !== null ? (
+                  <p className="font-semibold">
+                    {tParticipation('ownScore', { score: participation.attendance })}
+                  </p>
+                ) : null}
+              </>
+            )}
+          </div>
+        </Card>
+      ) : null}
 
       {picker ? (
         <CasePicker

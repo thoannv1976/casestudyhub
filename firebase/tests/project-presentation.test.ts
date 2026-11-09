@@ -525,9 +525,10 @@ describe('what the model does with a wall of questions', () => {
     expect(result.answered).toBe(2);
     const questions = await listSessionQuestions(sessionId);
     for (const question of questions) {
-      expect(question.answeredByAi).toBe(true);
-      // Not 'answered': that status means a student answered it in the room.
-      expect(question.status).toBe('closed');
+      // A suggestion for the lecturer to settle, never the answer itself.
+      expect(question.aiSuggestion?.text).toBeTruthy();
+      expect(question.answeredByAi).toBe(false);
+      expect(question.status).not.toBe('closed');
     }
   });
 

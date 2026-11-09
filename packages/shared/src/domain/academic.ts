@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { classCodeSchema, localeSchema } from './identity';
 import { presentationRoleIdSchema } from './roles';
+import { afterClassQaSchema, attendancePolicySchema } from './questions';
 
 /** University -> Academic year -> Semester -> Course -> Class (SRS 3.2). */
 
@@ -68,6 +69,14 @@ export const classSchema = z.object({
   caseSetIds: z.array(z.string().min(1)).max(MAX_CASE_SET).optional(),
   /** How many groups of this class may hold the same case at once. */
   groupsPerCase: z.number().int().min(1).max(MAX_GROUPS_PER_CASE).default(1),
+  /** Asking and answering after the presentation; off unless the lecturer sets days. */
+  afterClassQa: afterClassQaSchema.default({ askDays: 0, answerDays: 0 }),
+  /** How attendance (chuyên cần) is scored in this class. */
+  attendancePolicy: attendancePolicySchema.default({
+    questionWeight: 0.5,
+    reviewWeight: 0.5,
+    featuredBonus: 0.5,
+  }),
   status: z.enum(['draft', 'active', 'archived']),
 });
 export type Class = z.infer<typeof classSchema>;

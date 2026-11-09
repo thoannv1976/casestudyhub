@@ -22,6 +22,8 @@ export const NOTIFICATION_KINDS = [
   'enrollment.approved',
   /** The presenting group chose your question to answer aloud. */
   'question.selected',
+  /** The lecturer settled the answer to your question. */
+  'question.answered',
   /** Your mark has been published. */
   'grade.published',
   /** Your mark for the class group project has been published. */

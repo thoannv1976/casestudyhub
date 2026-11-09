@@ -49,6 +49,8 @@ export const AUDIT_ACTIONS = [
   'session.started',
   'session.status_changed',
   'question.selected',
+  'question.reviewed',
+  'class.qa_settings_changed',
   'submission.resubmission_allowed',
   'grade.drafted',
   'grade.published',

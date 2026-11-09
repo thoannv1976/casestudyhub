@@ -31,6 +31,7 @@ import { DEFAULT_AI_MODELS, type AiProviderName, type SystemSettings } from '@ca
 export interface AiCredentials {
   gemini?: string;
   openai?: string;
+  anthropic?: string;
 }
 
 export type AiConfig =
@@ -62,6 +63,13 @@ export type AiConfig =
       transport: 'apiKey';
       apiKey: string;
       fromEnvironment: boolean;
+    }
+  | {
+      provider: 'anthropic';
+      model: string;
+      transport: 'apiKey';
+      apiKey: string;
+      fromEnvironment: boolean;
     };
 
 type AiSettings = Pick<
@@ -79,6 +87,20 @@ export function readAiConfig(
   env: NodeJS.ProcessEnv = process.env,
 ): AiConfig | null {
   const provider = settings.aiProvider ?? 'gemini';
+
+  if (provider === 'anthropic') {
+    const model = modelFor(settings, 'anthropic');
+    const fromEnv = env.ANTHROPIC_API_KEY?.trim();
+    if (fromEnv) {
+      return { provider, model, transport: 'apiKey', apiKey: fromEnv, fromEnvironment: true };
+    }
+
+    if (!settings.aiEnabled) return null;
+    const stored = credentials.anthropic?.trim();
+    return stored
+      ? { provider, model, transport: 'apiKey', apiKey: stored, fromEnvironment: false }
+      : null;
+  }
 
   if (provider === 'openai') {
     const model = modelFor(settings, 'openai');
