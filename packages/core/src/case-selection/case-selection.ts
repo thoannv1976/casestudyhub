@@ -151,10 +151,13 @@ export async function choosableCases(
     : ({ open: false, messageKey: 'errors.caseSelectionNotOpen' } as const);
   const capacity = details.success ? details.data.groupsPerCase : 1;
   const scope = caseScopeOf(classSnapshot.data());
+  // A case a group of this class already holds is listed even if it is no
+  // longer offered, so the group still sees it as theirs.
+  const held = new Set(claims.map((claim) => claim.caseStudyId));
 
   return {
     cases: cases
-      .filter((study) => caseOfferedToClass(study, scope))
+      .filter((study) => caseOfferedToClass(study, scope) || held.has(study.id))
       .map((study) => ({
         study,
         claims: claims.filter((claim) => claim.caseStudyId === study.id),

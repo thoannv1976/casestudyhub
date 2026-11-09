@@ -52,7 +52,11 @@ export function CaseSetManager({
   const tError = useTranslations();
   const router = useRouter();
 
-  const [selected, setSelected] = useState<Set<string>>(() => new Set(caseIds));
+  // A chosen case is always in the set: it cannot be unticked, so it must not
+  // start unticked either.
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set([...caseIds, ...claimedCaseIds]),
+  );
   const [places, setPlaces] = useState(String(groupsPerCase));
   const [query, setQuery] = useState('');
   const [copyFrom, setCopyFrom] = useState(otherClasses[0]?.id ?? '');

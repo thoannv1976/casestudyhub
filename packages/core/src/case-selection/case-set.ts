@@ -37,11 +37,17 @@ export async function caseSetOfClass(classId: string): Promise<CaseSetView> {
 
   const set = classSnapshot.get('caseSetIds') as string[] | undefined;
   const explicit = Array.isArray(set);
+  const claimedCaseIds = [...new Set(claims.docs.map((doc) => doc.get('caseStudyId') as string))];
+  // A class without a set of its own can still hold a case from another
+  // course - claimed before claims were checked against the course. It is part
+  // of what the class works from, so it starts ticked: a first save must keep
+  // it rather than be refused for dropping it.
+  const fromCourse = explicit ? [] : (await offeredCases(classId)).map((study) => study.id);
   return {
     explicit,
-    caseIds: explicit ? [...set] : (await offeredCases(classId)).map((study) => study.id),
+    caseIds: explicit ? [...set] : [...new Set([...fromCourse, ...claimedCaseIds])],
     groupsPerCase: (classSnapshot.get('groupsPerCase') as number | undefined) ?? 1,
-    claimedCaseIds: [...new Set(claims.docs.map((doc) => doc.get('caseStudyId') as string))],
+    claimedCaseIds,
   };
 }
 

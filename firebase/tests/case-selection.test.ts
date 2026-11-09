@@ -507,6 +507,43 @@ describe('the class case set', () => {
   });
 });
 
+describe('a claim made before cases were checked against the course', () => {
+  // Production holds one: a group took a case filed under another course while
+  // nothing checked that. The class has no set yet.
+  async function seedOldClaim() {
+    await getDb()
+      .collection(COLLECTIONS.caseClaims)
+      .doc(caseClaimId(CLASS_ID, OTHER_COURSE_CASE))
+      .set({
+        id: caseClaimId(CLASS_ID, OTHER_COURSE_CASE),
+        classId: CLASS_ID,
+        caseStudyId: OTHER_COURSE_CASE,
+        groupId: GROUP_A,
+        claimedByUid: inA.uid,
+        claimedByName: inA.uid,
+        claimedAt: new Date().toISOString(),
+      });
+  }
+
+  it('still shows the group the case as theirs', async () => {
+    await seedOldClaim();
+    const row = (await choosableCases(CLASS_ID)).cases.find(
+      (item) => item.study.id === OTHER_COURSE_CASE,
+    );
+    expect(row?.claims.map((claim) => claim.groupId)).toEqual([GROUP_A]);
+  });
+
+  it('starts the set with that case ticked, so a first save keeps it', async () => {
+    await seedOldClaim();
+    const view = await caseSetOfClass(CLASS_ID);
+    expect(view.caseIds).toContain(OTHER_COURSE_CASE);
+
+    await expect(
+      setClassCaseSet(lecturer, CLASS_ID, { caseSetIds: view.caseIds, groupsPerCase: 1 }),
+    ).resolves.toBeUndefined();
+  });
+});
+
 describe('who may read a case', () => {
   it('lets a student read the cases of their course while the class has no set', async () => {
     const one = await getCase(CASE_ONE);
