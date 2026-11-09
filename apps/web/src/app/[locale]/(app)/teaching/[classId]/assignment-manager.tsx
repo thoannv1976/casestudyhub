@@ -41,6 +41,7 @@ export function AssignmentManager({
   classId,
   groups,
   cases,
+  classCaseIds,
   assignments,
   submissionsByAssignment,
   progressByAssignment,
@@ -48,6 +49,8 @@ export function AssignmentManager({
   classId: string;
   groups: Group[];
   cases: CaseStudy[];
+  /** The class's own cases, offered first; the rest of the library follows. */
+  classCaseIds: string[];
   assignments: Assignment[];
   submissionsByAssignment: Record<string, Submission[]>;
   /** Worked out on the server, where the frozen policy and the marks live. */
@@ -76,6 +79,8 @@ export function AssignmentManager({
   const [editing, setEditing] = useState<string | null>(null);
 
   const published = cases.filter((study) => study.status === 'published');
+  const ofClass = published.filter((study) => classCaseIds.includes(study.id));
+  const others = published.filter((study) => !classCaseIds.includes(study.id));
 
   async function assign(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -165,11 +170,24 @@ export function AssignmentManager({
             </Field>
             <Field label={t('case')} htmlFor="caseStudyId">
               <Select id="caseStudyId" name="caseStudyId" required>
-                {published.map((study) => (
-                  <option key={study.id} value={study.id}>
-                    {study.caseCode} — {study.title}
-                  </option>
-                ))}
+                {ofClass.length > 0 ? (
+                  <optgroup label={t('classCases')}>
+                    {ofClass.map((study) => (
+                      <option key={study.id} value={study.id}>
+                        {study.caseCode} — {study.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
+                {others.length > 0 ? (
+                  <optgroup label={t('otherCases')}>
+                    {others.map((study) => (
+                      <option key={study.id} value={study.id}>
+                        {study.caseCode} — {study.title}
+                      </option>
+                    ))}
+                  </optgroup>
+                ) : null}
               </Select>
             </Field>
             <Field

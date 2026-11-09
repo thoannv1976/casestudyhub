@@ -184,6 +184,10 @@ export interface ClassSummary {
   /** Who decides which case a group works on. */
   caseSelection: 'lecturer_assigns' | 'groups_choose';
   caseSelectionDeadline?: string;
+  /** The class's own cases from the library; absent until the lecturer picks. */
+  caseSetIds?: string[];
+  /** How many groups may hold the same case; one unless the lecturer changed it. */
+  groupsPerCase: number;
   status: string;
   studentCount: number;
 }
@@ -202,6 +206,8 @@ function toClassSummary(data: FirebaseFirestore.DocumentData): ClassSummary {
     caseSelection:
       (data.caseSelection as ClassSummary['caseSelection'] | undefined) ?? 'lecturer_assigns',
     caseSelectionDeadline: data.caseSelectionDeadline as string | undefined,
+    caseSetIds: Array.isArray(data.caseSetIds) ? (data.caseSetIds as string[]) : undefined,
+    groupsPerCase: typeof data.groupsPerCase === 'number' ? data.groupsPerCase : 1,
     status: data.status as string,
     studentCount: (data.studentCount as number | undefined) ?? 0,
   };

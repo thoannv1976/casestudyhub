@@ -30,6 +30,7 @@ export const AUDIT_ACTIONS = [
   'case.claimed',
   'case.claim_released',
   'class.case_selection_changed',
+  'class.case_set_changed',
   'case.attachment_added',
   'case.attachment_removed',
   'assignment.created',

@@ -8,6 +8,9 @@ import { Badge, Card, CardTitle } from '@/components/ui/card';
 import { Alert, Button, Field, Input, Select } from '@/components/ui/form';
 
 export interface ClaimRow {
+  /** The claim's own id: two groups may share a case, so the case is not one. */
+  id: string;
+  groupId: string;
   caseStudyId: string;
   caseTitle: string;
   caseCode: string;
@@ -72,7 +75,7 @@ export function CaseSelectionBoard({
     }
   }
 
-  async function release(caseStudyId: string, caseTitle: string) {
+  async function release(caseStudyId: string, groupId: string, caseTitle: string) {
     const reason = window.prompt(t('releasePrompt', { case: caseTitle }));
     if (!reason || reason.trim().length < 3) return;
 
@@ -82,7 +85,7 @@ export function CaseSelectionBoard({
       const response = await fetch(`/api/classes/${classId}/case-selection`, {
         method: 'DELETE',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ caseStudyId, reason }),
+        body: JSON.stringify({ caseStudyId, groupId, reason }),
       });
       if (!response.ok) {
         const body = (await response.json()) as { error?: { messageKey?: string } };
@@ -140,7 +143,7 @@ export function CaseSelectionBoard({
             <ul className="mt-3 space-y-2 text-sm" data-testid="claim-board">
               {claims.map((claim) => (
                 <li
-                  key={claim.caseStudyId}
+                  key={claim.id}
                   className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[var(--border-subtle)] pb-2"
                 >
                   <span className="font-medium">{claim.groupName}</span>
@@ -159,7 +162,9 @@ export function CaseSelectionBoard({
                       <Button
                         variant="ghost"
                         disabled={busy}
-                        onClick={() => void release(claim.caseStudyId, claim.caseTitle)}
+                        onClick={() =>
+                          void release(claim.caseStudyId, claim.groupId, claim.caseTitle)
+                        }
                       >
                         {t('release')}
                       </Button>

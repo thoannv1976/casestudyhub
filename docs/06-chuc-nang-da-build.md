@@ -55,8 +55,20 @@ Trang: `/classes/[classId]`, `/teaching/[classId]`.
 - **Sinh viên tự chọn case**: giảng viên mở cổng chọn, nhóm nào nhận trước được
   trước, case đã có người nhận hiện là đã nhận chứ không mời lần nữa; giảng viên
   xem ai chọn gì và thu hồi được.
+- **Bộ case của lớp**: thư viện case là dùng chung; mỗi lớp tick chọn các case
+  mình dùng (từ bất kỳ học phần nào), hoặc **sao chép bộ case của lớp khác** —
+  lớp kỳ sau không phải tải lại file. Lớp chưa lưu bộ case thì dùng các case đã
+  công bố cùng học phần, như trước đây. Không bỏ được case đang có nhóm chọn.
+- **Nhiều nhóm cùng một case**: giảng viên đặt "Số nhóm tối đa mỗi case" (1–6,
+  mặc định 1). Mỗi chỗ là một document riêng ghi bằng `create`, nên hai nhóm
+  tranh chỗ cuối cùng thì chỉ một nhóm được. Sinh viên thấy "Còn 1/2 chỗ".
+- **Quyền đọc case**: sinh viên mở được case đã công bố khi case nằm trong bộ
+  case của lớp mình, hoặc nhóm mình đã nhận / được giao case đó — kể cả case
+  thuộc học phần khác. Thư viện, trang chọn case và đường tải file dùng chung
+  một quy tắc.
 
-Trang: `/cases`, `/cases/[caseId]`, `/classes/[classId]`.
+Trang: `/cases`, `/cases/[caseId]`, `/classes/[classId]`, mục "Bộ case của
+lớp" ở `/teaching/[classId]`.
 
 ## 5. Giao bài và nộp bài — bài case study
 

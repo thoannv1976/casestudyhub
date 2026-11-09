@@ -23,12 +23,16 @@ studentIdIndex/{studentId}      bảo đảm mã sinh viên duy nhất
 academicYears/{id}              2026–2027
 semesters/{id}                  Fall 2026
 courses/{id}                    E-Commerce 2026, danh sách CLO
-classes/{id}                    ECOM-A01, classCode, lecturerIds, policy version
+classes/{id}                    ECOM-A01, classCode, lecturerIds, policy version,
+                                caseSetIds (bộ case của lớp, không có = theo học phần),
+                                groupsPerCase (số nhóm tối đa mỗi case, mặc định 1)
 classEnrollments/{id}           (classId, studentUid, status, role trong lớp)
 groups/{id}                     G01, maxMembers, memberCount, locked
 groupMembers/{id}               (groupId, studentUid, roleIds[R1..R6])
 caseStudies/{id}                Case Study Template + metadata
 caseVersions/{id}               phiên bản nội dung case
+caseClaims/{id}                 nhóm nhận case: `{classId}__{caseId}` cho chỗ 1,
+                                `{classId}__{caseId}__{n}` cho chỗ n; trường `slot`
 policies/{id}                   khung đánh giá, id = `{policyId}__{version}`
                                 (gồm cả rubric và ánh xạ criterion ↔ CLO)
 aiUsage/{period}                lượt gọi và token mô hình theo tháng

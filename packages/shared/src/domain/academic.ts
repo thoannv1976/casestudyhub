@@ -33,6 +33,11 @@ export const courseSchema = z.object({
 });
 export type Course = z.infer<typeof courseSchema>;
 
+/** A class picks at most this many cases from the library. */
+export const MAX_CASE_SET = 100;
+/** The most groups of one class that may share a case. */
+export const MAX_GROUPS_PER_CASE = 6;
+
 export const classSchema = z.object({
   id: z.string().min(1),
   classCode: classCodeSchema,
@@ -54,6 +59,15 @@ export const classSchema = z.object({
   caseSelection: z.enum(['lecturer_assigns', 'groups_choose']).default('lecturer_assigns'),
   /** ISO timestamp after which no group may claim a case. */
   caseSelectionDeadline: z.string().optional(),
+  /**
+   * The cases this class works from, picked out of the shared library. Absent
+   * on a class whose lecturer never picked: such a class is offered the
+   * published cases of its own course, which is what every class was offered
+   * before a class could have a set of its own.
+   */
+  caseSetIds: z.array(z.string().min(1)).max(MAX_CASE_SET).optional(),
+  /** How many groups of this class may hold the same case at once. */
+  groupsPerCase: z.number().int().min(1).max(MAX_GROUPS_PER_CASE).default(1),
   status: z.enum(['draft', 'active', 'archived']),
 });
 export type Class = z.infer<typeof classSchema>;
@@ -61,14 +75,16 @@ export type Class = z.infer<typeof classSchema>;
 /**
  * One group's claim on one case study, in one class (SRS Module 07).
  *
- * The document id is `${classId}__${caseStudyId}`, and that is the whole
- * mechanism: two groups pressing the button at the same instant do not race,
- * because the second write is refused by the database rather than by a check
- * that read before it wrote. The same shape as a peer review and a question -
- * a rule expressed as a name instead of as code.
+ * The document id names the class, the case and the place taken (see
+ * `caseClaimId`), and that is the whole mechanism: two groups pressing the
+ * button at the same instant for the same place do not race, because the
+ * second write is refused by the database rather than by a check that read
+ * before it wrote. The same shape as a peer review and a question - a rule
+ * expressed as a name instead of as code.
  *
- * Scoped to the class: two classes may both study Amazon, two groups in one
- * class may not. In `lecturer_assigns` mode there are no claims at all, and a
+ * Scoped to the class: two classes may both study Amazon. Within a class a
+ * case has as many places as the lecturer allows (`groupsPerCase`, one unless
+ * changed). In `lecturer_assigns` mode there are no claims at all, and a
  * lecturer may deliberately set one case to two groups so that the second
  * challenges the first.
  */
@@ -83,11 +99,30 @@ export const caseClaimSchema = z.object({
   claimedAt: z.string().min(1),
   /** Set once the lecturer has turned the claim into a scheduled assignment. */
   assignmentId: z.string().optional(),
+  /**
+   * Which of the case's places in this class the claim holds, from 1. A claim
+   * written before a case could be shared has no slot and holds the first.
+   */
+  slot: z.number().int().min(1).max(MAX_GROUPS_PER_CASE).default(1),
 });
 export type CaseClaim = z.infer<typeof caseClaimSchema>;
 
-export function caseClaimId(classId: string, caseStudyId: string): string {
-  return `${classId}__${caseStudyId}`;
+/**
+ * One document per place, so the database refuses a second claim on the same
+ * place however the two arrive. The first place keeps the id claims always
+ * had: every claim written before places existed is still the first place.
+ */
+export function caseClaimId(classId: string, caseStudyId: string, slot = 1): string {
+  return slot <= 1 ? `${classId}__${caseStudyId}` : `${classId}__${caseStudyId}__${slot}`;
+}
+
+/** The lowest place still free on a case, or null when every place is taken. */
+export function freeClaimSlot(takenSlots: readonly number[], groupsPerCase: number): number | null {
+  const taken = new Set(takenSlots);
+  for (let slot = 1; slot <= groupsPerCase; slot += 1) {
+    if (!taken.has(slot)) return slot;
+  }
+  return null;
 }
 
 /** Whether a group may still claim a case in this class, and why not. */

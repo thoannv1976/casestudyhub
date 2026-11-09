@@ -87,7 +87,7 @@ export default async function StudentClassPage({
   const groupNameOf = (groupId: string) =>
     groups.find((group) => group.id === groupId)?.groupName ?? groupId;
   const ownGroupHasCase = Boolean(
-    picker?.cases.some((row) => row.claim && row.claim.groupId === membership?.groupId),
+    picker?.cases.some((row) => row.claims.some((claim) => claim.groupId === membership?.groupId)),
   );
 
   /**
@@ -174,8 +174,9 @@ export default async function StudentClassPage({
               title: row.study.title,
               company: row.study.company,
             },
-            takenByGroupName: row.claim ? groupNameOf(row.claim.groupId) : null,
-            takenByOwnGroup: row.claim?.groupId === membership?.groupId,
+            takenByGroupNames: row.claims.map((claim) => groupNameOf(claim.groupId)),
+            takenByOwnGroup: row.claims.some((claim) => claim.groupId === membership?.groupId),
+            capacity: row.capacity,
           }))}
         />
       ) : null}

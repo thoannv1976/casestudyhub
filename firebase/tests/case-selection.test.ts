@@ -23,31 +23,49 @@ const {
   listClaims,
   choosableCases,
   createAssignment,
+  setClassCaseSet,
+  copyCaseSet,
+  caseSetOfClass,
+  assertCanReadCase,
+  filterCasesForStudent,
+  getCase,
 } = await import('@casestudyhub/core');
 const { COLLECTIONS, DEFAULT_PRESENTATION_POLICY, caseClaimId } =
   await import('@casestudyhub/shared');
 
 const CLASS_ID = 'CS-A01';
+/** A second class, for copying a set across and for reading from outside. */
+const CLASS_TWO = 'CS-A02';
 const GROUP_A = 'CS-G1';
 const GROUP_B = 'CS-G2';
+const GROUP_C = 'CS-G3';
 const CASE_ONE = 'CS-CASE1';
 const CASE_TWO = 'CS-CASE2';
 const DRAFT_CASE = 'CS-CASE3';
+/** Filed under another course: offered only through a class's own set. */
+const OTHER_COURSE_CASE = 'CS-CASE4';
 
 const policy = DEFAULT_PRESENTATION_POLICY;
 const lecturer = { uid: 'cs_lecturer', email: 'gv@x.edu.vn', role: 'lecturer' as const };
 const inA = { uid: 'cs_student_a', email: 'a@x.edu.vn', role: 'student' as const };
 const inB = { uid: 'cs_student_b', email: 'b@x.edu.vn', role: 'student' as const };
+const inC = { uid: 'cs_student_d', email: 'd@x.edu.vn', role: 'student' as const };
+const otherLecturer = { uid: 'cs_lecturer_2', email: 'gv2@x.edu.vn', role: 'lecturer' as const };
 const grouplesss = { uid: 'cs_student_c', email: 'c@x.edu.vn', role: 'student' as const };
 const outsider = { uid: 'cs_outsider', email: 'o@x.edu.vn', role: 'student' as const };
 
-async function seedClass(caseSelection: 'lecturer_assigns' | 'groups_choose', deadline?: string) {
+async function seedClass(
+  caseSelection: 'lecturer_assigns' | 'groups_choose',
+  deadline?: string,
+  extra: Record<string, unknown> = {},
+  classId = CLASS_ID,
+) {
   await getDb()
     .collection(COLLECTIONS.classes)
-    .doc(CLASS_ID)
+    .doc(classId)
     .set({
-      id: CLASS_ID,
-      classCode: 'CS01',
+      id: classId,
+      classCode: classId === CLASS_ID ? 'CS01' : 'CS02',
       className: 'Thuong mai dien tu',
       courseId: 'CS-C1',
       semesterId: 'CS-S1',
@@ -58,30 +76,36 @@ async function seedClass(caseSelection: 'lecturer_assigns' | 'groups_choose', de
       joinMode: 'code',
       caseSelection,
       ...(deadline ? { caseSelectionDeadline: deadline } : {}),
+      ...extra,
       status: 'active',
     });
 }
 
-async function seedCase(caseId: string, title: string, status: 'published' | 'draft') {
+async function seedCase(
+  caseId: string,
+  title: string,
+  status: 'published' | 'draft',
+  courseId = 'CS-C1',
+) {
   await getDb().collection(COLLECTIONS.caseStudies).doc(caseId).set({
     id: caseId,
     caseCode: caseId,
     title,
-    courseId: 'CS-C1',
+    courseId,
     language: 'vi',
     status,
     currentVersionId: 'v1',
   });
 }
 
-async function seedMember(uid: string, groupId: string | null) {
+async function seedMember(uid: string, groupId: string | null, classId = CLASS_ID) {
   const db = getDb();
   await db
     .collection(COLLECTIONS.classEnrollments)
-    .doc(`${CLASS_ID}__${uid}`)
+    .doc(`${classId}__${uid}`)
     .set({
-      id: `${CLASS_ID}__${uid}`,
-      classId: CLASS_ID,
+      id: `${classId}__${uid}`,
+      classId,
       studentUid: uid,
       studentId: uid.toUpperCase(),
       fullName: uid,
@@ -93,10 +117,10 @@ async function seedMember(uid: string, groupId: string | null) {
   if (!groupId) return;
   await db
     .collection(COLLECTIONS.groupMembers)
-    .doc(`${CLASS_ID}__${uid}`)
+    .doc(`${classId}__${uid}`)
     .set({
-      id: `${CLASS_ID}__${uid}`,
-      classId: CLASS_ID,
+      id: `${classId}__${uid}`,
+      classId,
       groupId,
       studentUid: uid,
       studentId: uid.toUpperCase(),
@@ -106,12 +130,12 @@ async function seedMember(uid: string, groupId: string | null) {
     });
 }
 
-async function seedGroup(groupId: string, groupName: string) {
+async function seedGroup(groupId: string, groupName: string, classId = CLASS_ID) {
   await getDb().collection(COLLECTIONS.groups).doc(groupId).set({
     id: groupId,
     groupCode: groupId,
     groupName,
-    classId: CLASS_ID,
+    classId,
     maxMembers: 5,
     memberCount: 1,
     formationMode: 'lecturer_assignment',
@@ -123,16 +147,18 @@ async function seedGroup(groupId: string, groupName: string) {
 async function wipe() {
   const db = getDb();
   const jobs = [
-    db.collection(COLLECTIONS.caseClaims).where('classId', '==', CLASS_ID).get(),
-    db.collection(COLLECTIONS.classEnrollments).where('classId', '==', CLASS_ID).get(),
-    db.collection(COLLECTIONS.groupMembers).where('classId', '==', CLASS_ID).get(),
-    db.collection(COLLECTIONS.groups).where('classId', '==', CLASS_ID).get(),
-    db.collection(COLLECTIONS.assignments).where('classId', '==', CLASS_ID).get(),
+    ...[CLASS_ID, CLASS_TWO].flatMap((classId) => [
+      db.collection(COLLECTIONS.caseClaims).where('classId', '==', classId).get(),
+      db.collection(COLLECTIONS.classEnrollments).where('classId', '==', classId).get(),
+      db.collection(COLLECTIONS.groupMembers).where('classId', '==', classId).get(),
+      db.collection(COLLECTIONS.groups).where('classId', '==', classId).get(),
+      db.collection(COLLECTIONS.assignments).where('classId', '==', classId).get(),
+    ]),
     db.collection(COLLECTIONS.submissions).where('assignmentId', '==', 'CS-A1').get(),
-    db.collection(COLLECTIONS.caseStudies).where('courseId', '==', 'CS-C1').get(),
+    db.collection(COLLECTIONS.caseStudies).where('courseId', 'in', ['CS-C1', 'CS-C2']).get(),
     // Cleared between tests too: a `.find()` over a log that still holds the
     // previous test's entry finds the previous test's answer.
-    ...[lecturer.uid, inA.uid, inB.uid].map((uid) =>
+    ...[lecturer.uid, otherLecturer.uid, inA.uid, inB.uid, inC.uid].map((uid) =>
       db.collection(COLLECTIONS.auditLogs).where('actorUid', '==', uid).get(),
     ),
   ];
@@ -140,6 +166,7 @@ async function wipe() {
     await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
   }
   await db.collection(COLLECTIONS.classes).doc(CLASS_ID).delete();
+  await db.collection(COLLECTIONS.classes).doc(CLASS_TWO).delete();
 }
 
 beforeAll(() => {
@@ -153,12 +180,15 @@ beforeEach(async () => {
   await seedClass('groups_choose');
   await seedGroup(GROUP_A, 'Nhom 1');
   await seedGroup(GROUP_B, 'Nhom 2');
+  await seedGroup(GROUP_C, 'Nhom 3');
   await seedMember(inA.uid, GROUP_A);
   await seedMember(inB.uid, GROUP_B);
+  await seedMember(inC.uid, GROUP_C);
   await seedMember(grouplesss.uid, null);
   await seedCase(CASE_ONE, 'Amazon', 'published');
   await seedCase(CASE_TWO, 'Walmart', 'published');
   await seedCase(DRAFT_CASE, 'Chua cong bo', 'draft');
+  await seedCase(OTHER_COURSE_CASE, 'Netflix', 'published', 'CS-C2');
 });
 
 afterAll(wipe);
@@ -253,10 +283,12 @@ describe('what a group sees while choosing', () => {
     const taken = state.cases.find((row) => row.study.id === CASE_ONE);
     const free = state.cases.find((row) => row.study.id === CASE_TWO);
 
-    expect(taken?.claim?.groupId).toBe(GROUP_A);
-    expect(free?.claim).toBeNull();
+    expect(taken?.claims.map((claim) => claim.groupId)).toEqual([GROUP_A]);
+    expect(free?.claims).toEqual([]);
     // A draft case is offered to nobody.
     expect(state.cases.some((row) => row.study.id === DRAFT_CASE)).toBe(false);
+    // Nor a case filed under another course, while the class has no set.
+    expect(state.cases.some((row) => row.study.id === OTHER_COURSE_CASE)).toBe(false);
   });
 
   it('says the window is shut, and why, decided by the server clock', async () => {
@@ -318,6 +350,211 @@ describe('the lecturer changing their mind', () => {
     // The lecturer is taking the decision back, not throwing away a week of
     // the groups' reading.
     expect(await listClaims(CLASS_ID)).toHaveLength(1);
+  });
+});
+
+describe('several groups on one case', () => {
+  it('lets as many groups take a case as the lecturer allows, each on a place of its own', async () => {
+    await seedClass('groups_choose', undefined, { groupsPerCase: 2 });
+
+    const first = await claimCase(inA, CLASS_ID, CASE_ONE);
+    const second = await claimCase(inB, CLASS_ID, CASE_ONE);
+
+    expect(first.id).toBe(caseClaimId(CLASS_ID, CASE_ONE, 1));
+    expect(second.id).toBe(caseClaimId(CLASS_ID, CASE_ONE, 2));
+    await expect(claimCase(inC, CLASS_ID, CASE_ONE)).rejects.toThrow(/caseFull/);
+  });
+
+  it('gives two places to exactly two of three groups pressing at once', async () => {
+    await seedClass('groups_choose', undefined, { groupsPerCase: 2 });
+
+    const results = await Promise.allSettled([
+      claimCase(inA, CLASS_ID, CASE_ONE),
+      claimCase(inB, CLASS_ID, CASE_ONE),
+      claimCase(inC, CLASS_ID, CASE_ONE),
+    ]);
+
+    expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(2);
+    const slots = (await listClaims(CLASS_ID)).map((claim) => claim.slot).sort();
+    expect(slots).toEqual([1, 2]);
+  });
+
+  it('shows the group the places left and who holds the others', async () => {
+    await seedClass('groups_choose', undefined, { groupsPerCase: 2 });
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+
+    const row = (await choosableCases(CLASS_ID)).cases.find((item) => item.study.id === CASE_ONE);
+    expect(row?.capacity).toBe(2);
+    expect(row?.claims.map((claim) => claim.groupId)).toEqual([GROUP_A]);
+  });
+
+  it('asks which group when two share the case being released', async () => {
+    await seedClass('groups_choose', undefined, { groupsPerCase: 2 });
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+    await claimCase(inB, CLASS_ID, CASE_ONE);
+
+    await expect(
+      releaseClaim(lecturer, CLASS_ID, CASE_ONE, 'Swapping one group out.'),
+    ).rejects.toThrow(/claimAmbiguous/);
+
+    await releaseClaim(lecturer, CLASS_ID, CASE_ONE, 'Swapping one group out.', GROUP_A);
+    const left = await listClaims(CLASS_ID);
+    expect(left.map((claim) => claim.groupId)).toEqual([GROUP_B]);
+
+    // The freed first place is the one a third group now gets.
+    const third = await claimCase(inC, CLASS_ID, CASE_ONE);
+    expect(third.slot).toBe(1);
+  });
+
+  it('marks the claim of the group the assignment was set for, not its neighbour', async () => {
+    await seedClass('groups_choose', undefined, { groupsPerCase: 2 });
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+    await claimCase(inB, CLASS_ID, CASE_ONE);
+
+    const assignmentId = await createAssignment(lecturer, {
+      classId: CLASS_ID,
+      groupId: GROUP_B,
+      caseStudyId: CASE_ONE,
+      presentationDate: new Date(Date.now() + 7 * 24 * 3600_000).toISOString(),
+    });
+
+    const claims = await listClaims(CLASS_ID);
+    expect(claims.find((claim) => claim.groupId === GROUP_B)?.assignmentId).toBe(assignmentId);
+    expect(claims.find((claim) => claim.groupId === GROUP_A)?.assignmentId).toBeUndefined();
+  });
+});
+
+describe('the class case set', () => {
+  it('offers a class with no set the published cases of its own course', async () => {
+    const view = await caseSetOfClass(CLASS_ID);
+    expect(view.explicit).toBe(false);
+    expect(view.caseIds.sort()).toEqual([CASE_ONE, CASE_TWO].sort());
+  });
+
+  it('offers exactly the set once there is one, from any course', async () => {
+    await setClassCaseSet(lecturer, CLASS_ID, {
+      caseSetIds: [CASE_TWO, OTHER_COURSE_CASE],
+      groupsPerCase: 1,
+    });
+
+    const offered = (await choosableCases(CLASS_ID)).cases.map((row) => row.study.id).sort();
+    expect(offered).toEqual([CASE_TWO, OTHER_COURSE_CASE].sort());
+
+    await expect(claimCase(inA, CLASS_ID, CASE_ONE)).rejects.toThrow(/caseNotOffered/);
+    await expect(claimCase(inA, CLASS_ID, OTHER_COURSE_CASE)).resolves.toBeTruthy();
+  });
+
+  it('will not drop a case a group has chosen', async () => {
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+    await expect(
+      setClassCaseSet(lecturer, CLASS_ID, { caseSetIds: [CASE_TWO], groupsPerCase: 1 }),
+    ).rejects.toThrow(/caseInUse/);
+  });
+
+  it('will not allow fewer places than groups already hold', async () => {
+    await seedClass('groups_choose', undefined, { groupsPerCase: 2 });
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+    await claimCase(inB, CLASS_ID, CASE_ONE);
+
+    await expect(
+      setClassCaseSet(lecturer, CLASS_ID, { caseSetIds: [CASE_ONE], groupsPerCase: 1 }),
+    ).rejects.toThrow(/groupsPerCaseBelowClaims/);
+  });
+
+  it('refuses a case that does not exist', async () => {
+    await expect(
+      setClassCaseSet(lecturer, CLASS_ID, { caseSetIds: ['no-such-case'], groupsPerCase: 1 }),
+    ).rejects.toThrow(/caseNotFound/);
+  });
+
+  it('records the change, so who changed what a class works from shows', async () => {
+    await setClassCaseSet(lecturer, CLASS_ID, { caseSetIds: [CASE_ONE], groupsPerCase: 3 });
+
+    const logs = await getDb()
+      .collection(COLLECTIONS.auditLogs)
+      .where('actorUid', '==', lecturer.uid)
+      .get();
+    const entry = logs.docs
+      .map((doc) => doc.data())
+      .find((row) => row.action === 'class.case_set_changed');
+    expect(entry?.after).toMatchObject({ caseSetIds: [CASE_ONE], groupsPerCase: 3 });
+  });
+
+  it('copies another class’s set and places to next term’s class', async () => {
+    await setClassCaseSet(lecturer, CLASS_ID, {
+      caseSetIds: [CASE_ONE, OTHER_COURSE_CASE],
+      groupsPerCase: 2,
+    });
+    await seedClass('groups_choose', undefined, {}, CLASS_TWO);
+
+    await copyCaseSet(lecturer, CLASS_TWO, CLASS_ID);
+
+    const copied = await caseSetOfClass(CLASS_TWO);
+    expect(copied.explicit).toBe(true);
+    expect(copied.caseIds.sort()).toEqual([CASE_ONE, OTHER_COURSE_CASE].sort());
+    expect(copied.groupsPerCase).toBe(2);
+  });
+
+  it('copies what a class without a set was offered from its course', async () => {
+    await seedClass('groups_choose', undefined, {}, CLASS_TWO);
+    await copyCaseSet(lecturer, CLASS_TWO, CLASS_ID);
+    expect((await caseSetOfClass(CLASS_TWO)).caseIds.sort()).toEqual([CASE_ONE, CASE_TWO].sort());
+  });
+
+  it('will not copy from a class the lecturer does not teach', async () => {
+    await seedClass('groups_choose', undefined, { lecturerIds: [otherLecturer.uid] }, CLASS_TWO);
+    await expect(copyCaseSet(otherLecturer, CLASS_TWO, CLASS_ID)).rejects.toThrow(/notYourClass/);
+  });
+});
+
+describe('who may read a case', () => {
+  it('lets a student read the cases of their course while the class has no set', async () => {
+    const one = await getCase(CASE_ONE);
+    await expect(assertCanReadCase(inA, one!)).resolves.toBeUndefined();
+
+    const other = await getCase(OTHER_COURSE_CASE);
+    await expect(assertCanReadCase(inA, other!)).rejects.toThrow(/caseNotYourCourse/);
+  });
+
+  it('lets a group open the case it holds, filed under another course', async () => {
+    // The CASE01 problem: a group took a case filed under a course the class
+    // is not in, and could not download its own material.
+    const other = await getCase(OTHER_COURSE_CASE);
+    await createAssignment(lecturer, {
+      classId: CLASS_ID,
+      groupId: GROUP_A,
+      caseStudyId: OTHER_COURSE_CASE,
+      presentationDate: new Date(Date.now() + 7 * 24 * 3600_000).toISOString(),
+    });
+
+    await expect(assertCanReadCase(inA, other!)).resolves.toBeUndefined();
+    // Their classmate in another group is not holding it.
+    await expect(assertCanReadCase(inB, other!)).rejects.toThrow(/caseNotYourCourse/);
+  });
+
+  it('follows the set once the class has one', async () => {
+    await setClassCaseSet(lecturer, CLASS_ID, {
+      caseSetIds: [OTHER_COURSE_CASE],
+      groupsPerCase: 1,
+    });
+
+    const all = await Promise.all(
+      [CASE_ONE, CASE_TWO, OTHER_COURSE_CASE].map(async (id) => (await getCase(id))!),
+    );
+    const readable = (await filterCasesForStudent(inB.uid, all)).map((study) => study.id);
+    expect(readable).toEqual([OTHER_COURSE_CASE]);
+  });
+
+  it('gives a student of another class nothing of this class’s set', async () => {
+    await setClassCaseSet(lecturer, CLASS_ID, {
+      caseSetIds: [OTHER_COURSE_CASE],
+      groupsPerCase: 1,
+    });
+    await seedClass('groups_choose', undefined, { courseId: 'CS-C9' }, CLASS_TWO);
+    await seedMember(outsider.uid, null, CLASS_TWO);
+
+    const other = await getCase(OTHER_COURSE_CASE);
+    await expect(assertCanReadCase(outsider, other!)).rejects.toThrow(/caseNotYourCourse/);
   });
 });
 

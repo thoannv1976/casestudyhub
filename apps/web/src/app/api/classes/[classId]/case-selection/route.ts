@@ -17,6 +17,8 @@ export const dynamic = 'force-dynamic';
 const claimSchema = z.object({ caseStudyId: z.string().min(1) });
 const releaseSchema = z.object({
   caseStudyId: z.string().min(1),
+  /** Which group's claim, when several groups share the case. */
+  groupId: z.string().min(1).optional(),
   reason: z.string().trim().min(3, 'errors.reasonRequired').max(500),
 });
 const modeSchema = z.object({
@@ -24,7 +26,7 @@ const modeSchema = z.object({
   deadline: z.string().nullable().default(null),
 });
 
-/** Every published case, and which group in this class has taken each. */
+/** Every case this class is offered, and which groups in it have taken each. */
 export async function GET(
   _request: NextRequest,
   context: { params: Promise<{ classId: string }> },
@@ -87,8 +89,8 @@ export async function DELETE(
     const body: unknown = await request.json().catch(() => null);
     if (!body) throw new AppError('VALIDATION_FAILED', 'errors.validationFailed');
 
-    const { caseStudyId, reason } = releaseSchema.parse(body);
-    await releaseClaim(caller, classId, caseStudyId, reason);
+    const { caseStudyId, groupId, reason } = releaseSchema.parse(body);
+    await releaseClaim(caller, classId, caseStudyId, reason, groupId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     return respondWithError(error);

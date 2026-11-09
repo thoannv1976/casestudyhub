@@ -9,8 +9,11 @@ import { Alert, Button } from '@/components/ui/form';
 
 export interface ChoosableCaseView {
   study: Pick<CaseStudy, 'id' | 'caseCode' | 'title' | 'company'>;
-  takenByGroupName: string | null;
+  /** The groups already holding it, first taken first. */
+  takenByGroupNames: string[];
   takenByOwnGroup: boolean;
+  /** How many groups of the class may hold it. */
+  capacity: number;
 }
 
 /**
@@ -18,7 +21,8 @@ export interface ChoosableCaseView {
  *
  * Cases another group has taken stay on the list, greyed out and named: a
  * group deciding what to study should see that Amazon has gone to group 2
- * rather than wonder where it went.
+ * rather than wonder where it went. When the lecturer lets several groups
+ * share a case, the places left are said as well.
  */
 export function CasePicker({
   classId,
@@ -88,34 +92,46 @@ export function CasePicker({
       ) : null}
 
       <ul className="mt-4 space-y-2 text-sm" data-testid="case-picker">
-        {cases.map((row) => (
-          <li
-            key={row.study.id}
-            className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--border-subtle)] pb-2"
-          >
-            <span className="text-muted font-mono text-xs">{row.study.caseCode}</span>
-            <span className="font-medium">{row.study.title}</span>
-            {row.study.company ? (
-              <span className="text-muted text-xs">{row.study.company}</span>
-            ) : null}
+        {cases.map((row) => {
+          const left = Math.max(0, row.capacity - row.takenByGroupNames.length);
+          const takenBy = row.takenByGroupNames.join(', ');
+          return (
+            <li
+              key={row.study.id}
+              className="flex flex-wrap items-center gap-x-3 gap-y-2 border-b border-[var(--border-subtle)] pb-2"
+            >
+              <span className="text-muted font-mono text-xs">{row.study.caseCode}</span>
+              <span className="font-medium">{row.study.title}</span>
+              {row.study.company ? (
+                <span className="text-muted text-xs">{row.study.company}</span>
+              ) : null}
 
-            <span className="ml-auto flex items-center gap-2">
-              {row.takenByOwnGroup ? (
-                <Badge tone="brand">{t('yours')}</Badge>
-              ) : row.takenByGroupName ? (
-                <Badge tone="neutral">{t('takenBy', { group: row.takenByGroupName })}</Badge>
-              ) : (
-                <Button
-                  variant="ghost"
-                  disabled={!canChoose || ownGroupHasCase || busy !== null}
-                  onClick={() => void choose(row.study.id)}
-                >
-                  {busy === row.study.id ? t('choosing') : t('choose')}
-                </Button>
-              )}
-            </span>
-          </li>
-        ))}
+              <span className="ml-auto flex flex-wrap items-center justify-end gap-2">
+                {row.takenByOwnGroup ? (
+                  <Badge tone="brand">{t('yours')}</Badge>
+                ) : left === 0 ? (
+                  <Badge tone="neutral">{t('takenBy', { group: takenBy })}</Badge>
+                ) : (
+                  <>
+                    {row.capacity > 1 ? (
+                      <span className="text-muted text-xs">
+                        {t('placesLeft', { left, total: row.capacity })}
+                        {takenBy ? ` · ${t('takenBy', { group: takenBy })}` : ''}
+                      </span>
+                    ) : null}
+                    <Button
+                      variant="ghost"
+                      disabled={!canChoose || ownGroupHasCase || busy !== null}
+                      onClick={() => void choose(row.study.id)}
+                    >
+                      {busy === row.study.id ? t('choosing') : t('choose')}
+                    </Button>
+                  </>
+                )}
+              </span>
+            </li>
+          );
+        })}
       </ul>
 
       {ownGroupHasCase ? <p className="text-muted mt-4 text-sm">{t('alreadyChosen')}</p> : null}

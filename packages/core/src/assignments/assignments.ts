@@ -102,7 +102,7 @@ export async function createAssignment(
   // A group that chose this case for itself has its claim marked as
   // scheduled, which is what stops the lecturer releasing it from under work
   // that now exists.
-  await linkClaimToAssignment(input.classId, input.caseStudyId, ref.id);
+  await linkClaimToAssignment(input.classId, input.caseStudyId, ref.id, input.groupId);
 
   await writeAuditLog({
     action: 'assignment.created',

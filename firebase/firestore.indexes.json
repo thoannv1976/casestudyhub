@@ -209,6 +209,20 @@
       ]
     },
     {
+      "collectionGroup": "caseClaims",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "classId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "caseStudyId",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "questions",
       "queryScope": "COLLECTION",
       "fields": [

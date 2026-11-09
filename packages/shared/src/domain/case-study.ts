@@ -55,6 +55,49 @@ export const caseStudySchema = z.object({
 });
 export type CaseStudy = z.infer<typeof caseStudySchema>;
 
+/** What deciding which cases a class works from needs to know about the class. */
+export interface CaseScopeClass {
+  courseId: string;
+  caseSetIds?: readonly string[];
+}
+
+/**
+ * Whether a class works from this case.
+ *
+ * A class with a set of its own works from exactly that set, whichever course
+ * each case was written for: that is what lets next term's class reuse this
+ * term's library without anybody uploading a file again. A class that never
+ * picked works from the published cases of its own course, as every class
+ * did before a class could pick.
+ */
+export function caseOfferedToClass(
+  study: Pick<CaseStudy, 'id' | 'courseId' | 'status'>,
+  details: CaseScopeClass,
+): boolean {
+  if (study.status !== 'published') return false;
+  return details.caseSetIds
+    ? details.caseSetIds.includes(study.id)
+    : study.courseId === details.courseId;
+}
+
+/**
+ * Whether a student may read a case.
+ *
+ * Published, and either offered to a class they are in, or held by their own
+ * group - claimed, or set as an assignment. The second half matters: a group
+ * must always be able to open the case it is working on, even one the lecturer
+ * set from outside the class's own list.
+ */
+export function studentMayReadCase(
+  study: Pick<CaseStudy, 'id' | 'courseId' | 'status'>,
+  classes: readonly CaseScopeClass[],
+  heldCaseIds: ReadonlySet<string>,
+): boolean {
+  if (study.status !== 'published') return false;
+  if (heldCaseIds.has(study.id)) return true;
+  return classes.some((details) => caseOfferedToClass(study, details));
+}
+
 /**
  * A revision of a case study (SRS Module 05).
  *

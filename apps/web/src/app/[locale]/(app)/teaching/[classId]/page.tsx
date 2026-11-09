@@ -23,6 +23,10 @@ import {
   progressOfAssignments,
   isLtiEnabled,
   ltiLinksOfClass,
+  caseSetOfClass,
+  listCourses,
+  listClassesOfLecturer,
+  listAllClasses,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -31,6 +35,7 @@ import { Alert } from '@/components/ui/form';
 import { AssignmentManager } from './assignment-manager';
 import { ProjectManager, type ProjectRow } from './project-manager';
 import { CaseSelectionBoard } from './case-selection-board';
+import { CaseSetManager } from './case-set-manager';
 import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
 import { SessionBoard } from './session-board';
@@ -91,6 +96,15 @@ export default async function ClassDetailPage({
   ]);
 
   const [lecturers, claims] = await Promise.all([listClassLecturers(classId), listClaims(classId)]);
+
+  // The class's own cases from the shared library, and the classes it could
+  // copy a set from: the lecturer's own, or every class for an admin.
+  const [caseSet, courses, teachable] = await Promise.all([
+    caseSetOfClass(classId),
+    listCourses(),
+    user.role === 'admin' ? listAllClasses() : listClassesOfLecturer(user.uid),
+  ]);
+  const tCaseSelection = await getTranslations('caseSelection');
 
   const submissionsByAssignment = Object.fromEntries(
     await Promise.all(
@@ -235,12 +249,41 @@ export default async function ClassDetailPage({
         </div>
       </Card>
 
+      <Card>
+        <CardTitle>{tCaseSelection('setTitle')}</CardTitle>
+        <p className="text-muted mt-2 text-sm">{tCaseSelection('setBody')}</p>
+        <div className="mt-4">
+          <CaseSetManager
+            classId={classId}
+            courseId={details.courseId}
+            cases={cases.map((study) => ({
+              id: study.id,
+              caseCode: study.caseCode,
+              title: study.title,
+              company: study.company,
+              courseId: study.courseId,
+              status: study.status,
+            }))}
+            courses={courses.map((course) => ({ id: course.id, name: course.name }))}
+            explicit={caseSet.explicit}
+            caseIds={caseSet.caseIds}
+            groupsPerCase={caseSet.groupsPerCase}
+            claimedCaseIds={caseSet.claimedCaseIds}
+            otherClasses={teachable
+              .filter((row) => row.id !== classId)
+              .map((row) => ({ id: row.id, label: `${row.classCode} · ${row.className}` }))}
+          />
+        </div>
+      </Card>
+
       <CaseSelectionBoard
         classId={classId}
         mode={details.caseSelection}
         deadline={details.caseSelectionDeadline ?? null}
         groupCount={groups.length}
         claims={claims.map((claim) => ({
+          id: claim.id,
+          groupId: claim.groupId,
           caseStudyId: claim.caseStudyId,
           caseTitle:
             cases.find((study) => study.id === claim.caseStudyId)?.title ?? claim.caseStudyId,
@@ -274,6 +317,7 @@ export default async function ClassDetailPage({
             classId={classId}
             groups={groups}
             cases={cases}
+            classCaseIds={caseSet.caseIds}
             assignments={assignments}
             submissionsByAssignment={submissionsByAssignment}
             progressByAssignment={progressByAssignment}

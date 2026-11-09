@@ -14,6 +14,7 @@ export * from './academic/rate-limit';
 export * from './academic/access';
 export * from './groups/groups';
 export * from './case-selection/case-selection';
+export * from './case-selection/case-set';
 export * from './cases/cases';
 export * from './assignments/assignments';
 export * from './projects/projects';

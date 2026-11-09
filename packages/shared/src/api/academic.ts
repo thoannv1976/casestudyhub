@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { classCodeSchema, localeSchema, studentIdSchema, userRoleSchema } from '../domain/identity';
+import { MAX_CASE_SET, MAX_GROUPS_PER_CASE } from '../domain/academic';
 
 /** Request contracts for the academic structure and user administration. */
 
@@ -210,3 +211,20 @@ export type UpdateCaseRequest = z.infer<typeof updateCaseSchema>;
 export const setCaseStatusSchema = z.object({
   status: z.enum(['draft', 'published', 'archived'], { error: 'errors.statusInvalid' }),
 });
+
+/**
+ * A class's own set of cases from the library: either the cases picked, with
+ * how many groups may share one, or the set of another class copied across.
+ */
+export const caseSetRequestSchema = z.union([
+  z.object({
+    caseSetIds: z.array(z.string().trim().min(1)).max(MAX_CASE_SET, 'errors.caseSetTooLarge'),
+    groupsPerCase: z
+      .number({ error: 'errors.groupsPerCaseInvalid' })
+      .int('errors.groupsPerCaseInvalid')
+      .min(1, 'errors.groupsPerCaseInvalid')
+      .max(MAX_GROUPS_PER_CASE, 'errors.groupsPerCaseInvalid'),
+  }),
+  z.object({ copyFromClassId: z.string().trim().min(1) }),
+]);
+export type CaseSetRequest = z.infer<typeof caseSetRequestSchema>;

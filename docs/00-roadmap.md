@@ -78,6 +78,7 @@ lên trình bày đến lúc sinh viên nhìn thấy điểm đã công bố.
 | 23  | Chuẩn đầu ra của khoa       | Khoa tự đặt tên chuẩn đầu ra, chọn tiêu chí nào đo nó, đặt ngưỡng đạt, và xác nhận đã đối chiếu đề cương; báo cáo bỏ cảnh báo "bảng minh hoạ" khi đã xác nhận. Tất cả đi theo phiên bản khung                      | ✅         |
 | 24  | Hệ thống và hạn mức AI      | Số liệu nền tảng đếm bằng aggregate query; đóng/mở đăng ký, giới hạn file danh sách lớp, và hạn mức lượt gọi mô hình mỗi tháng — chặn ngay tại cổng AI, đếm theo tháng                                             | ✅         |
 | 25  | Phiên bản case study        | Case sửa được lần đầu tiên, và sửa là ghi phiên bản mới chứ không đè bản cũ; `caseVersionId` mà assignment đóng băng từ nay đọc lại được                                                                           | ✅         |
+| 26  | Bộ case của lớp             | Thư viện dùng chung; mỗi lớp chọn bộ case riêng hoặc sao chép từ lớp khác, không tải lại file; nhiều nhóm cùng một case (số chỗ do giảng viên đặt); nhóm luôn mở được case mình nhận                               | ✅         |
 | —   | Tích hợp Moodle/LTI         | Qua UniGame Hub (Hub đã có khoá LTI với Moodle của trường): mở từ Moodle, ghép tài khoản, gắn khoá ↔ lớp, gửi điểm đã công bố về Sổ điểm Moodle. Xem docs/06 mục 14b                                               | ✅         |
 
 **Ghi chú thiết kế Phase 4**

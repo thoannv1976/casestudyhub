@@ -2544,6 +2544,16 @@ test('a lecturer opens self-selection and a group takes a case', async ({ page }
   await expect(page.getByText('Your group has chosen')).toBeVisible();
 });
 
+/** Presses Save on "How cases are chosen" and waits until the server has it. */
+async function saveCaseSelection(page: Page) {
+  const saved = page.waitForResponse(
+    (response) =>
+      response.url().includes('/case-selection') && response.request().method() === 'PUT',
+  );
+  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  expect((await saved).ok()).toBe(true);
+}
+
 /**
  * Deadlines are read and typed in one time zone, the course's.
  *
@@ -2562,7 +2572,10 @@ test('a deadline reopens as the time it was set to, and does not drift on saving
 
   const typed = '2026-12-20T10:10';
   await page.locator('#deadline').fill(typed);
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  // Wait for the save itself: reloading while it is still in flight can cancel
+  // it, and the page would then reopen on the old value for a reason that has
+  // nothing to do with time zones.
+  await saveCaseSelection(page);
   await expect(page.getByTestId('alert-error')).toHaveCount(0);
 
   // Reopen the page: the field must say what was typed, not what was stored.
@@ -2571,7 +2584,7 @@ test('a deadline reopens as the time it was set to, and does not drift on saving
 
   // Save again without touching it, then reopen. This is where the deadline
   // used to walk backwards seven hours at a time.
-  await page.getByRole('button', { name: 'Save', exact: true }).click();
+  await saveCaseSelection(page);
   await page.reload();
   await expect(page.locator('#deadline')).toHaveValue(typed);
 
@@ -2624,6 +2637,44 @@ test('a student cannot take a case for a class they are not in', async ({ page }
     failOnStatusCode: false,
   });
   expect([403, 404]).toContain(response.status());
+});
+
+/**
+ * A class works from its own set of cases out of the shared library, and the
+ * lecturer may let two groups share one - which used to mean uploading the
+ * same file again as "Amazon2". The case the audience's group took stays
+ * theirs; another group now finds a place left on it.
+ */
+test('the lecturer lets two groups share a case of the class case set', async ({ page }) => {
+  await signIn(page, LECTURER.email, LECTURER.newPassword);
+  await page.goto('/en/teaching');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/teaching\/.+/);
+
+  const manager = page.getByTestId('case-set-manager');
+  await expect(manager).toContainText('no set of its own yet');
+  // A case a group has chosen cannot be unticked from under it.
+  await expect(manager.getByText('Chosen by a group')).toBeVisible();
+
+  await page.getByLabel('Groups per case').fill('2');
+  await manager.getByRole('button', { name: 'Save case set' }).click();
+  await expect(manager.getByText(/Case set saved/)).toBeVisible();
+  await page.reload();
+  await expect(page.getByTestId('case-set-manager')).toContainText('has its own set');
+
+  await signOut(page);
+  await signIn(page, STUDENT.email, STUDENT.password);
+  await page.goto('/en/classes');
+  await page.getByText(CLASS_CODE).click();
+  await page.waitForURL(/\/classes\/.+/);
+
+  const shared = page
+    .getByTestId('case-picker')
+    .getByRole('listitem')
+    .filter({ hasText: `CASE${RUN}` });
+  await expect(shared).toContainText('1 of 2 places left');
+  await shared.getByRole('button', { name: 'Choose this' }).click();
+  await expect(shared.getByText("Your group's")).toBeVisible();
 });
 
 /**
