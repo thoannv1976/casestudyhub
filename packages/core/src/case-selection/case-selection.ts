@@ -140,7 +140,8 @@ export async function choosableCases(
 ): Promise<CaseSelectionState> {
   const db = getDb();
   const [cases, claims, classSnapshot] = await Promise.all([
-    listCases({ publishedOnly: true }),
+    // Archived too: a group holding an archived case still sees it as theirs.
+    listCases({ visibleOnly: true }),
     listClaims(classId),
     db.collection(COLLECTIONS.classes).doc(classId).get(),
   ]);

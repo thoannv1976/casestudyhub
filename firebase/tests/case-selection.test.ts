@@ -29,6 +29,7 @@ const {
   assertCanReadCase,
   filterCasesForStudent,
   getCase,
+  caseUsage,
 } = await import('@casestudyhub/core');
 const { COLLECTIONS, DEFAULT_PRESENTATION_POLICY, caseClaimId } =
   await import('@casestudyhub/shared');
@@ -592,6 +593,46 @@ describe('who may read a case', () => {
 
     const other = await getCase(OTHER_COURSE_CASE);
     await expect(assertCanReadCase(outsider, other!)).rejects.toThrow(/caseNotYourCourse/);
+  });
+});
+
+describe('archiving a case', () => {
+  async function archive(caseId: string) {
+    await getDb().collection(COLLECTIONS.caseStudies).doc(caseId).update({ status: 'archived' });
+  }
+
+  it('stops it being offered, but leaves it with the group holding it', async () => {
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+    await archive(CASE_ONE);
+
+    const rows = (await choosableCases(CLASS_ID)).cases;
+    // Gone for anybody choosing now…
+    await expect(claimCase(inB, CLASS_ID, CASE_ONE)).rejects.toThrow(/caseNotPublished/);
+    // …but the group that took it still sees it as theirs, and can open it.
+    expect(rows.find((row) => row.study.id === CASE_ONE)?.claims[0]?.groupId).toBe(GROUP_A);
+    await expect(assertCanReadCase(inA, (await getCase(CASE_ONE))!)).resolves.toBeUndefined();
+    await expect(assertCanReadCase(inB, (await getCase(CASE_ONE))!)).rejects.toThrow(
+      /caseNotYourCourse/,
+    );
+  });
+});
+
+describe('how much the platform leans on a case', () => {
+  it('counts the classes using it and the assignments set from it', async () => {
+    await claimCase(inA, CLASS_ID, CASE_ONE);
+    await createAssignment(lecturer, {
+      classId: CLASS_ID,
+      groupId: GROUP_A,
+      caseStudyId: CASE_ONE,
+      presentationDate: new Date(Date.now() + 7 * 24 * 3600_000).toISOString(),
+    });
+    await seedClass('groups_choose', undefined, { caseSetIds: [CASE_ONE, CASE_TWO] }, CLASS_TWO);
+
+    const usage = await caseUsage();
+    expect(usage[CASE_ONE]?.classIds.sort()).toEqual([CLASS_ID, CLASS_TWO].sort());
+    expect(usage[CASE_ONE]?.assignments).toBe(1);
+    expect(usage[CASE_TWO]?.classIds).toEqual([CLASS_TWO]);
+    expect(usage[DRAFT_CASE]).toBeUndefined();
   });
 });
 

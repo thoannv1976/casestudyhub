@@ -222,9 +222,16 @@ export async function getCase(caseId: string): Promise<CaseStudy | null> {
   return parsed.data;
 }
 
-export async function listCases(options: { publishedOnly?: boolean } = {}): Promise<CaseStudy[]> {
+/**
+ * The library. `publishedOnly` is what a class may be offered; `visibleOnly`
+ * adds the archived cases, which a group already holding one may still read.
+ */
+export async function listCases(
+  options: { publishedOnly?: boolean; visibleOnly?: boolean } = {},
+): Promise<CaseStudy[]> {
   let query = getDb().collection(COLLECTIONS.caseStudies).limit(200);
   if (options.publishedOnly) query = query.where('status', '==', 'published');
+  else if (options.visibleOnly) query = query.where('status', 'in', ['published', 'archived']);
 
   const snapshot = await query.get();
   return snapshot.docs
@@ -232,6 +239,52 @@ export async function listCases(options: { publishedOnly?: boolean } = {}): Prom
     .filter((parsed) => parsed.success)
     .map((parsed) => parsed.data)
     .sort((a, b) => a.caseCode.localeCompare(b.caseCode));
+}
+
+/** How much of the platform leans on one case: what to weigh before archiving it. */
+export interface CaseUsage {
+  /** Classes that work from it: in their set, claimed or set as an assignment. */
+  classIds: string[];
+  assignments: number;
+}
+
+export async function caseUsage(): Promise<Record<string, CaseUsage>> {
+  const db = getDb();
+  const [assignments, claims, classes] = await Promise.all([
+    db.collection(COLLECTIONS.assignments).select('caseStudyId', 'classId').get(),
+    db.collection(COLLECTIONS.caseClaims).select('caseStudyId', 'classId').get(),
+    db.collection(COLLECTIONS.classes).select('caseSetIds').get(),
+  ]);
+
+  const usage = new Map<string, { classIds: Set<string>; assignments: number }>();
+  const entry = (caseId: string) => {
+    let found = usage.get(caseId);
+    if (!found) {
+      found = { classIds: new Set(), assignments: 0 };
+      usage.set(caseId, found);
+    }
+    return found;
+  };
+
+  for (const doc of assignments.docs) {
+    const found = entry(doc.get('caseStudyId') as string);
+    found.assignments += 1;
+    found.classIds.add(doc.get('classId') as string);
+  }
+  for (const doc of claims.docs) {
+    entry(doc.get('caseStudyId') as string).classIds.add(doc.get('classId') as string);
+  }
+  for (const doc of classes.docs) {
+    const set = doc.get('caseSetIds') as string[] | undefined;
+    for (const caseId of set ?? []) entry(caseId).classIds.add(doc.id);
+  }
+
+  return Object.fromEntries(
+    [...usage].map(([caseId, found]) => [
+      caseId,
+      { classIds: [...found.classIds], assignments: found.assignments },
+    ]),
+  );
 }
 
 /**

@@ -83,19 +83,61 @@ export function caseOfferedToClass(
 /**
  * Whether a student may read a case.
  *
- * Published, and either offered to a class they are in, or held by their own
- * group - claimed, or set as an assignment. The second half matters: a group
- * must always be able to open the case it is working on, even one the lecturer
- * set from outside the class's own list.
+ * Offered to a class they are in (which needs it published), or held by their
+ * own group - claimed, or set as an assignment. The second half matters: a
+ * group must always be able to open the case it is working on, even one the
+ * lecturer set from outside the class's own list, and even one archived since:
+ * archiving stops a case being offered, it does not take it from a group
+ * working on it. A draft is nobody's to read.
  */
 export function studentMayReadCase(
   study: Pick<CaseStudy, 'id' | 'courseId' | 'status'>,
   classes: readonly CaseScopeClass[],
   heldCaseIds: ReadonlySet<string>,
 ): boolean {
-  if (study.status !== 'published') return false;
+  if (study.status === 'draft') return false;
   if (heldCaseIds.has(study.id)) return true;
   return classes.some((details) => caseOfferedToClass(study, details));
+}
+
+/**
+ * Codes for a batch: the prefix, numbered on from the highest code already
+ * using it. CASE27 in the library makes the next ones CASE28, CASE29, …
+ */
+export function nextCaseCodes(
+  prefix: string,
+  existing: readonly string[],
+  count: number,
+): string[] {
+  const clean =
+    prefix
+      .trim()
+      .toUpperCase()
+      .replace(/[^A-Z0-9-]/g, '') || 'CASE';
+  const pattern = new RegExp(`^${clean.replace(/-/g, '\\-')}(\\d+)$`);
+  let highest = 0;
+  let width = 2;
+  for (const code of existing) {
+    const match = pattern.exec(code.toUpperCase());
+    if (!match) continue;
+    highest = Math.max(highest, Number(match[1]));
+    width = Math.max(width, match[1]!.length);
+  }
+  return Array.from(
+    { length: count },
+    (_, index) => `${clean}${String(highest + index + 1).padStart(width, '0')}`,
+  );
+}
+
+/** A readable title from a file name: "G1-Case-07---Shein-EN-.pdf" → "G1 Case 07 Shein EN". */
+export function titleFromFileName(fileName: string): string {
+  const title = fileName
+    .replace(/\.[A-Za-z0-9]+$/, '')
+    .replace(/[_\-.]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, 200);
+  return title.length >= 2 ? title : `Case ${title}`.trim();
 }
 
 /**

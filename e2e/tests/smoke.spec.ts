@@ -462,6 +462,61 @@ test('publishing the case makes it readable by the class', async ({ page }) => {
   expect(response.headers()['content-disposition']).toContain('attachment');
 });
 
+/**
+ * A term's worth of case files, uploaded once: each file becomes a draft case
+ * numbered on from the library's own codes, instead of one form per case.
+ */
+test('a lecturer turns several files into draft cases at once', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/cases');
+
+  await page.getByRole('button', { name: 'Create several cases from files' }).click();
+  const bulk = page.getByTestId('bulk-create');
+  await bulk.locator('#bulkPrefix').fill(`B${RUN}`);
+  await bulk.locator('#bulkFiles').setInputFiles([
+    { name: 'Walmart-case.pdf', mimeType: 'application/pdf', buffer: TINY_PDF },
+    { name: 'eBay_case.pdf', mimeType: 'application/pdf', buffer: TINY_PDF },
+  ]);
+
+  const preview = bulk.getByTestId('bulk-preview');
+  await expect(preview).toContainText(`B${RUN}01`);
+  await expect(preview).toContainText(`B${RUN}02`);
+  await bulk.getByRole('button', { name: 'Create 2 draft cases' }).click();
+  await expect(bulk.getByText('2 draft cases created')).toBeVisible();
+
+  const first = page.getByRole('listitem').filter({ hasText: `B${RUN}01` });
+  await expect(first).toContainText('Walmart case');
+  await expect(first).toContainText('Draft');
+  await expect(first).toContainText('Walmart-case.pdf');
+});
+
+test('a lecturer removes a file, then archives and restores a case', async ({ page }) => {
+  await signIn(page, ADMIN.email, ADMIN.password);
+  await page.goto('/en/cases');
+
+  const second = page.getByRole('listitem').filter({ hasText: `B${RUN}02` });
+  await expect(second).toContainText('Not used by any class yet');
+
+  page.once('dialog', (dialog) => void dialog.accept());
+  await second.getByRole('button', { name: 'Remove', exact: true }).click();
+  await expect(page.getByTestId('alert-success')).toContainText('Removed eBay_case.pdf');
+  await expect(second).toContainText('No material uploaded yet.');
+
+  // Archived cases leave the default list, which is what keeps it short.
+  page.once('dialog', (dialog) => void dialog.accept());
+  await second.getByRole('button', { name: 'Archive' }).click();
+  await expect(page.getByRole('listitem').filter({ hasText: `B${RUN}02` })).toHaveCount(0);
+
+  await page.locator('#caseStatusFilter').selectOption('archived');
+  const archived = page.getByRole('listitem').filter({ hasText: `B${RUN}02` });
+  await expect(archived).toContainText('Archived');
+
+  // Nothing left to read, so it comes back as a draft rather than to students.
+  await archived.getByRole('button', { name: 'Restore' }).click();
+  await page.locator('#caseStatusFilter').selectOption('all');
+  await expect(page.getByRole('listitem').filter({ hasText: `B${RUN}02` })).toContainText('Draft');
+});
+
 test('a lecturer sets the case for the group', async ({ page }) => {
   await signIn(page, ADMIN.email, ADMIN.password);
   await page.goto('/en/teaching');

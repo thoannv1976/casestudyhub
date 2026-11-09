@@ -124,7 +124,7 @@ export async function caseScopeOfStudent(
 export async function assertCanReadCase(caller: SessionUser, study: CaseStudy): Promise<void> {
   if (caller.role === 'admin' || caller.role === 'lecturer') return;
 
-  if (study.status !== 'published') {
+  if (study.status === 'draft') {
     throw new AppError('FORBIDDEN', 'errors.caseNotPublished');
   }
 

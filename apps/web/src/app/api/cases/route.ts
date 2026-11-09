@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   try {
     const caller = await requireSessionUser();
-    const all = await listCases({ publishedOnly: caller.role === 'student' });
+    const all = await listCases({ visibleOnly: caller.role === 'student' });
 
     // Publishing a case for one course must not hand it to the whole
     // university: a student sees the courses they are actually taking.
