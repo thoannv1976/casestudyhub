@@ -21,6 +21,8 @@ import {
   projectDeliverables,
   projectTarget,
   progressOfAssignments,
+  isLtiEnabled,
+  ltiLinksOfClass,
 } from '@casestudyhub/core';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
 import { Badge, Card, CardTitle } from '@/components/ui/card';
@@ -33,6 +35,7 @@ import { GroupManager } from './group-manager';
 import { RosterManager } from './roster-manager';
 import { SessionBoard } from './session-board';
 import { StaffManager } from './staff-manager';
+import { MoodlePanel } from './moodle-panel';
 
 export const dynamic = 'force-dynamic';
 
@@ -139,6 +142,11 @@ export default async function ClassDetailPage({
       )
     : [];
 
+  // Only when the class is reachable from Moodle: a panel about a connection
+  // that does not exist would only raise questions.
+  const moodle = isLtiEnabled() ? await ltiLinksOfClass(classId) : null;
+  const tLti = await getTranslations('lti');
+
   const joined = roster.filter((row) => row.studentUid && row.status === 'active').length;
   const expected = roster.filter((row) => row.status !== 'removed').length;
 
@@ -165,6 +173,19 @@ export default async function ClassDetailPage({
           </Link>
         </div>
       </div>
+
+      {moodle && moodle.courses.length > 0 ? (
+        <Card>
+          <CardTitle>{tLti('panelTitle')}</CardTitle>
+          <div className="mt-4">
+            <MoodlePanel
+              classId={classId}
+              courses={moodle.courses}
+              activities={moodle.activities}
+            />
+          </div>
+        </Card>
+      ) : null}
 
       <Card>
         <CardTitle>{tTeaching('staffTitle')}</CardTitle>

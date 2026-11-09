@@ -910,3 +910,24 @@ describe('tutor conversations', () => {
     );
   });
 });
+
+describe('the Moodle connection collections', () => {
+  const COLLECTIONS_LTI = [
+    'ltiUsers',
+    'ltiContexts',
+    'ltiPending',
+    'ltiActivities',
+    'ltiGradeTargets',
+    'ltiUsedTickets',
+  ];
+
+  it('are closed to every client, signed in or not', async () => {
+    for (const name of COLLECTIONS_LTI) {
+      for (const db of [student(), lecturer(), admin(), anonymous()]) {
+        await assertFails(getDoc(doc(db, name, 'X1')));
+        await assertFails(getDocs(collection(db, name)));
+        await assertFails(setDoc(doc(db, name, 'X1'), { uid: STUDENT_UID, classId: 'C1' }));
+      }
+    }
+  });
+});

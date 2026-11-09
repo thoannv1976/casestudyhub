@@ -46,6 +46,20 @@ export const COLLECTIONS = {
   auditLogs: 'auditLogs',
   aiUsage: 'aiUsage',
   systemSettings: 'systemSettings',
+  // The Moodle connection through UniGame Hub (LTI 1.3). Server-only: rules
+  // deny every client read and write. See packages/core/src/lti.
+  /** One per Moodle user, id = Hub user id: which account they are here. */
+  ltiUsers: 'ltiUsers',
+  /** One per Moodle course, id = context key: which class it is. */
+  ltiContexts: 'ltiContexts',
+  /** A lecturer opened a course that is not linked yet. id = context key. */
+  ltiPending: 'ltiPending',
+  /** One per Moodle activity, id = resource key: its class, kind and gradebook column. */
+  ltiActivities: 'ltiActivities',
+  /** Where one student's mark goes for one activity. id = `${uid}__${resourceKey}`. */
+  ltiGradeTargets: 'ltiGradeTargets',
+  /** Launch tickets already used (replay protection), id = ticket id. */
+  ltiUsedTickets: 'ltiUsedTickets',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

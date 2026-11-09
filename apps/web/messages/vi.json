@@ -331,7 +331,14 @@
     "onlyGroupMembersVolunteer": "Chỉ thành viên trong nhóm mới xung phong được cho nhóm.",
     "tooFewQuestionsToCluster": "Cần ít nhất 3 câu hỏi mới gom theo chủ đề được.",
     "maxMembersBelowMembers": "Không hạ được xuống dưới số thành viên đang có trong nhóm.",
-    "leaveAfterAssignment": "Nhóm đã được giao bài nên không tự rời được. Hãy nhờ giảng viên chuyển nhóm."
+    "leaveAfterAssignment": "Nhóm đã được giao bài nên không tự rời được. Hãy nhờ giảng viên chuyển nhóm.",
+    "ltiNotEnabled": "Kết nối Moodle chưa được bật.",
+    "ltiTicketInvalid": "Phiên mở từ Moodle đã hết hạn hoặc không hợp lệ.",
+    "ltiTenantNotAllowed": "Trường của bạn chưa được phép dùng CaseStudy Hub qua Moodle.",
+    "ltiNoCourse": "Hoạt động phải nằm trong một khoá học Moodle.",
+    "ltiLecturerNotFound": "Tài khoản giảng viên của bạn chưa có trên CaseStudy Hub. Hãy liên hệ quản trị viên để được tạo tài khoản bằng đúng email trên Moodle.",
+    "ltiClassNotLinked": "Giảng viên chưa gắn khoá Moodle này với lớp trên CaseStudy Hub. Vui lòng quay lại sau.",
+    "ltiLinkExpired": "Phiên gắn lớp đã hết hạn. Hãy mở lại hoạt động từ Moodle."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -1253,5 +1260,31 @@
     "answeredByModel": "Trả lời bởi {model}",
     "answeredByStudent": "Trả lời bởi {name}",
     "notInSources": "tài liệu của nhóm không nói điều này"
+  },
+  "lti": {
+    "launchTitle": "Mở từ Moodle",
+    "launching": "Đang đăng nhập bằng tài khoản Moodle của bạn…",
+    "launchFailedHint": "Hãy quay lại Moodle và mở lại hoạt động. Nếu vẫn lỗi, báo giảng viên của bạn.",
+    "linkTitle": "Gắn khoá Moodle với lớp",
+    "linkCourse": "Khoá Moodle: {course}",
+    "linkHint": "Chọn lớp học phần của khoá này. Sinh viên mở hoạt động từ Moodle sẽ vào lớp này, và điểm đã công bố được gửi về Sổ điểm Moodle. Bạn chỉ làm bước này một lần cho mỗi khoá.",
+    "linkNoClasses": "Bạn chưa phụ trách lớp đang hoạt động nào. Hãy nhờ quản trị viên thêm bạn vào lớp, rồi mở lại hoạt động từ Moodle.",
+    "linkChooseClass": "Lớp học phần",
+    "linkSubmit": "Gắn lớp",
+    "linking": "Đang gắn…",
+    "panelTitle": "Kết nối Moodle",
+    "linkedTo": "Lớp đang gắn với khoá Moodle:",
+    "untitledActivity": "Hoạt động Moodle",
+    "kind": {
+      "class": "vào lớp (không gửi điểm)",
+      "case_study": "điểm bài case study",
+      "group_project": "điểm bài tập lớn"
+    },
+    "noActivitiesYet": "Chưa có hoạt động nào được mở từ Moodle.",
+    "autoSendHint": "Điểm được gửi về Moodle ngay khi bạn công bố. Nút dưới đây gửi lại toàn bộ điểm đã công bố của lớp, kể cả sinh viên mở từ Moodle sau khi điểm đã công bố.",
+    "sendAll": "Gửi điểm cả lớp về Moodle",
+    "sending": "Đang gửi…",
+    "sendDone": "Đã gửi {rows} điểm tới {activities} cột điểm Moodle.",
+    "sendPartly": "Đã gửi {rows} điểm, nhưng {failed} cột điểm chưa gửi được. Thử lại sau ít phút."
   }
 }

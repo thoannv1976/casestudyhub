@@ -39,6 +39,7 @@ export * from './settings/settings';
 export * from './notifications/notifications';
 export * from './policy/policy-store';
 export * from './analytics/reports';
+export * from './lti';
 
 // Next.js-specific entry points are NOT re-exported here: `auth/session` and
 // `auth/authorize` import `next/headers`, which only resolves inside the web

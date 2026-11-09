@@ -238,6 +238,35 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // ----- the Moodle connection (UniGame Hub, LTI 1.3) -----------------------
+    // Who a Moodle user is here, which class a course is, where a student's
+    // mark goes in Moodle and which launch tickets were used. All of it is
+    // server bookkeeping: a client that could write it could point a Moodle
+    // course at somebody else's class or replay a sign-in.
+    match /ltiUsers/{hubUserId} {
+      allow read, write: if false;
+    }
+
+    match /ltiContexts/{contextKey} {
+      allow read, write: if false;
+    }
+
+    match /ltiPending/{contextKey} {
+      allow read, write: if false;
+    }
+
+    match /ltiActivities/{resourceKey} {
+      allow read, write: if false;
+    }
+
+    match /ltiGradeTargets/{targetId} {
+      allow read, write: if false;
+    }
+
+    match /ltiUsedTickets/{ticketId} {
+      allow read, write: if false;
+    }
+
     // A group's claim on a case. A client that could write one could take a
     // case for a group it is not in, or take one already taken - the whole
     // point is that the server writes it with `create` on a deterministic id.

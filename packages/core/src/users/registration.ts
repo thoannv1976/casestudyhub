@@ -28,6 +28,24 @@ export function studentIdKey(studentId: string): string {
 }
 
 export async function registerStudent(input: RegisterStudentInput): Promise<{ uid: string }> {
+  return createStudentAccount(input);
+}
+
+/**
+ * A student account created on first opening the platform from Moodle
+ * (through UniGame Hub). It has no password: the person signs in through the
+ * LMS, so there is nothing to change on first sign-in and no temporary
+ * password anyone else has seen.
+ */
+export async function registerStudentFromLms(
+  input: Omit<RegisterStudentInput, 'password'>,
+): Promise<{ uid: string }> {
+  return createStudentAccount(input);
+}
+
+async function createStudentAccount(
+  input: Omit<RegisterStudentInput, 'password'> & { password?: string },
+): Promise<{ uid: string }> {
   const auth = getAdminAuth();
   const db = getDb();
   const key = studentIdKey(input.studentId);
@@ -36,7 +54,7 @@ export async function registerStudent(input: RegisterStudentInput): Promise<{ ui
   try {
     const record = await auth.createUser({
       email: input.email,
-      password: input.password,
+      ...(input.password ? { password: input.password } : {}),
       displayName: input.fullName,
     });
     uid = record.uid;

@@ -131,7 +131,7 @@ export const classEnrollmentSchema = z.object({
   email: z.email(),
   /** `pending` = on the faculty list, not signed in yet. */
   status: enrollmentStatusSchema,
-  joinedVia: z.enum(['class_code', 'lecturer_added', 'import']),
+  joinedVia: z.enum(['class_code', 'lecturer_added', 'import', 'lti']),
   removedReason: z.string().max(500).optional(),
 });
 export type ClassEnrollment = z.infer<typeof classEnrollmentSchema>;

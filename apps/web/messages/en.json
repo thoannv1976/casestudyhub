@@ -331,7 +331,14 @@
     "onlyGroupMembersVolunteer": "Only a member of the group may volunteer for it.",
     "tooFewQuestionsToCluster": "At least three questions are needed before grouping them means anything.",
     "maxMembersBelowMembers": "It cannot go below the number of members already in the group.",
-    "leaveAfterAssignment": "This group has work set, so you cannot leave it yourself. Ask your lecturer to move you."
+    "leaveAfterAssignment": "This group has work set, so you cannot leave it yourself. Ask your lecturer to move you.",
+    "ltiNotEnabled": "The Moodle connection is not switched on.",
+    "ltiTicketInvalid": "The Moodle launch has expired or is not valid.",
+    "ltiTenantNotAllowed": "Your institution is not allowed to use CaseStudy Hub through Moodle yet.",
+    "ltiNoCourse": "The activity must be inside a Moodle course.",
+    "ltiLecturerNotFound": "Your lecturer account does not exist on CaseStudy Hub yet. Ask an administrator to create it with the same e-mail address as in Moodle.",
+    "ltiClassNotLinked": "Your lecturer has not linked this Moodle course to a class on CaseStudy Hub yet. Please come back later.",
+    "ltiLinkExpired": "The linking session has expired. Open the activity from Moodle again."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -1253,5 +1260,31 @@
     "answeredByModel": "Answered by {model}",
     "answeredByStudent": "Answered by {name}",
     "notInSources": "not in the group's documents"
+  },
+  "lti": {
+    "launchTitle": "Opening from Moodle",
+    "launching": "Signing you in with your Moodle account…",
+    "launchFailedHint": "Go back to Moodle and open the activity again. If it still fails, tell your lecturer.",
+    "linkTitle": "Link a Moodle course to a class",
+    "linkCourse": "Moodle course: {course}",
+    "linkHint": "Choose the class for this course. Students who open the activity from Moodle join this class, and published marks are sent to the Moodle gradebook. You do this once per course.",
+    "linkNoClasses": "You do not teach an active class yet. Ask an administrator to add you to the class, then open the activity from Moodle again.",
+    "linkChooseClass": "Class",
+    "linkSubmit": "Link class",
+    "linking": "Linking…",
+    "panelTitle": "Moodle connection",
+    "linkedTo": "This class is linked to the Moodle course:",
+    "untitledActivity": "Moodle activity",
+    "kind": {
+      "class": "opens the class (no mark)",
+      "case_study": "case study mark",
+      "group_project": "class project mark"
+    },
+    "noActivitiesYet": "No activity has been opened from Moodle yet.",
+    "autoSendHint": "Marks go to Moodle as soon as you publish them. The button below sends every published mark of the class again, including students who first opened Moodle after a mark was published.",
+    "sendAll": "Send class marks to Moodle",
+    "sending": "Sending…",
+    "sendDone": "Sent {rows} marks to {activities} Moodle grade columns.",
+    "sendPartly": "Sent {rows} marks, but {failed} grade columns could not be sent. Try again in a few minutes."
   }
 }

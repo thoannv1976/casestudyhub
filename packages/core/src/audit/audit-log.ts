@@ -56,6 +56,9 @@ export const AUDIT_ACTIONS = [
   'penalty.waived',
   'system.setting_changed',
   'ai.configuration_changed',
+  'lti.account_linked',
+  'lti.class_linked',
+  'lti.grades_sent',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

@@ -10,6 +10,7 @@ import {
   previewGrades,
   publishGrades,
   saveLecturerAssessment,
+  sendLtiGradesQuietly,
 } from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { respondWithError } from '@/lib/api/respond';
@@ -50,6 +51,9 @@ export async function POST(
 
     if (publishing) {
       const grades = await publishGrades(actor, assignmentId);
+      // Published marks go on to Moodle when the class is linked there. Never
+      // fails the request: the mark is published either way.
+      await sendLtiGradesQuietly(assignmentId);
       return NextResponse.json({ grades });
     }
 

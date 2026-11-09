@@ -1,0 +1,13 @@
+{
+  "hosting": {
+    "site": "casestudyhub",
+    "public": "hosting-public",
+    "ignore": ["**/.*"],
+    "rewrites": [
+      {
+        "source": "**",
+        "run": { "serviceId": "casestudyhub-web", "region": "asia-southeast1" }
+      }
+    ]
+  }
+}

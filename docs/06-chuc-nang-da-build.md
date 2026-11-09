@@ -211,6 +211,35 @@ Trang: `/framework`.
 
 Trang: `/notifications`, `/admin`, `/admin/system`.
 
+## 14b. Kết nối Moodle qua UniGame Hub (LTI 1.3)
+
+Không cần khoá LTI riêng của trường: UniGame Hub đã là công cụ LTI đăng ký với
+Moodle; nền tảng này là một "game" trong danh mục của Hub. Tắt mặc định
+(`LTI_ENABLED`), bật bằng biến môi trường khi Hub đã sẵn sàng.
+
+- Giảng viên thêm hoạt động trong Moodle: **UniGame Hub → Select content →
+  CaseStudy Hub**, chọn một trong ba loại: **Vào lớp** (không gửi điểm),
+  **Điểm bài case study**, **Điểm bài tập lớn**.
+- **Một khoá Moodle = một lớp.** Lần đầu giảng viên mở, trang
+  `/lti/link` hỏi gắn khoá với lớp nào trong các lớp mình dạy; ghi sổ.
+- **Ghép tài khoản**: lần trước đã ghép → theo email → (chỉ sinh viên) tạo mới,
+  mã sinh viên = username Moodle (trùng thì thêm đuôi), **không mật khẩu**
+  nên không bị buộc đổi mật khẩu. **Giảng viên không bao giờ được tạo từ
+  Moodle**: chưa có tài khoản giảng viên thì báo liên hệ quản trị.
+- Sinh viên mở từ Moodle **vào lớp ngay, không cần mã lớp hay duyệt**; sinh
+  viên đã bị gỡ khỏi lớp thì vẫn bị chặn.
+- **Điểm**: khi giảng viên **công bố**, điểm cuối (thang 100) của sinh viên
+  được gửi về cột Moodle tương ứng (Moodle quy về thang của nó). Cột case study
+  = **trung bình các bài case study đã công bố** của lớp; cột bài tập lớn =
+  điểm bài tập lớn. Điểm nháp, điểm AI, điểm từng tiêu chí **không bao giờ**
+  được gửi. Lỗi gửi không làm hỏng việc công bố.
+- Trang lớp của giảng viên có khung **Kết nối Moodle** và nút **Gửi điểm cả
+  lớp về Moodle** (khớp sinh viên theo Hub id, username = mã sinh viên, email).
+- Mọi dữ liệu kết nối nằm trong các bảng `lti*`, **Security Rules chặn mọi
+  client**; vé đăng nhập dùng một lần.
+
+Trang: `/lti-launch`, `/lti/link`, `/teaching/[classId]`. Mã: `packages/core/src/lti/`.
+
 ## 15. Nền tảng
 
 - **Song ngữ Việt / Anh** toàn bộ, chuyển ngôn ngữ tức thì.
@@ -231,7 +260,6 @@ Chưa duyệt, hoặc còn vướng:
 - **So sánh nhận xét AI với nhận xét giảng viên**.
 - **Tập duyệt thuyết trình** (rehearsal).
 - **Theo dõi mức đóng góp** của từng thành viên trong nhóm.
-- **Moodle / LTI** — chờ mã client và khoá của trường.
 - **Chính sách vòng đời file** trên Cloud Storage (file cũ tự chuyển lớp lưu trữ).
 - File kèm theo case **chưa đánh phiên bản theo từng phiên bản case**.
 - Trình soạn khung đánh giá **chưa thêm / bớt được tiêu chí rubric** và chưa sửa

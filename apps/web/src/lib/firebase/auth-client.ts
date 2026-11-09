@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  signInWithCustomToken,
   signInWithEmailAndPassword,
   signOut as firebaseSignOut,
   type UserCredential,
@@ -59,6 +60,16 @@ async function exchangeForSessionCookie(credential: UserCredential): Promise<voi
 
 export async function signInAndStartSession(email: string, password: string): Promise<void> {
   const credential = await signInWithEmailAndPassword(getFirebaseAuth(), email, password);
+  await exchangeForSessionCookie(credential);
+}
+
+/**
+ * Sign-in from Moodle: the server checked UniGame Hub's ticket and returned a
+ * custom token for the matching account. Exchanged for the same session
+ * cookie as a password sign-in, so nothing downstream can tell them apart.
+ */
+export async function signInWithLmsTokenAndStartSession(customToken: string): Promise<void> {
+  const credential = await signInWithCustomToken(getFirebaseAuth(), customToken);
   await exchangeForSessionCookie(credential);
 }
 
