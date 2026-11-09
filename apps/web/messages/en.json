@@ -1360,10 +1360,11 @@
     "kind": {
       "class": "opens the class (no mark)",
       "case_study": "case study mark",
-      "group_project": "class project mark"
+      "group_project": "class project mark",
+      "attendance": "attendance score"
     },
     "noActivitiesYet": "No activity has been opened from Moodle yet.",
-    "autoSendHint": "Marks go to Moodle as soon as you publish them. The button below sends every published mark of the class again, including students who first opened Moodle after a mark was published.",
+    "autoSendHint": "Marks go to Moodle as soon as you publish them. The button below sends every published mark of the class again, including students who first opened Moodle after a mark was published, and sends the current attendance score to the attendance column - attendance goes only when you press it.",
     "sendAll": "Send class marks to Moodle",
     "sending": "Sending…",
     "sendDone": "Sent {rows} marks to {activities} Moodle grade columns.",
@@ -1468,6 +1469,13 @@
     "ownTitle": "Your participation",
     "ownBody": "Presentations you sat in: {eligible} · asked at {asked} · scored {reviewed} · good questions {featured}.",
     "ownScore": "Attendance so far: {score}/10",
-    "ownNone": "No presentation has taken place yet."
+    "ownNone": "No presentation has taken place yet.",
+    "moodleTitle": "Send attendance to Moodle",
+    "moodleHint": "Sends the attendance score shown on this page to the attendance column of the Moodle gradebook (Moodle rescales it to the column). Attendance changes after every presentation, so the app never sends it on its own: press again after the last presentation, or whenever you want Moodle updated. A student with no presentation to attend yet is left empty, not 0.",
+    "moodleNoColumn": "This class has no attendance column in Moodle yet. In the Moodle course, add a UniGame Hub activity → Select content → CaseStudy Hub → \"Điểm chuyên cần\" (attendance), with grading on, then open it once with your lecturer account. Then come back here.",
+    "moodleSend": "Send attendance to Moodle",
+    "moodleSending": "Sending…",
+    "moodleDone": "Sent the attendance score of {rows} students to Moodle.",
+    "moodlePartly": "Sent {rows} scores, but {failed} columns could not be sent. Try again in a few minutes."
   }
 }

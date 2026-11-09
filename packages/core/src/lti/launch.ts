@@ -320,7 +320,10 @@ export async function handleLtiLaunch(ctx: LaunchContext): Promise<LtiLaunchResu
     const teaches = account.role === 'admin' || lecturerIds.includes(account.uid);
     if (ctx.role === 'instructor' && !teaches)
       throw new AppError('FORBIDDEN', 'errors.notYourClass');
-    return { customToken, next: teaches ? `/teaching/${classId}` : '/dashboard' };
+    // The attendance activity opens where the lecturer reads and sends it.
+    const page =
+      kind === 'attendance' ? `/teaching/${classId}/participation` : `/teaching/${classId}`;
+    return { customToken, next: teaches ? page : '/dashboard' };
   }
 
   await ensureEnrolled(account, classId);

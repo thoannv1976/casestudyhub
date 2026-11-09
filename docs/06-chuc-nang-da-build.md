@@ -263,8 +263,8 @@ Moodle; nền tảng này là một "game" trong danh mục của Hub. Tắt m�
 (`LTI_ENABLED`), bật bằng biến môi trường khi Hub đã sẵn sàng.
 
 - Giảng viên thêm hoạt động trong Moodle: **UniGame Hub → Select content →
-  CaseStudy Hub**, chọn một trong ba loại: **Vào lớp** (không gửi điểm),
-  **Điểm bài case study**, **Điểm bài tập lớn**.
+  CaseStudy Hub**, chọn một trong bốn loại: **Vào lớp** (không gửi điểm),
+  **Điểm bài case study**, **Điểm bài tập lớn**, **Điểm chuyên cần**.
 - **Một khoá Moodle = một lớp.** Lần đầu giảng viên mở, trang
   `/lti/link` hỏi gắn khoá với lớp nào trong các lớp mình dạy; ghi sổ.
 - **Ghép tài khoản**: lần trước đã ghép → theo email → (chỉ sinh viên) tạo mới,
@@ -278,6 +278,12 @@ Moodle; nền tảng này là một "game" trong danh mục của Hub. Tắt m�
   = **trung bình các bài case study đã công bố** của lớp; cột bài tập lớn =
   điểm bài tập lớn. Điểm nháp, điểm AI, điểm từng tiêu chí **không bao giờ**
   được gửi. Lỗi gửi không làm hỏng việc công bố.
+- **Điểm chuyên cần** (mục 9b, thang 10) đi sang Moodle là số × 10 trên thang
+  100, **chỉ khi giảng viên bấm gửi** — nó đổi sau mỗi buổi, nên không tự gửi.
+  Nút ở trang **Tham gia & chuyên cần** chỉ gửi cột chuyên cần; nút **Gửi điểm
+  cả lớp** gửi mọi cột, kể cả chuyên cần. Sinh viên chưa có buổi nào để ngồi
+  nghe thì ô để trống, không phải 0. Giảng viên mở hoạt động chuyên cần từ
+  Moodle thì vào thẳng trang Tham gia & chuyên cần.
 - Trang lớp của giảng viên có khung **Kết nối Moodle** và nút **Gửi điểm cả
   lớp về Moodle** (khớp sinh viên theo Hub id, username = mã sinh viên, email).
 - Mọi dữ liệu kết nối nằm trong các bảng `lti*`, **Security Rules chặn mọi

@@ -76,6 +76,21 @@ xuất, con người quyết định".
 **Làm nếu kịp:** gửi điểm chuyên cần sang Moodle như một hoạt động mới của UniGame
 Hub (cần sửa catalogue Hub và deploy lại Hub).
 
+## Phần 4 — Gửi điểm chuyên cần sang Moodle (làm sáng 10/11/2026, chủ dự án bảo "làm tiếp")
+
+1. **UniGame Hub**: danh mục CaseStudy Hub thêm hoạt động thứ tư `attendance`
+   — "Điểm chuyên cần". Chỉ sửa `config/games.json`; deploy lại Hub với đúng
+   các biến đang chạy (8 game, 5 địa chỉ). Có thể quay về revision cũ ngay.
+2. **CaseStudy Hub**: loại hoạt động `attendance`. Điểm gửi = điểm chuyên cần
+   × 10 (thang 100). **Chỉ gửi khi giảng viên bấm**: nút trên trang Tham gia &
+   chuyên cần (chỉ cột chuyên cần) và nút Gửi điểm cả lớp (mọi cột). Công bố
+   điểm bài không bao giờ chạm cột chuyên cần. Chưa có buổi nào → ô trống.
+3. Giảng viên mở hoạt động chuyên cần từ Moodle → vào trang Tham gia & chuyên cần.
+
+**Không làm:** tự gửi định kỳ hoặc sau mỗi buổi — con số trong Sổ điểm phải là
+con số giảng viên đã xem. Không tự thêm hoạt động vào khoá Moodle 33 (khoá
+thật): giảng viên tự thêm.
+
 ## Kiểm chứng và deploy
 
 Mỗi phần: `npm run check`, `test:rules`, `test:e2e` trên máy, CI 4 job xanh, gộp

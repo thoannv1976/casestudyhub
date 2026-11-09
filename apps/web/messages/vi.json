@@ -1360,10 +1360,11 @@
     "kind": {
       "class": "vào lớp (không gửi điểm)",
       "case_study": "điểm bài case study",
-      "group_project": "điểm bài tập lớn"
+      "group_project": "điểm bài tập lớn",
+      "attendance": "điểm chuyên cần"
     },
     "noActivitiesYet": "Chưa có hoạt động nào được mở từ Moodle.",
-    "autoSendHint": "Điểm được gửi về Moodle ngay khi bạn công bố. Nút dưới đây gửi lại toàn bộ điểm đã công bố của lớp, kể cả sinh viên mở từ Moodle sau khi điểm đã công bố.",
+    "autoSendHint": "Điểm được gửi về Moodle ngay khi bạn công bố. Nút dưới đây gửi lại toàn bộ điểm đã công bố của lớp, kể cả sinh viên mở từ Moodle sau khi điểm đã công bố, và gửi điểm chuyên cần hiện tại tới cột chuyên cần — điểm chuyên cần chỉ đi khi bạn bấm.",
     "sendAll": "Gửi điểm cả lớp về Moodle",
     "sending": "Đang gửi…",
     "sendDone": "Đã gửi {rows} điểm tới {activities} cột điểm Moodle.",
@@ -1468,6 +1469,13 @@
     "ownTitle": "Mức tham gia của bạn",
     "ownBody": "Số buổi ngồi nghe: {eligible} · có đặt câu hỏi: {asked} · có chấm chéo: {reviewed} · câu hỏi hay: {featured}.",
     "ownScore": "Điểm chuyên cần hiện tại: {score}/10",
-    "ownNone": "Chưa có buổi thuyết trình nào."
+    "ownNone": "Chưa có buổi thuyết trình nào.",
+    "moodleTitle": "Gửi điểm chuyên cần sang Moodle",
+    "moodleHint": "Gửi điểm chuyên cần đang hiện trên trang này tới cột điểm chuyên cần trong Sổ điểm Moodle (Moodle quy về thang của cột). Điểm chuyên cần thay đổi sau mỗi buổi, nên app không tự gửi: bấm lại sau buổi cuối, hoặc mỗi khi muốn cập nhật. Sinh viên chưa có buổi nào để ngồi nghe thì để trống, không phải 0.",
+    "moodleNoColumn": "Lớp chưa có cột chuyên cần trong Moodle. Trong khoá Moodle, thêm hoạt động UniGame Hub → Chọn nội dung → CaseStudy Hub → \"Điểm chuyên cần\", bật cho điểm, rồi mở hoạt động đó một lần bằng tài khoản giảng viên. Sau đó quay lại trang này.",
+    "moodleSend": "Gửi điểm chuyên cần sang Moodle",
+    "moodleSending": "Đang gửi…",
+    "moodleDone": "Đã gửi điểm chuyên cần của {rows} sinh viên sang Moodle.",
+    "moodlePartly": "Đã gửi {rows} điểm, nhưng {failed} cột chưa gửi được. Thử lại sau ít phút."
   }
 }

@@ -16,8 +16,11 @@ import type { GradedWorkKind } from '@casestudyhub/shared';
  *   worse than no column.
  * - `case_study`: the student's published case-study mark(s) in this class.
  * - `group_project`: the student's published class-project mark.
+ * - `attendance`: the attendance score read from the class's presentations
+ *   (Tham gia & chuyên cần). It changes after every presentation, so it is
+ *   sent only when the lecturer presses send - never on its own.
  */
-export const LTI_ACTIVITY_KINDS = ['class', 'case_study', 'group_project'] as const;
+export const LTI_ACTIVITY_KINDS = ['class', 'case_study', 'group_project', 'attendance'] as const;
 export type LtiActivityKind = (typeof LTI_ACTIVITY_KINDS)[number];
 
 /** Anything the Hub did not set, or set to something this app does not know, opens the class. */
@@ -99,7 +102,7 @@ export function ltiScore(
   kind: LtiActivityKind,
   grades: readonly { kind: GradedWorkKind; finalScore: number }[],
 ): number | null {
-  if (kind === 'class') return null;
+  if (kind === 'class' || kind === 'attendance') return null;
   const scores = grades.filter((grade) => grade.kind === kind).map((grade) => grade.finalScore);
   if (scores.length === 0) return null;
 
@@ -108,4 +111,13 @@ export function ltiScore(
       ? scores.reduce((sum, score) => sum + score, 0) / scores.length
       : Math.max(...scores);
   return Math.round(Math.min(100, Math.max(0, value)) * 100) / 100;
+}
+
+/**
+ * The attendance score (out of ten) as the 0-100 number a Moodle column takes.
+ * Null - an empty cell, not a 0 - before any presentation the student could attend.
+ */
+export function ltiAttendanceScore(attendance: number | null | undefined): number | null {
+  if (attendance === null || attendance === undefined || !Number.isFinite(attendance)) return null;
+  return Math.round(Math.min(100, Math.max(0, attendance * 10)) * 100) / 100;
 }

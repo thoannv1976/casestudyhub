@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   alternativeStudentId,
   ltiActivityKind,
+  ltiAttendanceScore,
   ltiContextKey,
   ltiScore,
   placeholderEmail,
@@ -12,6 +13,7 @@ describe('the activity a Moodle link is for', () => {
   it('reads the kinds the Hub offers and opens the class for anything else', () => {
     expect(ltiActivityKind('case_study')).toBe('case_study');
     expect(ltiActivityKind('group_project')).toBe('group_project');
+    expect(ltiActivityKind('attendance')).toBe('attendance');
     expect(ltiActivityKind(undefined)).toBe('class');
     expect(ltiActivityKind('default')).toBe('class');
   });
@@ -75,5 +77,24 @@ describe('the number a Moodle column receives', () => {
 
   it('stays within 0-100', () => {
     expect(ltiScore('case_study', [{ kind: 'case_study', finalScore: 104 }])).toBe(100);
+  });
+});
+
+describe('the attendance column', () => {
+  it('takes the score out of ten as a number out of a hundred', () => {
+    expect(ltiAttendanceScore(7.5)).toBe(75);
+    expect(ltiAttendanceScore(0)).toBe(0);
+    expect(ltiAttendanceScore(10)).toBe(100);
+    expect(ltiAttendanceScore(6.67)).toBe(66.7);
+  });
+
+  it('stays empty before any presentation the student could attend', () => {
+    expect(ltiAttendanceScore(null)).toBeNull();
+    expect(ltiAttendanceScore(undefined)).toBeNull();
+    expect(ltiAttendanceScore(Number.NaN)).toBeNull();
+  });
+
+  it('never fills from published marks', () => {
+    expect(ltiScore('attendance', [{ kind: 'case_study', finalScore: 80 }])).toBeNull();
   });
 });

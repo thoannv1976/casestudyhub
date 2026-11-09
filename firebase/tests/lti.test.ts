@@ -111,6 +111,8 @@ async function wipe() {
   await deleteWhere(COLLECTIONS.classEnrollments, 'classId', CLASS_ID);
   await deleteWhere(COLLECTIONS.lecturerAssessments, 'classId', CLASS_ID);
   for (const id of ['LTI-A1', 'LTI-A2']) await deleteWhere(COLLECTIONS.grades, 'assignmentId', id);
+  await deleteWhere(COLLECTIONS.presentationSessions, 'classId', CLASS_ID);
+  await deleteWhere(COLLECTIONS.peerReviews, 'classId', CLASS_ID);
 
   const auth = getAdminAuth();
   for (const email of [...createdEmails, LECTURER_EMAIL]) {
@@ -402,6 +404,122 @@ describe('marks going to the Moodle gradebook', () => {
       maxScore: 100,
       rows: [{ hubUserId: 'hub-student-1', username: 'sv2026001', score: 90 }],
     });
+  });
+
+  it('fills the attendance column from the attendance score, only when the lecturer sends it', async () => {
+    await linkCourse();
+    await handleLtiLaunch(launch());
+    await handleLtiLaunch(
+      launch({
+        resourceLink: { id: 'res-att', title: 'Điểm chuyên cần' },
+        activity: 'attendance',
+        gradeTarget: 'grade-target-att',
+        linkTarget: 'link-target-att',
+      }),
+    );
+    const uid = (await getAdminAuth().getUserByEmail('an.nguyen@example.edu.vn')).uid;
+    await seedPublished('LTI-A1', uid, 80);
+
+    // Another group presented; the student scored it but asked nothing: 5/10.
+    const db = getDb();
+    await db
+      .collection(COLLECTIONS.presentationSessions)
+      .doc('LTI-PS1')
+      .set({
+        id: 'LTI-PS1',
+        classId: CLASS_ID,
+        assignmentId: 'LTI-PS1-A',
+        groupId: 'G-OTHER',
+        caseStudyId: 'CS1',
+        status: 'completed',
+        currentRoleId: null,
+        runningSinceMs: null,
+        accumulatedMs: 0,
+        roleMs: {},
+        questionsOpen: false,
+        peerReviewOpen: false,
+        startedAt: new Date(Date.now() - 3600_000).toISOString(),
+        endedAt: new Date().toISOString(),
+      });
+    await db
+      .collection(COLLECTIONS.peerReviews)
+      .doc(`LTI-PS1__${uid}`)
+      .set({
+        id: `LTI-PS1__${uid}`,
+        sessionId: 'LTI-PS1',
+        classId: CLASS_ID,
+        groupId: 'G-OTHER',
+        reviewerUid: uid,
+        reviewerName: 'An',
+        reviewerStudentId: 'sv2026001',
+        reviewerGroupId: null,
+        scores: {},
+        total: 10,
+      });
+
+    // Publishing a mark sends that mark, never the attendance column.
+    const published = fakeHub();
+    expect(await sendLtiGradesForAssignment('LTI-A1', published.client)).toEqual({
+      sent: 1,
+      failed: 0,
+    });
+    expect(published.results[0]).toMatchObject({ gradeTarget: 'grade-target-an' });
+
+    const lecturer = { uid: lecturerUid, email: LECTURER_EMAIL, role: 'lecturer' as const };
+    const onlyAttendance = fakeHub();
+    expect(
+      await sendLtiClassGrades(lecturer, CLASS_ID, onlyAttendance.client, ['attendance']),
+    ).toEqual({ activities: 1, rows: 1, failed: 0 });
+    expect(onlyAttendance.batches[0]).toMatchObject({
+      linkTarget: 'link-target-att',
+      maxScore: 100,
+      rows: [{ hubUserId: 'hub-student-1', username: 'sv2026001', score: 50 }],
+    });
+
+    const everything = fakeHub();
+    expect(await sendLtiClassGrades(lecturer, CLASS_ID, everything.client)).toEqual({
+      activities: 2,
+      rows: 2,
+      failed: 0,
+    });
+    const byTarget = Object.fromEntries(
+      everything.batches.map((batch) => [
+        batch.linkTarget,
+        (batch.rows as { score: number }[])[0]?.score,
+      ]),
+    );
+    expect(byTarget).toEqual({ 'link-target-case': 80, 'link-target-att': 50 });
+  });
+
+  it('leaves the attendance column empty before any presentation', async () => {
+    await linkCourse();
+    await handleLtiLaunch(
+      launch({
+        resourceLink: { id: 'res-att', title: 'Điểm chuyên cần' },
+        activity: 'attendance',
+        linkTarget: 'link-target-att',
+      }),
+    );
+    const hub = fakeHub();
+    const outcome = await sendLtiClassGrades(
+      { uid: lecturerUid, email: LECTURER_EMAIL, role: 'lecturer' },
+      CLASS_ID,
+      hub.client,
+      ['attendance'],
+    );
+    expect(outcome).toEqual({ activities: 0, rows: 0, failed: 0 });
+    expect(hub.batches).toHaveLength(0);
+  });
+
+  it('opens the attendance activity on the participation page for the lecturer', async () => {
+    await linkCourse();
+    const again = await handleLtiLaunch(
+      lecturerLaunch({
+        resourceLink: { id: 'res-att', title: 'Điểm chuyên cần' },
+        activity: 'attendance',
+      }),
+    );
+    expect(again.next).toBe(`/teaching/${CLASS_ID}/participation`);
   });
 
   it('lets only a lecturer of the class send it', async () => {

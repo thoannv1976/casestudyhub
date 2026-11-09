@@ -5,9 +5,10 @@ import type { SessionUser } from '../auth/types';
 import { assertCanManageClass } from '../academic/structure';
 import { listRoster } from '../academic/enrollment';
 import { listPublishedGradesOfStudent } from '../grading/assessments';
+import { classParticipation } from '../analytics/participation';
 import { defaultHubClient, isLtiEnabled, type LtiHubClient } from './config';
 import type { BulkRow } from './hub-sdk';
-import { ltiScore, type LtiActivityKind } from './keys';
+import { ltiAttendanceScore, ltiScore, type LtiActivityKind } from './keys';
 
 /**
  * Sending marks to the Moodle gradebook.
@@ -145,11 +146,17 @@ export interface LtiClassSendOutcome {
  * Students are matched in Moodle by their Hub id when they have opened the
  * activity, else by username (the student code) and e-mail - so a student who
  * never came in from Moodle still gets their mark.
+ *
+ * The attendance column goes out only from here, when the lecturer presses
+ * send: it moves after every presentation, and the number in Moodle should be
+ * one the lecturer looked at. `kinds` limits the send to some columns (the
+ * participation page sends only attendance).
  */
 export async function sendLtiClassGrades(
   actor: SessionUser,
   classId: string,
   hub: LtiHubClient | null = defaultHubClient(),
+  kinds?: readonly LtiActivityKind[],
 ): Promise<LtiClassSendOutcome> {
   await assertCanManageClass(actor, classId);
   const outcome = { activities: 0, rows: 0, failed: 0 };
@@ -158,7 +165,12 @@ export async function sendLtiClassGrades(
   const db = getDb();
   const activities = (
     await db.collection(COLLECTIONS.ltiActivities).where('classId', '==', classId).get()
-  ).docs.filter((doc) => doc.get('kind') !== 'class' && typeof doc.get('linkTarget') === 'string');
+  ).docs.filter(
+    (doc) =>
+      doc.get('kind') !== 'class' &&
+      typeof doc.get('linkTarget') === 'string' &&
+      (!kinds || kinds.includes(doc.get('kind') as LtiActivityKind)),
+  );
   if (activities.length === 0) return outcome;
 
   const roster = (await listRoster(classId)).filter(
@@ -173,16 +185,28 @@ export async function sendLtiClassGrades(
     mappings.docs.forEach((doc) => hubIds.set(doc.get('uid') as string, doc.id));
   }
 
+  const kindOf = (doc: (typeof activities)[number]) => doc.get('kind') as LtiActivityKind;
   const marks = new Map<string, { kind: GradedWorkKind; finalScore: number }[]>();
-  for (const uid of uids) marks.set(uid, await publishedMarksInClass(uid, classId));
+  if (activities.some((doc) => kindOf(doc) !== 'attendance')) {
+    for (const uid of uids) marks.set(uid, await publishedMarksInClass(uid, classId));
+  }
+  const attendance = new Map<string, number | null>();
+  if (activities.some((doc) => kindOf(doc) === 'attendance')) {
+    const participation = await classParticipation(classId);
+    participation.rows.forEach((row) => attendance.set(row.studentUid, row.attendance));
+  }
+  const scoreOf = (kind: LtiActivityKind, uid: string) =>
+    kind === 'attendance'
+      ? ltiAttendanceScore(attendance.get(uid))
+      : ltiScore(kind, marks.get(uid) ?? []);
 
   const sentAt = new Date().toISOString();
   for (const activity of activities) {
-    const kind = activity.get('kind') as LtiActivityKind;
+    const kind = kindOf(activity);
     const rows: BulkRow[] = [];
     for (const row of roster) {
       const uid = row.studentUid as string;
-      const score = ltiScore(kind, marks.get(uid) ?? []);
+      const score = scoreOf(kind, uid);
       if (score === null) continue;
       const hubUserId = hubIds.get(uid);
       rows.push({
@@ -216,7 +240,7 @@ export async function sendLtiClassGrades(
     actorRole: actor.role,
     target: `${COLLECTIONS.classes}/${classId}`,
     classId,
-    after: { ...outcome },
+    after: { ...outcome, kinds: kinds ? [...kinds] : null },
   });
   return outcome;
 }
