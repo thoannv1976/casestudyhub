@@ -48,6 +48,7 @@ export function QaReview({
   locale,
   sessions,
   afterClassQa,
+  liveQaUrl,
   providers,
   defaultProvider,
 }: {
@@ -55,6 +56,8 @@ export function QaReview({
   locale: string;
   sessions: QaSessionView[];
   afterClassQa: AfterClassQa;
+  /** In-class Q&A held in ClassInteract, if the lecturer set it. */
+  liveQaUrl: string | null;
   /** Vendors with a key, which the lecturer may pick for suggestions. */
   providers: AiProviderName[];
   defaultProvider: AiProviderName | null;
@@ -86,6 +89,7 @@ export function QaReview({
           askDays: Number(form.get('askDays') ?? 0),
           answerDays: Number(form.get('answerDays') ?? 0),
         },
+        liveQaUrl: String(form.get('liveQaUrl') ?? '').trim(),
       });
       if (!ok) {
         setErrorKey(errorKeyOf(payload));
@@ -157,6 +161,16 @@ export function QaReview({
               max={30}
               defaultValue={afterClassQa.answerDays}
               className="w-24"
+            />
+          </Field>
+          <Field label={t('liveQaUrl')} htmlFor="liveQaUrl" hint={t('liveQaUrlHint')}>
+            <Input
+              id="liveQaUrl"
+              name="liveQaUrl"
+              type="url"
+              placeholder="https://classinteractive.web.app/…"
+              defaultValue={liveQaUrl ?? ''}
+              className="w-96 max-w-full"
             />
           </Field>
           <Button type="submit" disabled={busy !== null}>

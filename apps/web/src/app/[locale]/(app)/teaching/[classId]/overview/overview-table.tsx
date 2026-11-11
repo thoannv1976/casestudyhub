@@ -9,6 +9,7 @@ import {
   type ProgressFilter,
 } from '@casestudyhub/shared';
 import { Badge, type BadgeTone } from '@/components/ui/card';
+import { Alert, Button } from '@/components/ui/form';
 import type { ClassOverview } from '@casestudyhub/core';
 import { Link } from '@/i18n/navigation';
 
@@ -45,7 +46,35 @@ export function OverviewTable({ classId, overview }: { classId: string; overview
   const format = useFormatter();
   const tProgress = useTranslations('progress');
   const tProject = useTranslations('project');
+  const tAll = useTranslations();
   const [filter, setFilter] = useState<ProgressFilter>('all');
+  const [reminding, setReminding] = useState(false);
+  const [notice, setNotice] = useState<{ tone: 'success' | 'error'; text: string } | null>(null);
+  const owing = overview.rows.filter(
+    (row) => row.progress.missing > 0 && row.marking === 'unmarked' && row.memberCount > 0,
+  ).length;
+
+  async function remind() {
+    if (!window.confirm(t('remindConfirm', { count: owing }))) return;
+    setReminding(true);
+    setNotice(null);
+    try {
+      const response = await fetch(`/api/classes/${classId}/reminders`, { method: 'POST' });
+      const body = await response.json().catch(() => null);
+      setNotice(
+        response.ok
+          ? {
+              tone: 'success',
+              text: t('remindDone', { groups: body.groups, students: body.students }),
+            }
+          : { tone: 'error', text: tAll(body?.error?.messageKey ?? 'errors.unexpected') },
+      );
+    } catch {
+      setNotice({ tone: 'error', text: tAll('errors.networkError') });
+    } finally {
+      setReminding(false);
+    }
+  }
 
   const visible = overview.rows.filter((row) => matchesFilter(row.progress, filter));
 
@@ -80,6 +109,14 @@ export function OverviewTable({ classId, overview }: { classId: string; overview
           </li>
         ))}
       </ul>
+
+      <div className="flex flex-wrap items-center gap-3">
+        <Button onClick={remind} disabled={reminding || owing === 0}>
+          {reminding ? t('reminding') : t('remind', { count: owing })}
+        </Button>
+        <span className="text-muted text-sm">{t('remindHint')}</span>
+      </div>
+      {notice ? <Alert tone={notice.tone}>{notice.text}</Alert> : null}
 
       <div className="flex flex-wrap items-center gap-2">
         <span className="text-muted text-sm">{tProgress('filterLabel')}</span>
@@ -147,6 +184,13 @@ export function OverviewTable({ classId, overview }: { classId: string; overview
                   {row.progress.lateItems > 0 ? (
                     <span className="ml-2 text-xs text-red-600 dark:text-red-400">
                       {t('lateItems', { count: row.progress.lateItems })}
+                    </span>
+                  ) : null}
+                  {row.missingItems.length > 0 && row.marking === 'unmarked' ? (
+                    <span className="text-muted block max-w-56 text-xs" data-testid="missing-items">
+                      {t('missingList', {
+                        items: row.missingItems.map((key) => tAll(key)).join(', '),
+                      })}
                     </span>
                   ) : null}
                 </td>

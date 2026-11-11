@@ -347,7 +347,11 @@
     "caseSetTooLarge": "A class can work from at most 100 cases.",
     "claimAmbiguous": "Several groups share this case. Say which group’s choice to release.",
     "answersClosed": "The time for the group to answer in the app has ended.",
-    "nothingToFeature": "There is no answer to mark yet."
+    "nothingToFeature": "There is no answer to mark yet.",
+    "ltiRelinkHasGrades": "This class has already published marks for this Moodle course, so the course cannot move to another class (two cohorts would share one grade column).",
+    "urlInvalid": "Enter an address starting with https://.",
+    "reminderTooSoon": "This class was reminded in the last 12 hours. Wait a little before reminding again.",
+    "mergeSizeInvalid": "Choose from 1 to 6 members."
   },
   "auth": {
     "signInTitle": "Sign in",
@@ -386,7 +390,9 @@
     "nothingWaiting": "Nothing is waiting on you. Every group is either still within its deadline or already published.",
     "nothingDue": "Nothing is due. Everything your group owes has been handed in.",
     "noClassesStaff": "You are not teaching a class yet. Create one from the teaching page.",
-    "noClassesStudent": "You have not joined a class yet. Ask your lecturer for the class code."
+    "noClassesStudent": "You have not joined a class yet. Ask your lecturer for the class code.",
+    "noGroupYet": "You are not in a group yet in {className}.",
+    "chooseGroup": "Open the class to join a group"
   },
   "profile": {
     "title": "My profile",
@@ -456,7 +462,8 @@
     "addLecturer": "Lecturer email",
     "addLecturerHint": "The account must already exist and be a lecturer account.",
     "addLecturerAction": "Add lecturer",
-    "lecturerAdded": "{name} now teaches this class."
+    "lecturerAdded": "{name} now teaches this class.",
+    "cloneTitle": "Open a class for a new cohort from this one"
   },
   "roster": {
     "title": "Student list",
@@ -602,7 +609,21 @@
     "placementHint": "The whole class, with the group each is in. Pick a group to place somebody who has none, or to move somebody who has.",
     "nobodyToPlace": "This class has no students to place yet.",
     "noGroupYet": "no group yet",
-    "placeInto": "Pick a group for {name}"
+    "placeInto": "Pick a group for {name}",
+    "toolsTitle": "Whole-class tools",
+    "toolsHint": "For the end of group formation: place students without a group, merge groups with too few members, then lock every group.",
+    "placeAll": "{count, plural, =0 {Every student has a group} one {Randomly place # student without a group} other {Randomly place # students without a group}}",
+    "placeAllConfirm": "Randomly place {count} students without a group into unlocked groups (emptiest first)?",
+    "placeAllDone": "Placed {placed} students. {unplaced, plural, =0 {} other {# could not be placed: no seats left.}}",
+    "lockAll": "Lock all groups",
+    "unlockAll": "Unlock all groups",
+    "lockAllDone": "Locked {count} groups.",
+    "unlockAllDone": "Unlocked {count} groups.",
+    "mergeSize": "Merge groups with at most (members)",
+    "mergeHint": "Groups holding a case or an assignment are never merged.",
+    "mergeSmall": "Merge small groups",
+    "mergeConfirm": "Move the members of groups with at most {size} members (no case, no assignment) into other groups with room?",
+    "mergeDone": "Moved {moved} students and emptied {emptied} groups. {stuck, plural, =0 {} other {# could not move: no seats left.}}"
   },
   "cases": {
     "title": "Case study library",
@@ -761,7 +782,8 @@
     "openPeerReview": "Open scoring",
     "closePeerReview": "Close scoring",
     "mark": "Mark",
-    "classReport": "Class report"
+    "classReport": "Class report",
+    "liveQaLink": "Ask your question on ClassInteract"
   },
   "questions": {
     "title": "Question wall",
@@ -1027,7 +1049,8 @@
       "submissionDueSoon": "{missing, plural, one {# deliverable is} other {# deliverables are}} still missing for {case}, and the deadline is in {hours, plural, one {# hour} other {# hours}}.",
       "assignmentRescheduled": "Your group’s presentation has moved to {presentation, date, medium} at {presentation, time, short}. The new submission deadline is {deadline, date, medium} at {deadline, time, short}.",
       "gradeProjectPublished": "Your mark for the class group project has been published.",
-      "questionAnswered": "Your question now has an answer settled by the lecturer."
+      "questionAnswered": "Your question now has an answer settled by the lecturer.",
+      "submissionReminder": "Reminder from your lecturer: your group is still missing {missing} required items for {kind, select, group_project {the group project} other {{case}}}. Due {deadline, time, short} on {deadline, date, medium}."
     }
   },
   "framework": {
@@ -1309,7 +1332,13 @@
       "unmarked": "Not marked",
       "draft": "Draft",
       "published": "Published"
-    }
+    },
+    "remind": "{count, plural, =0 {No group is missing work} one {Remind # group missing work} other {Remind # groups missing work}}",
+    "reminding": "Sending reminders…",
+    "remindHint": "Sends an in-app notification to groups still missing required items and not yet marked. A class can be reminded at most once every 12 hours.",
+    "remindConfirm": "Send a reminder to {count} groups missing work?",
+    "remindDone": "Reminded {groups} groups ({students} students).",
+    "missingList": "Missing: {items}"
   },
   "volunteer": {
     "title": "Volunteer to present the group project",
@@ -1368,7 +1397,16 @@
     "sendAll": "Send class marks to Moodle",
     "sending": "Sending…",
     "sendDone": "Sent {rows} marks to {activities} Moodle grade columns.",
-    "sendPartly": "Sent {rows} marks, but {failed} grade columns could not be sent. Try again in a few minutes."
+    "sendPartly": "Sent {rows} marks, but {failed} grade columns could not be sent. Try again in a few minutes.",
+    "rosterMatch": "{fromMoodle, plural, =0 {No student has come in from Moodle yet.} other {# students came in from Moodle; {newcomers} of them were not on this class roster.}}",
+    "likelyWrongClass": "Most students opening this class from Moodle are not on its roster. The Moodle course may be linked to the wrong class (for example last term's). Check, and move the Moodle course to the right class below.",
+    "relinkTitle": "Move the Moodle course to another class",
+    "relinkHint": "For a new cohort, or when the course was linked to the wrong class. Every Moodle activity of the course (class entry, grade columns, attendance) will point to the new class. Not possible once this class has published marks.",
+    "relinkTarget": "New class",
+    "relinkSubmit": "Move «{course}» to the selected class",
+    "relinking": "Moving…",
+    "relinkConfirm": "Move the Moodle course «{course}» to {target}? Students opening it from Moodle will then enter {target}.",
+    "linkClassFacts": "{students} students · case choice closes {deadline}"
   },
   "qaReview": {
     "title": "Questions & answers",
@@ -1429,7 +1467,9 @@
     "csvSuggestion": "AI suggestion",
     "csvFinal": "Settled answer",
     "csvFinalSource": "Settled from (group/ai/lecturer)",
-    "csvFeaturedAnswer": "Good answer"
+    "csvFeaturedAnswer": "Good answer",
+    "liveQaUrl": "In-class Q&A link",
+    "liveQaUrlHint": "For example the session on ClassInteract. Students see a button to it in the presentation room. Leave empty to remove."
   },
   "participation": {
     "title": "Participation & attendance",
@@ -1477,5 +1517,16 @@
     "moodleSending": "Sending…",
     "moodleDone": "Sent the attendance score of {rows} students to Moodle.",
     "moodlePartly": "Sent {rows} scores, but {failed} columns could not be sent. Try again in a few minutes."
+  },
+  "cloneClass": {
+    "hint": "The new class uses this class's course, semester, language, joining rule, lecturers, case selection, case set and Q&A and attendance settings. Students, group members, assignments and marks are not copied. Afterwards, move the Moodle course to the new class in the Moodle panel.",
+    "classCode": "New class code",
+    "className": "New class name",
+    "groupCount": "Number of groups",
+    "maxMembers": "Members per group",
+    "deadline": "Case choice closes",
+    "deadlineHint": "Leave empty if not decided yet.",
+    "creating": "Creating…",
+    "submit": "Create the new cohort class"
   }
 }

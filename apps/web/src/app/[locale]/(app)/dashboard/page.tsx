@@ -82,10 +82,27 @@ export default async function DashboardPage({ params }: { params: Promise<{ loca
       {board.classes.length > 0 ? (
         <Card>
           <CardTitle>{isStaff ? t('waitingOnYou') : t('yourWork')}</CardTitle>
+          {!isStaff && board.withoutGroup.length > 0 ? (
+            <ul className="mt-3 space-y-2 text-sm" data-testid="dashboard-no-group">
+              {board.withoutGroup.map((row) => (
+                <li key={row.classId}>
+                  {t('noGroupYet', { className: row.className })}{' '}
+                  <Link
+                    href={`/classes/${row.classId}`}
+                    className="text-brand-600 dark:text-brand-300 font-medium underline"
+                  >
+                    {t('chooseGroup')}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : null}
           {board.outstanding.length === 0 ? (
-            <p className="text-muted mt-3 text-sm">
-              {isStaff ? t('nothingWaiting') : t('nothingDue')}
-            </p>
+            !isStaff && board.withoutGroup.length === board.classes.length ? null : (
+              <p className="text-muted mt-3 text-sm">
+                {isStaff ? t('nothingWaiting') : t('nothingDue')}
+              </p>
+            )
           ) : (
             <ul className="mt-4 space-y-3 text-sm" data-testid="dashboard-outstanding">
               {board.outstanding.map((row) => (

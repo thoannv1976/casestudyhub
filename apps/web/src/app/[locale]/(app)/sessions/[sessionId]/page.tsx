@@ -255,6 +255,7 @@ export default async function SessionPage({
         sessionId={sessionId}
         policy={policy}
         afterClassQa={qaPolicy.afterClassQa}
+        liveQaUrl={qaPolicy.liveQaUrl}
         ownUid={user.uid}
         isStaff={isStaff}
         isStudent={user.role === 'student'}

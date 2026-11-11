@@ -56,6 +56,11 @@ export interface Dashboard {
   published: DashboardAssignment[];
   /** Classes this person teaches or is enrolled on. */
   classes: { classId: string; className: string; classCode: string }[];
+  /**
+   * Classes where this student has no group yet. Nothing can be due without a
+   * group, which must not read as "your group handed everything in".
+   */
+  withoutGroup: { classId: string; className: string }[];
 }
 
 interface ClassContext {
@@ -185,6 +190,7 @@ export async function dashboardFor(user: SessionUser, now = Date.now()): Promise
   const outstanding: DashboardAssignment[] = [];
   const published: DashboardAssignment[] = [];
   const live: DashboardSession[] = [];
+  const withoutGroup: Dashboard['withoutGroup'] = [];
   const db = getDb();
 
   for (const context of classes) {
@@ -206,6 +212,9 @@ export async function dashboardFor(user: SessionUser, now = Date.now()): Promise
     const mine = isStaff
       ? assignments
       : assignments.filter((assignment) => assignment.groupId === ownGroupId);
+    if (!isStaff && ownGroupId === null) {
+      withoutGroup.push({ classId: context.classId, className: context.className });
+    }
 
     // Titles are needed for the live session too, and that session belongs to
     // a group this person may not be in - a student in the audience would
@@ -260,5 +269,6 @@ export async function dashboardFor(user: SessionUser, now = Date.now()): Promise
     live,
     published: published.sort((a, b) => bySoonest(b, a)).slice(0, MAX_ROWS),
     classes,
+    withoutGroup,
   };
 }

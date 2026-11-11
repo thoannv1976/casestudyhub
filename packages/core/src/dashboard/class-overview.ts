@@ -48,6 +48,8 @@ export interface OverviewRow {
   submissionDeadline: string;
   requiredCount: number;
   handedInCount: number;
+  /** Message keys of the required deliverables not handed in yet. */
+  missingItems: string[];
   progress: AssignmentProgress;
   marking: 'unmarked' | 'draft' | 'published';
   /** The group's rubric total as the lecturer saved it, before weighting. */
@@ -201,6 +203,9 @@ export async function classOverview(
       submissionDeadline: input.submissionDeadline,
       requiredCount: input.required.filter((item) => item.required).length,
       handedInCount: submitted.length,
+      missingItems: input.required
+        .filter((item) => item.required && !submitted.some((row) => row.deliverableId === item.id))
+        .map((item) => item.key),
       progress: assignmentProgress({
         requiredDeliverables: input.required,
         submitted,

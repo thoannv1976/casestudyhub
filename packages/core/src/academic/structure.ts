@@ -190,6 +190,8 @@ export interface ClassSummary {
   groupsPerCase: number;
   status: string;
   studentCount: number;
+  /** In-class Q&A held in ClassInteract, when the lecturer set it. */
+  liveQaUrl?: string;
 }
 
 function toClassSummary(data: FirebaseFirestore.DocumentData): ClassSummary {
@@ -210,6 +212,7 @@ function toClassSummary(data: FirebaseFirestore.DocumentData): ClassSummary {
     groupsPerCase: typeof data.groupsPerCase === 'number' ? data.groupsPerCase : 1,
     status: data.status as string,
     studentCount: (data.studentCount as number | undefined) ?? 0,
+    ...(typeof data.liveQaUrl === 'string' ? { liveQaUrl: data.liveQaUrl } : {}),
   };
 }
 

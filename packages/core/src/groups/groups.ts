@@ -731,3 +731,104 @@ export async function moveMember(
 
   return { fromGroupId };
 }
+
+/**
+ * Locks, or unlocks, every group of a class at once: the end of group
+ * formation is one moment for the whole class, not twenty clicks.
+ */
+export async function setAllGroupsLocked(
+  actor: SessionUser,
+  classId: string,
+  locked: boolean,
+): Promise<{ changed: number }> {
+  const db = getDb();
+  const groups = (await listGroups(classId)).filter((group) => group.locked !== locked);
+  const batch = db.batch();
+  for (const group of groups) {
+    batch.update(db.collection(COLLECTIONS.groups).doc(group.id), {
+      locked,
+      status: locked ? 'active' : 'forming',
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+  if (groups.length > 0) await batch.commit();
+
+  await writeAuditLog({
+    action: 'group.bulk_locked',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.classes}/${classId}`,
+    classId,
+    after: { locked, groups: groups.length },
+  });
+  return { changed: groups.length };
+}
+
+/**
+ * Gives the members of near-empty groups a real group to work in.
+ *
+ * A group with at most `maxSize` members, that holds no case and has no work
+ * yet, is emptied: each member moves to the unlocked group with the most free
+ * places. Groups that already hold a case or an assignment are never emptied,
+ * because their members' work and claim belong to that group. Members who fit
+ * nowhere stay where they are and are counted.
+ */
+export async function mergeSmallGroups(
+  actor: SessionUser,
+  classId: string,
+  maxSize: number,
+): Promise<{ moved: number; emptied: number; stuck: number }> {
+  if (!Number.isInteger(maxSize) || maxSize < 1 || maxSize > 6) {
+    throw new AppError('VALIDATION_FAILED', 'errors.mergeSizeInvalid');
+  }
+  const db = getDb();
+  const [groups, members, claims, assignments] = await Promise.all([
+    listGroups(classId),
+    listMembers(classId),
+    db.collection(COLLECTIONS.caseClaims).where('classId', '==', classId).get(),
+    db.collection(COLLECTIONS.assignments).where('classId', '==', classId).get(),
+  ]);
+  const busy = new Set<string>([
+    ...claims.docs.map((doc) => String(doc.get('groupId'))),
+    ...assignments.docs.map((doc) => String(doc.get('groupId'))),
+  ]);
+  const open = groups.filter((group) => !group.locked);
+  const small = open
+    .filter((group) => group.memberCount > 0 && group.memberCount <= maxSize && !busy.has(group.id))
+    .sort((a, b) => a.memberCount - b.memberCount);
+  const smallIds = new Set(small.map((group) => group.id));
+  const seats = open
+    .filter((group) => !smallIds.has(group.id))
+    .map((group) => ({ group, free: group.maxMembers - group.memberCount }));
+
+  let moved = 0;
+  let stuck = 0;
+  let emptied = 0;
+  for (const group of small) {
+    const leaving = members.filter((member) => member.groupId === group.id);
+    let left = 0;
+    for (const member of leaving) {
+      seats.sort((a, b) => b.free - a.free);
+      const target = seats[0];
+      if (!target || target.free <= 0) {
+        stuck += 1;
+        continue;
+      }
+      await moveMember(actor, classId, member.studentUid, target.group.id);
+      target.free -= 1;
+      moved += 1;
+      left += 1;
+    }
+    if (left === leaving.length) emptied += 1;
+  }
+
+  await writeAuditLog({
+    action: 'group.small_merged',
+    actorUid: actor.uid,
+    actorRole: actor.role,
+    target: `${COLLECTIONS.classes}/${classId}`,
+    classId,
+    after: { maxSize, moved, emptied, stuck },
+  });
+  return { moved, emptied, stuck };
+}

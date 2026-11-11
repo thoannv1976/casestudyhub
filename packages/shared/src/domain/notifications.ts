@@ -34,6 +34,8 @@ export const NOTIFICATION_KINDS = [
    * would go on saying "due soon" after the work was handed in.
    */
   'submission.dueSoon',
+  /** The lecturer reminded the group that required work is still missing. */
+  'submission.reminder',
 ] as const;
 export const notificationKindSchema = z.enum(NOTIFICATION_KINDS);
 export type NotificationKind = z.infer<typeof notificationKindSchema>;

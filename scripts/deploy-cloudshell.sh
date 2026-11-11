@@ -142,7 +142,7 @@ gcloud run deploy "$SERVICE" \
   --platform managed \
   "${SA_FLAG[@]}" \
   --allow-unauthenticated \
-  --min-instances 0 \
+  --min-instances 1 \
   --max-instances 4 \
   --memory 1Gi \
   --cpu 1 \

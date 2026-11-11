@@ -180,6 +180,8 @@ export async function saveQaSettings(
   const patch: Record<string, unknown> = { updatedAt: FieldValue.serverTimestamp() };
   if (input.afterClassQa) patch.afterClassQa = input.afterClassQa;
   if (input.attendancePolicy) patch.attendancePolicy = input.attendancePolicy;
+  if (input.liveQaUrl !== undefined)
+    patch.liveQaUrl = input.liveQaUrl === '' ? FieldValue.delete() : input.liveQaUrl;
   await ref.update(patch);
 
   await writeAuditLog({
@@ -191,10 +193,12 @@ export async function saveQaSettings(
     before: {
       afterClassQa: snapshot.get('afterClassQa') ?? null,
       attendancePolicy: snapshot.get('attendancePolicy') ?? null,
+      liveQaUrl: snapshot.get('liveQaUrl') ?? null,
     },
     after: {
       ...(input.afterClassQa ? { afterClassQa: input.afterClassQa } : {}),
       ...(input.attendancePolicy ? { attendancePolicy: input.attendancePolicy } : {}),
+      ...(input.liveQaUrl !== undefined ? { liveQaUrl: input.liveQaUrl || null } : {}),
     },
   });
 }

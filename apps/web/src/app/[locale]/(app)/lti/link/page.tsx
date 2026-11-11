@@ -57,7 +57,13 @@ export default async function LtiLinkPage({
               linkKey={pending.key}
               classes={pending.classes.map((item) => ({
                 id: item.id,
-                label: `${item.className} · ${item.classCode}`,
+                // Enough to tell this cohort's class from last term's.
+                label: `${item.className} · ${item.classCode} · ${t('linkClassFacts', {
+                  students: item.studentCount,
+                  deadline: item.caseSelectionDeadline
+                    ? new Date(item.caseSelectionDeadline).toLocaleDateString(locale)
+                    : '—',
+                })}`,
               }))}
             />
           )}

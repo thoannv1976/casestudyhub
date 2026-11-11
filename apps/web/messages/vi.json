@@ -347,7 +347,11 @@
     "caseSetTooLarge": "Một lớp dùng tối đa 100 case.",
     "claimAmbiguous": "Nhiều nhóm cùng giữ case này. Hãy nói rõ thu hồi lựa chọn của nhóm nào.",
     "answersClosed": "Đã hết thời gian để nhóm trả lời trong app.",
-    "nothingToFeature": "Chưa có câu trả lời nào để đánh dấu."
+    "nothingToFeature": "Chưa có câu trả lời nào để đánh dấu.",
+    "ltiRelinkHasGrades": "Lớp này đã công bố điểm cho khoá Moodle hiện tại, nên không chuyển khoá sang lớp khác được (điểm hai khoá sẽ lẫn vào một cột).",
+    "urlInvalid": "Hãy nhập đường dẫn bắt đầu bằng https://.",
+    "reminderTooSoon": "Lớp vừa được nhắc trong 12 giờ qua. Hãy đợi thêm rồi nhắc lại.",
+    "mergeSizeInvalid": "Chọn từ 1 đến 6 thành viên."
   },
   "auth": {
     "signInTitle": "Đăng nhập",
@@ -386,7 +390,9 @@
     "nothingWaiting": "Không có việc nào chờ bạn. Mọi nhóm đều còn hạn hoặc đã được công bố điểm.",
     "nothingDue": "Không còn gì phải nộp. Nhóm bạn đã nộp đủ.",
     "noClassesStaff": "Bạn chưa phụ trách lớp nào. Tạo lớp ở trang Giảng dạy.",
-    "noClassesStudent": "Bạn chưa vào lớp nào. Hãy hỏi giảng viên mã lớp."
+    "noClassesStudent": "Bạn chưa vào lớp nào. Hãy hỏi giảng viên mã lớp.",
+    "noGroupYet": "Bạn chưa có nhóm ở lớp {className}.",
+    "chooseGroup": "Vào lớp để tham gia nhóm"
   },
   "profile": {
     "title": "Hồ sơ của tôi",
@@ -456,7 +462,8 @@
     "addLecturer": "Email giảng viên",
     "addLecturerHint": "Tài khoản phải có sẵn và là tài khoản giảng viên.",
     "addLecturerAction": "Thêm giảng viên",
-    "lecturerAdded": "{name} đã phụ trách lớp này."
+    "lecturerAdded": "{name} đã phụ trách lớp này.",
+    "cloneTitle": "Mở lớp cho khoá mới từ lớp này"
   },
   "roster": {
     "title": "Danh sách sinh viên",
@@ -602,7 +609,21 @@
     "placementHint": "Cả lớp ở đây, kèm nhóm hiện tại. Chọn nhóm để xếp người chưa có nhóm, hoặc chuyển người đang ở nhóm khác.",
     "nobodyToPlace": "Lớp chưa có sinh viên nào để xếp.",
     "noGroupYet": "chưa có nhóm",
-    "placeInto": "Chọn nhóm cho {name}"
+    "placeInto": "Chọn nhóm cho {name}",
+    "toolsTitle": "Công cụ cho cả lớp",
+    "toolsHint": "Dùng khi kết thúc giai đoạn lập nhóm: xếp người chưa có nhóm, gộp nhóm quá ít người, rồi khoá tất cả nhóm.",
+    "placeAll": "{count, plural, =0 {Mọi sinh viên đã có nhóm} other {Xếp ngẫu nhiên # sinh viên chưa có nhóm}}",
+    "placeAllConfirm": "Xếp ngẫu nhiên {count} sinh viên chưa có nhóm vào các nhóm chưa khoá (nhóm vắng nhất trước)?",
+    "placeAllDone": "Đã xếp {placed} sinh viên. {unplaced, plural, =0 {} other {# người chưa xếp được vì hết chỗ.}}",
+    "lockAll": "Khoá tất cả nhóm",
+    "unlockAll": "Mở khoá tất cả nhóm",
+    "lockAllDone": "Đã khoá {count} nhóm.",
+    "unlockAllDone": "Đã mở khoá {count} nhóm.",
+    "mergeSize": "Gộp nhóm có tối đa (thành viên)",
+    "mergeHint": "Nhóm đã nhận case hoặc đã có bài giao không bị gộp.",
+    "mergeSmall": "Gộp nhóm ít người",
+    "mergeConfirm": "Chuyển thành viên của các nhóm có tối đa {size} người (chưa nhận case, chưa có bài) sang nhóm khác còn chỗ?",
+    "mergeDone": "Đã chuyển {moved} sinh viên, làm trống {emptied} nhóm. {stuck, plural, =0 {} other {# người chưa chuyển được vì hết chỗ.}}"
   },
   "cases": {
     "title": "Thư viện Case Study",
@@ -761,7 +782,8 @@
     "openPeerReview": "Mở chấm điểm",
     "closePeerReview": "Đóng chấm điểm",
     "mark": "Chấm điểm",
-    "classReport": "Báo cáo lớp"
+    "classReport": "Báo cáo lớp",
+    "liveQaLink": "Đặt câu hỏi trên ClassInteract"
   },
   "questions": {
     "title": "Tường câu hỏi",
@@ -1027,7 +1049,8 @@
       "submissionDueSoon": "Còn thiếu {missing} sản phẩm cho {case}, và hạn nộp chỉ còn {hours} giờ.",
       "assignmentRescheduled": "Buổi thuyết trình của nhóm bạn đã dời sang {presentation, time, short} ngày {presentation, date, medium}. Hạn nộp mới là {deadline, time, short} ngày {deadline, date, medium}.",
       "gradeProjectPublished": "Điểm bài tập lớn của bạn đã được công bố.",
-      "questionAnswered": "Câu hỏi của bạn đã có câu trả lời được giảng viên chốt."
+      "questionAnswered": "Câu hỏi của bạn đã có câu trả lời được giảng viên chốt.",
+      "submissionReminder": "Giảng viên nhắc: nhóm bạn còn thiếu {missing} sản phẩm bắt buộc cho {kind, select, group_project {bài tập lớn} other {{case}}}. Hạn nộp {deadline, time, short} ngày {deadline, date, medium}."
     }
   },
   "framework": {
@@ -1309,7 +1332,13 @@
       "unmarked": "Chưa chấm",
       "draft": "Đang nháp",
       "published": "Đã công bố"
-    }
+    },
+    "remind": "{count, plural, =0 {Không có nhóm nào còn thiếu bài} other {Nhắc # nhóm còn thiếu bài}}",
+    "reminding": "Đang gửi nhắc…",
+    "remindHint": "Gửi thông báo trong app tới các nhóm còn thiếu sản phẩm bắt buộc và chưa được chấm. Mỗi lớp nhắc tối đa một lần trong 12 giờ.",
+    "remindConfirm": "Gửi lời nhắc tới {count} nhóm còn thiếu bài?",
+    "remindDone": "Đã nhắc {groups} nhóm ({students} sinh viên).",
+    "missingList": "Còn thiếu: {items}"
   },
   "volunteer": {
     "title": "Xung phong thuyết trình bài tập lớn",
@@ -1368,7 +1397,16 @@
     "sendAll": "Gửi điểm cả lớp về Moodle",
     "sending": "Đang gửi…",
     "sendDone": "Đã gửi {rows} điểm tới {activities} cột điểm Moodle.",
-    "sendPartly": "Đã gửi {rows} điểm, nhưng {failed} cột điểm chưa gửi được. Thử lại sau ít phút."
+    "sendPartly": "Đã gửi {rows} điểm, nhưng {failed} cột điểm chưa gửi được. Thử lại sau ít phút.",
+    "rosterMatch": "{fromMoodle, plural, =0 {Chưa có sinh viên nào vào lớp từ Moodle.} other {# sinh viên đã vào lớp từ Moodle, trong đó {newcomers} người không có sẵn trong danh sách lớp.}}",
+    "likelyWrongClass": "Phần lớn sinh viên mở từ Moodle không có trong danh sách lớp này. Khoá Moodle có thể đang gắn nhầm lớp (ví dụ lớp của khoá trước). Hãy kiểm tra và chuyển khoá Moodle sang đúng lớp ở bên dưới.",
+    "relinkTitle": "Chuyển khoá Moodle sang lớp khác",
+    "relinkHint": "Dùng khi mở lớp cho khoá mới, hoặc khi khoá Moodle đã gắn nhầm lớp. Mọi hoạt động Moodle của khoá (vào lớp, cột điểm, chuyên cần) sẽ trỏ sang lớp mới. Không chuyển được nếu lớp này đã công bố điểm.",
+    "relinkTarget": "Lớp mới",
+    "relinkSubmit": "Chuyển «{course}» sang lớp đã chọn",
+    "relinking": "Đang chuyển…",
+    "relinkConfirm": "Chuyển khoá Moodle «{course}» sang lớp {target}? Sinh viên mở từ Moodle sau đó sẽ vào lớp {target}.",
+    "linkClassFacts": "{students} SV · hạn chọn case {deadline}"
   },
   "qaReview": {
     "title": "Hỏi–đáp",
@@ -1429,7 +1467,9 @@
     "csvSuggestion": "Gợi ý của AI",
     "csvFinal": "Câu trả lời đã chốt",
     "csvFinalSource": "Chốt từ (group/ai/lecturer)",
-    "csvFeaturedAnswer": "Câu trả lời tốt"
+    "csvFeaturedAnswer": "Câu trả lời tốt",
+    "liveQaUrl": "Đường dẫn hỏi–đáp trên lớp",
+    "liveQaUrlHint": "Ví dụ buổi học trên ClassInteract. Sinh viên thấy nút mở đường dẫn này trong phòng thuyết trình. Để trống để bỏ."
   },
   "participation": {
     "title": "Tham gia & chuyên cần",
@@ -1477,5 +1517,16 @@
     "moodleSending": "Đang gửi…",
     "moodleDone": "Đã gửi điểm chuyên cần của {rows} sinh viên sang Moodle.",
     "moodlePartly": "Đã gửi {rows} điểm, nhưng {failed} cột chưa gửi được. Thử lại sau ít phút."
+  },
+  "cloneClass": {
+    "hint": "Lớp mới dùng cùng học phần, học kỳ, ngôn ngữ, cách vào lớp, giảng viên, cách chọn case, bộ case và cài đặt hỏi–đáp, chuyên cần của lớp này. Không chép sinh viên, thành viên nhóm, bài giao hay điểm. Sau đó, chuyển khoá Moodle sang lớp mới trong ô Kết nối Moodle.",
+    "classCode": "Mã lớp mới",
+    "className": "Tên lớp mới",
+    "groupCount": "Số nhóm",
+    "maxMembers": "Tối đa mỗi nhóm",
+    "deadline": "Hạn chọn case",
+    "deadlineHint": "Để trống nếu chưa định ngày.",
+    "creating": "Đang tạo…",
+    "submit": "Tạo lớp khoá mới"
   }
 }

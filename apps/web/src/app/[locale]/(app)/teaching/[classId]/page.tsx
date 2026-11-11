@@ -41,6 +41,8 @@ import { RosterManager } from './roster-manager';
 import { SessionBoard } from './session-board';
 import { StaffManager } from './staff-manager';
 import { MoodlePanel } from './moodle-panel';
+import { GroupTools } from './group-tools';
+import { CloneClassForm } from './clone-class-form';
 
 export const dynamic = 'force-dynamic';
 
@@ -208,6 +210,10 @@ export default async function ClassDetailPage({
               classId={classId}
               courses={moodle.courses}
               activities={moodle.activities}
+              roster={moodle.roster}
+              otherClasses={teachable
+                .filter((item) => item.id !== classId && item.status === 'active')
+                .map((item) => ({ id: item.id, label: `${item.className} (${item.classCode})` }))}
             />
           </div>
         </Card>
@@ -242,6 +248,17 @@ export default async function ClassDetailPage({
       <Card>
         <CardTitle>{tGroups('title')}</CardTitle>
         <div className="mt-4">
+          <GroupTools
+            classId={classId}
+            ungrouped={
+              roster.filter(
+                (row) =>
+                  row.status === 'active' &&
+                  row.studentUid &&
+                  !members.some((member) => member.studentUid === row.studentUid),
+              ).length
+            }
+          />
           <GroupManager classId={classId} groups={groups} members={members} roster={roster} />
         </div>
       </Card>
@@ -333,6 +350,17 @@ export default async function ClassDetailPage({
             assignments={assignments}
             submissionsByAssignment={submissionsByAssignment}
             progressByAssignment={progressByAssignment}
+          />
+        </div>
+      </Card>
+      <Card>
+        <CardTitle>{tTeaching('cloneTitle')}</CardTitle>
+        <div className="mt-4">
+          <CloneClassForm
+            classId={classId}
+            groupsChoose={details.caseSelection === 'groups_choose'}
+            defaultGroups={Math.max(groups.length, 1)}
+            defaultMaxMembers={groups[0]?.maxMembers ?? 8}
           />
         </div>
       </Card>

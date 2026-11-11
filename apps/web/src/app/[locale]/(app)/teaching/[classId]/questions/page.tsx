@@ -101,6 +101,7 @@ export default async function ClassQuestionsPage({
         locale={locale}
         sessions={views}
         afterClassQa={policy.afterClassQa}
+        liveQaUrl={policy.liveQaUrl}
         providers={providers}
         defaultProvider={
           providers.includes(defaultProvider) ? defaultProvider : (providers[0] ?? null)

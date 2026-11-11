@@ -111,7 +111,7 @@ gcloud run deploy casestudyhub-web \
   --image "$IMAGE:latest" \
   --region "$REGION" \
   --allow-unauthenticated \
-  --min-instances 0 --max-instances 4 --memory 1Gi \
+  --min-instances 1 --max-instances 4 --memory 1Gi \
   --set-env-vars "GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FIREBASE_STORAGE_BUCKET=$PROJECT_ID.firebasestorage.app"
 ```
 

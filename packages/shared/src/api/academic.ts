@@ -231,8 +231,41 @@ export const caseSetRequestSchema = z.union([
 export type CaseSetRequest = z.infer<typeof caseSetRequestSchema>;
 
 /** The lecturer's after-class Q&A and attendance settings for a class. */
+/** An https address, or empty to remove it. */
+export const liveQaUrlSchema = z
+  .string()
+  .trim()
+  .max(500, 'errors.urlInvalid')
+  .refine((value) => value === '' || /^https:\/\/[^\s]+$/i.test(value), 'errors.urlInvalid');
+
 export const qaSettingsRequestSchema = z.object({
   afterClassQa: afterClassQaSchema.optional(),
   attendancePolicy: attendancePolicySchema.optional(),
+  liveQaUrl: liveQaUrlSchema.optional(),
 });
+
+/**
+ * A new cohort opened from a class that ran before: same course, cases and
+ * settings, no people. Its groups start empty.
+ */
+export const cloneClassSchema = z.object({
+  classCode: classCodeSchema,
+  className: z.string().trim().min(2, 'errors.nameInvalid').max(160, 'errors.nameInvalid'),
+  groupCount: z
+    .number()
+    .int()
+    .min(1, 'errors.groupCountInvalid')
+    .max(50, 'errors.groupCountInvalid'),
+  maxMembers: z
+    .number()
+    .int()
+    .min(2, 'errors.maxMembersInvalid')
+    .max(12, 'errors.maxMembersInvalid'),
+  /** ISO timestamp; only used when groups choose their own case. */
+  caseSelectionDeadline: z.iso
+    .datetime({ offset: true, error: 'errors.dateInvalid' })
+    .nullable()
+    .optional(),
+});
+export type CloneClassRequest = z.infer<typeof cloneClassSchema>;
 export type QaSettingsRequest = z.infer<typeof qaSettingsRequestSchema>;

@@ -61,7 +61,12 @@ export const AUDIT_ACTIONS = [
   'ai.configuration_changed',
   'lti.account_linked',
   'lti.class_linked',
+  'lti.class_relinked',
   'lti.grades_sent',
+  'class.cloned',
+  'group.bulk_locked',
+  'group.small_merged',
+  'submission.reminder_sent',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];

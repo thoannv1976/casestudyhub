@@ -8,6 +8,9 @@ import {
   listGroups,
   listMembers,
   listRoster,
+  mergeSmallGroups,
+  setAllGroupsLocked,
+  AppError,
 } from '@casestudyhub/core';
 import { requirePermission } from '@casestudyhub/core/auth/authorize';
 import { requireSessionUser } from '@casestudyhub/core/auth/session';
@@ -34,6 +37,49 @@ export async function GET(
   }
 }
 
+async function ungroupedCandidates(classId: string) {
+  const roster = await listRoster(classId);
+  return roster
+    .filter((row) => row.status === 'active' && row.studentUid)
+    .map((row) => ({
+      studentUid: row.studentUid as string,
+      studentId: row.studentId,
+      fullName: row.fullName,
+    }));
+}
+
+/**
+ * Whole-class group tools: place everyone still without a group, lock or
+ * unlock every group, or empty near-empty groups into the others.
+ */
+export async function PATCH(
+  request: NextRequest,
+  context: { params: Promise<{ classId: string }> },
+) {
+  try {
+    const actor = await requirePermission('group.create');
+    const { classId } = await context.params;
+    await assertCanManageClass(actor, classId);
+    const body = (await request.json()) as { action?: string; maxSize?: number };
+    switch (body.action) {
+      case 'placeAll':
+        return NextResponse.json(
+          await distributeRandomly(actor, classId, await ungroupedCandidates(classId)),
+        );
+      case 'lockAll':
+        return NextResponse.json(await setAllGroupsLocked(actor, classId, true));
+      case 'unlockAll':
+        return NextResponse.json(await setAllGroupsLocked(actor, classId, false));
+      case 'mergeSmall':
+        return NextResponse.json(await mergeSmallGroups(actor, classId, Number(body.maxSize ?? 1)));
+      default:
+        throw new AppError('VALIDATION_FAILED', 'errors.unknownKind');
+    }
+  } catch (error) {
+    return respondWithError(error);
+  }
+}
+
 export async function POST(
   request: NextRequest,
   context: { params: Promise<{ classId: string }> },
@@ -49,15 +95,11 @@ export async function POST(
     // Random grouping is only meaningful together with the groups it fills, so
     // the lecturer gets one action rather than two that must be run in order.
     if (input.formationMode === 'random') {
-      const roster = await listRoster(classId);
-      const candidates = roster
-        .filter((row) => row.status === 'active' && row.studentUid)
-        .map((row) => ({
-          studentUid: row.studentUid as string,
-          studentId: row.studentId,
-          fullName: row.fullName,
-        }));
-      const distribution = await distributeRandomly(actor, classId, candidates);
+      const distribution = await distributeRandomly(
+        actor,
+        classId,
+        await ungroupedCandidates(classId),
+      );
       return NextResponse.json({ ...result, ...distribution }, { status: 201 });
     }
 

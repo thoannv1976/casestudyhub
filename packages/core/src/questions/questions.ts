@@ -44,9 +44,12 @@ function parse(data: FirebaseFirestore.DocumentData): ClassQuestion | null {
 }
 
 /** A class's after-class Q&A and attendance settings, defaulted when never set. */
-export async function qaPolicyOfClass(
-  classId: string,
-): Promise<{ afterClassQa: AfterClassQa; attendancePolicy: AttendancePolicy }> {
+export async function qaPolicyOfClass(classId: string): Promise<{
+  afterClassQa: AfterClassQa;
+  attendancePolicy: AttendancePolicy;
+  /** In-class Q&A held in another app (ClassInteract), when the lecturer set one. */
+  liveQaUrl: string | null;
+}> {
   const snapshot = await getDb().collection(COLLECTIONS.classes).doc(classId).get();
   const afterClassQa = afterClassQaSchema.safeParse(snapshot.get('afterClassQa') ?? {});
   const attendancePolicy = attendancePolicySchema.safeParse(snapshot.get('attendancePolicy') ?? {});
@@ -55,6 +58,7 @@ export async function qaPolicyOfClass(
     attendancePolicy: attendancePolicy.success
       ? attendancePolicy.data
       : attendancePolicySchema.parse({}),
+    liveQaUrl: typeof snapshot.get('liveQaUrl') === 'string' ? snapshot.get('liveQaUrl') : null,
   };
 }
 

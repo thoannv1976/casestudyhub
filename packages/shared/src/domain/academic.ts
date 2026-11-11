@@ -77,6 +77,13 @@ export const classSchema = z.object({
     reviewWeight: 0.5,
     featuredBonus: 0.5,
   }),
+  /**
+   * Where the class asks questions during class, when that happens in another
+   * app (ClassInteract). Shown as a button in the presentation room.
+   */
+  liveQaUrl: z.string().max(500).optional(),
+  /** The class this one was opened from, for a new cohort. */
+  clonedFromClassId: z.string().optional(),
   status: z.enum(['draft', 'active', 'archived']),
 });
 export type Class = z.infer<typeof classSchema>;

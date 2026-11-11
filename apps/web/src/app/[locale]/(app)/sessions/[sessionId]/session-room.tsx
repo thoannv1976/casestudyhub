@@ -49,8 +49,11 @@ export function SessionRoom({
   isStudent,
   title,
   subtitle,
+  liveQaUrl = null,
 }: {
   sessionId: string;
+  /** The class asks its questions in ClassInteract during class, when set. */
+  liveQaUrl?: string | null;
   /** The framework this session runs under, frozen when the case was set. */
   policy: PresentationPolicy;
   /** How long asking and answering stay open after the session ends. */
@@ -103,6 +106,17 @@ export function SessionRoom({
           {t(`status.${session.status}`)}
         </Badge>
       </div>
+      {liveQaUrl && session.status !== 'completed' ? (
+        <a
+          href={liveQaUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-testid="live-qa-link"
+          className="bg-brand-600 hover:bg-brand-700 inline-flex h-10 items-center rounded-lg px-4 text-sm font-medium text-white"
+        >
+          {t('liveQaLink')}
+        </a>
+      ) : null}
 
       <Card>
         <CardTitle>{t('timerTitle')}</CardTitle>

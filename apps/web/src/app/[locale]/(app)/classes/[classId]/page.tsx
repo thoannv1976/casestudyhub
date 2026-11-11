@@ -297,6 +297,16 @@ export default async function StudentClassPage({
         <Card>
           <CardTitle>{tSession('inClassTitle')}</CardTitle>
           <p className="text-muted mt-2 text-sm">{tSession('inClassHint')}</p>
+          {details?.liveQaUrl ? (
+            <a
+              href={details.liveQaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand-600 dark:text-brand-300 mt-2 inline-block text-sm font-medium underline"
+            >
+              {tSession('liveQaLink')}
+            </a>
+          ) : null}
           <ul className="mt-4 space-y-2">
             {openSessions.map((session) => {
               const group = groups.find((candidate) => candidate.id === session.groupId);

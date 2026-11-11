@@ -70,7 +70,7 @@ jobs:
             --platform managed \
             --service-account "${{ secrets.CLOUD_RUN_RUNTIME_SERVICE_ACCOUNT }}" \
             --allow-unauthenticated \
-            --min-instances 0 \
+            --min-instances 1 \
             --max-instances 4 \
             --memory 1Gi \
             --cpu 1 \
